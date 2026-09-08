@@ -1,55 +1,14 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  /* Happy Hues: https://www.happyhues.co/ — coral, lavender, plum, yellow. */
-  --app-bg: #f4effc;
-  --sidebar-bg: #ffffff;
-  --surface: #ffffff;
-  --surface-elevated: #f4effc;
-  --surface-soft: #e2daeb;
-  --border: #d6c9e5;
-  --text-primary: #1f1235;
-  --text-secondary: #463366;
-  --text-muted: #67568c;
-  --primary: #a93845;
-  --primary-hover: #892c37;
-  --action: #ff6e6c;
-  --action-hover: #f65e60;
-  --on-action: #1f1235;
-  --accent-blue: #67568c;
-  --accent-violet: #67568c;
-  --brand-coral: #ff6e6c;
-  --brand-yellow: #fbdd74;
-  --brand-plum: #301e4e;
-  --brand-lavender: #c9bae2;
-  --success: #16a34a;
-  --warning: #ffb020;
-  --danger: #dc2626;
-}
-
-.dark {
-  --app-bg: #1f1235;
-  --sidebar-bg: #301e4e;
-  --surface: #301e4e;
-  --surface-elevated: #3b2858;
-  --surface-soft: #463366;
-  --border: #67568c;
-  --text-primary: #ffffff;
-  --text-secondary: #f4effc;
-  --text-muted: #c9bae2;
-  --primary: #ff6e6c;
-  --primary-hover: #ff9694;
-  --accent-blue: #c9bae2;
-  --accent-violet: #c9bae2;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-}
-
 @theme inline {
-  --font-sans: var(--font-kanit);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
 }
 
 * {
@@ -58,19 +17,16 @@
 
 html {
   background: var(--app-bg);
-  scroll-behavior: smooth;
-  scroll-padding-top: 64px;
 }
 
+/* Flat ground, no gradient wash. The page's depth comes from hairline rules and
+   surface steps, the way a terminal reads, not from a blurred colour field. */
 body {
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    linear-gradient(180deg, rgba(255, 110, 108, 0.08), transparent 280px),
-    linear-gradient(135deg, rgba(103, 86, 140, 0.08), transparent 42%),
-    var(--app-bg);
+  background: var(--app-bg);
   color: var(--text-primary);
-  font-family: var(--font-kanit), Kanit, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 button,
@@ -80,21 +36,69 @@ textarea {
   font: inherit;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 ::selection {
-  background: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: var(--action);
+  color: var(--on-action);
 }
 
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 3px;
+  outline: 1px solid var(--action);
+  outline-offset: 2px;
 }
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Terminal surfaces ─────────────────────────────────────────────────────
+   Ported from Chaos Market AI's chaos-* utilities so both projects draw their
+   background structure from the same rules. */
+
+.chaos-grid {
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+}
+
+.chaos-dot-field {
+  background-image: radial-gradient(color-mix(in oklab, var(--text-muted) 28%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(ellipse 72% 62% at 48% 42%, #000 22%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 62% at 48% 42%, #000 22%, transparent 82%);
+}
+
+.chaos-scanlines {
+  background-image: repeating-linear-gradient(180deg, color-mix(in oklab, var(--text-muted) 7%, transparent) 0 1px, transparent 1px 5px);
+}
+
+/* The clipped corner. This is the one shape motif the whole interface uses in
+   place of a border radius, so panels read as cut plate rather than as cards. */
+.chaos-cut {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.chaos-cut-lg {
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────────
+   Everything below animates transform or opacity only. */
 
 @keyframes seal-progress-sweep {
   from { transform: translateX(-100%); }
   to { transform: translateX(300%); }
 }
 
-.seal-progress { animation: seal-progress-sweep 1.4s ease-in-out infinite; }
+.seal-progress {
+  animation: seal-progress-sweep 1.4s ease-in-out infinite;
+}
 
 @keyframes seal-skeleton-shimmer {
   0% { background-position: 200% 0; }
@@ -102,255 +106,75 @@ textarea {
 }
 
 .seal-skeleton-shimmer {
-  background-image: linear-gradient(90deg, var(--surface-soft) 0%, var(--surface-elevated) 50%, var(--surface-soft) 100%);
+  background-image: linear-gradient(90deg, var(--surface) 0%, var(--surface-soft) 50%, var(--surface) 100%);
   background-size: 200% 100%;
   animation: seal-skeleton-shimmer 1.6s linear infinite;
 }
+
+@keyframes seal-ticker-run {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.seal-ticker__track {
+  display: inline-flex;
+  min-width: 200%;
+  animation: seal-ticker-run 42s linear infinite;
+}
+
+@keyframes seal-blink {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0.15; }
+}
+
+.seal-blink {
+  animation: seal-blink 1.6s steps(1, end) infinite;
+}
+
+/* ── Form controls ─────────────────────────────────────────────────────────
+   Square, hairline, monospace. Addresses and amounts are the one thing a payment
+   app must never let the reader mis-scan, which is what the mono is for. */
 
 .payment-input {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-elevated);
-  padding: 14px 16px;
+  border-radius: 0;
+  background: var(--surface);
+  padding: 13px 14px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
-.payment-input::placeholder { color: var(--text-muted); opacity: 0.8; }
 
+.payment-input:hover {
+  border-color: var(--border-strong);
+}
+
+.payment-input:focus {
+  border-color: var(--action);
+  outline: none;
+}
+
+.payment-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* The perforation on the receipt preview — kept from the previous design because
+   it is the one motif that was already saying "payment" rather than "SaaS". */
 .receipt-edge {
   background-image: radial-gradient(circle at 8px 0, var(--app-bg) 6px, transparent 6.5px);
   background-size: 16px 10px;
   background-repeat: repeat-x;
 }
 
-@keyframes seal-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(22px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes seal-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
-}
-
-@keyframes seal-float-soft {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(0, -8px, 0) rotate(1deg);
-  }
-}
-
-@keyframes seal-bar-rise {
-  from {
-    transform: scaleY(0.2);
-    opacity: 0.45;
-  }
-  to {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-@keyframes seal-gradient-pan {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 200% 50%;
-  }
-}
-
-@keyframes seal-pulse-ring {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 28%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent);
-  }
-}
-
-@keyframes seal-bounce-down {
-  0%,
-  100% {
-    transform: translate(-50%, 0);
-  }
-  50% {
-    transform: translate(-50%, 8px);
-  }
-}
-
-.seal-fade-up {
-  animation: seal-fade-up 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--seal-delay, 0ms);
-}
-
-.seal-float {
-  animation: seal-float 6s ease-in-out infinite;
-}
-
-.seal-float-soft {
-  animation: seal-float-soft 7s ease-in-out infinite;
-  animation-delay: var(--seal-delay, 0ms);
-}
-
-.seal-bar-rise {
-  transform-origin: bottom;
-  animation: seal-bar-rise 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--seal-delay, 0ms);
-}
-
-.seal-gradient-pan {
-  background-size: 200% 100%;
-  animation: seal-gradient-pan 7s linear infinite;
-}
-
-.seal-pulse-ring {
-  animation: seal-pulse-ring 2.7s ease-in-out infinite;
-}
-
-.seal-hover-lift {
-  transition:
-    transform 220ms ease,
-    box-shadow 220ms ease,
-    border-color 220ms ease;
-}
-
-.seal-hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 28px 80px rgba(47, 128, 237, 0.16);
-}
-
-.seal-landing-page {
-  width: 100%;
-  overflow-x: clip;
-}
-
-.seal-scroll-section {
-  position: relative;
-  min-height: calc(100svh - 64px);
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
-  scroll-margin-top: 64px;
-  display: flex;
-  align-items: center;
-  padding-block: clamp(24px, 4vw, 56px);
-  overflow-x: clip;
-  transform: translateZ(0);
-}
-
-.seal-section-inner {
-  width: 100%;
-  max-width: 1232px;
-  margin-inline: auto;
-  padding-inline: 16px;
-  min-width: 0;
-}
-
-.seal-landing-page .animate-me,
-.seal-landing-page .animate-child {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-.seal-section-next {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  z-index: 5;
-  display: inline-flex;
-  height: 48px;
-  width: 48px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  color: var(--primary);
-  box-shadow: 0 18px 50px rgba(16, 191, 174, 0.18);
-  backdrop-filter: blur(16px);
-  animation: seal-bounce-down 1.8s ease-in-out infinite;
-  transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.seal-section-next:hover {
-  background: var(--primary);
-  color: #07130f;
-  box-shadow: 0 20px 55px rgba(16, 191, 174, 0.28);
-}
-
-.seal-back-to-top {
-  position: fixed;
-  right: clamp(16px, 3vw, 32px);
-  bottom: clamp(18px, 4vw, 34px);
-  z-index: 60;
-  display: inline-flex;
-  height: 48px;
-  width: 48px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  color: var(--primary);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(12px) scale(0.94);
-  box-shadow: 0 18px 50px rgba(47, 128, 237, 0.16);
-  backdrop-filter: blur(16px);
-  transition:
-    opacity 220ms ease,
-    transform 220ms ease,
-    background-color 180ms ease,
-    color 180ms ease;
-}
-
-.seal-back-to-top.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
-}
-
-.seal-back-to-top:hover {
-  background: var(--primary);
-  color: #07130f;
-}
-
-@media (max-width: 767px) {
-  .seal-scroll-section {
-    min-height: calc(100svh - 64px - 64px);
-    align-items: flex-start;
-    padding-block: 24px 88px;
-  }
-
-  .seal-section-next {
-    bottom: 12px;
-    height: 44px;
-    width: 44px;
-  }
-
-  .seal-back-to-top {
-    bottom: 86px;
-    right: 16px;
+@media (min-width: 640px) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
   }
 }
 
@@ -360,15 +184,10 @@ textarea {
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
   }
 
-  html {
-    scroll-snap-type: none;
-  }
-
-  .seal-scroll-section {
-    scroll-snap-align: none;
+  .seal-ticker__track {
+    animation: none;
   }
 }

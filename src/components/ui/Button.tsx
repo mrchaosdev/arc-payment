@@ -8,26 +8,22 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
 };
 
+// Square, uppercase, monospace. The accent fill is reserved for the one action
+// that spends money on the screen; everything else is a hairline outline.
 const variants: Record<ButtonVariant, string> = {
-  primary:
-    "bg-[var(--action)] text-[var(--on-action)] shadow-[0_12px_28px_rgba(255,110,108,0.18)] hover:bg-[var(--action-hover)]",
+  primary: "bg-[var(--action)] text-[var(--on-action)] hover:bg-[var(--action-hover)]",
   secondary:
-    "border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:bg-[var(--surface-soft)]",
-  ghost: "text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]",
+    "border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-soft)]",
+  ghost: "text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]",
   danger:
-    "border border-red-500/30 bg-red-500/10 text-red-700 hover:bg-red-500/15 dark:text-red-100 dark:hover:bg-red-500/20",
+    "border border-[var(--negative)]/40 bg-[var(--negative)]/10 text-[var(--negative)] hover:bg-[var(--negative)]/16",
 };
 
-export function Button({
-  className,
-  variant = "primary",
-  children,
-  ...props
-}: ButtonProps) {
+export function Button({ className, variant = "primary", children, ...props }: ButtonProps) {
   return (
     <button
       className={cn(
-        "inline-flex h-10 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-black transition active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-10 items-center justify-center gap-2 px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
         variants[variant],
         className
       )}

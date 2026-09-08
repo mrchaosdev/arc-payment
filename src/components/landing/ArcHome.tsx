@@ -1,263 +1,319 @@
-import Link from "next/link";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  CheckCircle2,
-  CircleDollarSign,
-  Clock3,
-  Code2,
-  FileText,
-  Fuel,
-  Globe2,
-  Link2,
-  LockKeyhole,
-  Network,
-  ReceiptText,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  WalletCards,
-  Zap,
-} from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { DotGrid } from "@/components/chaos/DotGrid";
-import { GlowBorder } from "@/components/chaos/GlowBorder";
-import { SpotlightCard } from "@/components/chaos/SpotlightCard";
-import { ARC_EXPLORER_URL, ARC_FAUCET_URL } from "@/lib/arc";
+"use client";
 
-const benefits = [
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
+import { ChaosSphere } from "@/components/chaos/ChaosSphere";
+import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
+import { derivePulse } from "@/lib/visual/pulse";
+import {
+  ARC_EXPLORER_URL,
+  ARC_FAUCET_URL,
+  ARC_TESTNET_ID,
+  ARC_USDC_ADDRESS,
+  ARC_USDC_DECIMALS,
+} from "@/lib/arc";
+
+const settlementPath = [
+  "Validate recipient & amount",
+  "Estimate gas · check balance",
+  "Sign in wallet",
+  "Broadcast to Arc",
+  "Await onchain receipt",
+];
+
+const capabilities = [
   {
-    icon: CircleDollarSign,
-    title: "One currency, less friction",
-    description: "Send USDC and pay network fees in USDC. No separate volatile gas token to acquire.",
+    id: "01",
+    title: "One currency all the way down",
+    body: "USDC moves and USDC pays the fee. There is no second volatile token to acquire before a payment can go out.",
+    meta: "ERC-20 · 6 DECIMALS",
   },
   {
-    icon: Zap,
-    title: "Fast finality",
-    description: "Give payers and merchants a clear confirmation flow built around Arc settlement.",
+    id: "02",
+    title: "The wallet signs, the app never holds",
+    body: "SealPay builds the transfer and hands it to your wallet. No private key, no custody, no account to create.",
+    meta: "NON-CUSTODIAL",
   },
   {
-    icon: Link2,
-    title: "Payment links",
-    description: "Share an amount, recipient and human-readable memo in a simple request URL.",
+    id: "03",
+    title: "A request is a URL",
+    body: "Recipient, amount, memo and reference travel in the link. Open it and the checkout is already filled in.",
+    meta: "SHAREABLE",
   },
   {
-    icon: ShieldCheck,
-    title: "Non-custodial by default",
-    description: "The connected wallet signs the transfer. The app never stores a private key.",
+    id: "04",
+    title: "Every payment ends in a receipt",
+    body: "The transaction hash goes straight to ArcScan, so the payer and the payee check the same public record.",
+    meta: "VERIFIABLE",
   },
 ];
 
+/**
+ * The landing page as a settlement terminal.
+ *
+ * Structure follows Chaos Market AI: a meta bar that states what this is and
+ * what it runs on, a two-tone headline, the execution path as a real numbered
+ * list, and a live surface on the right. The limits panel at the end is the part
+ * that is specific to this project — a payment MVP that hides its boundaries is
+ * worse than one that prints them.
+ */
 export function ArcHome() {
+  const [drag, setDrag] = useState(0);
+  const pulse = derivePulse("idle", 0.35);
+
   return (
-    <div className="overflow-hidden">
-      <section className="relative px-4 py-16 sm:py-20 md:px-8 lg:py-28">
-        <DotGrid className="opacity-70" />
-        <div className="pointer-events-none absolute left-1/2 top-12 h-[430px] w-[430px] -translate-x-1/2 rounded-full bg-[var(--brand-coral)]/15 blur-3xl" />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="violet">
-                <Sparkles className="h-3.5 w-3.5" /> Built on Arc
-              </Badge>
-              <Badge tone="green">Live MVP · Public testnet</Badge>
-            </div>
-            <h1 className="mt-6 max-w-3xl text-5xl font-black leading-[0.98] tracking-[-0.045em] text-[var(--text-primary)] sm:text-6xl lg:text-7xl">
-              Payment links that settle in{" "}
-              <span className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent-violet)] bg-clip-text text-transparent">
-                digital dollars.
-              </span>
+    <div className="relative">
+      <div aria-hidden className="chaos-grid pointer-events-none absolute inset-0 opacity-60" />
+
+      <div className="relative border-b border-[var(--border)]">
+        <div className="mx-auto grid max-w-[1400px] gap-0 px-4 md:grid-cols-[1fr_auto] md:px-8">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-5">
+            <Label>Arc public testnet</Label>
+            <span className="text-[var(--border-strong)]">/</span>
+            <Label>Non-custodial settlement</Label>
+          </div>
+          <div className="grid grid-cols-3 border-t border-[var(--border)] md:border-t-0">
+            <MetaCell label="Network" value="ARC" />
+            <MetaCell label="Chain" value={String(ARC_TESTNET_ID)} bordered />
+            <MetaCell label="Gas" value="USDC" />
+          </div>
+        </div>
+      </div>
+
+      <section className="relative border-b border-[var(--border)]">
+        <div className="mx-auto grid max-w-[1400px] items-start gap-0 px-4 md:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="py-12 lg:py-16 lg:pr-12">
+            <Label className="text-[var(--action)]">Sign once · settle in seconds · keep the proof</Label>
+
+            <h1 className="mt-6 max-w-[16ch] text-5xl font-semibold leading-[0.95] tracking-[-0.03em] sm:text-6xl lg:text-7xl">
+              A link is a promise.
+              <span className="mt-2 block text-[var(--text-muted)]">A receipt is proof.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-[var(--text-secondary)] md:text-lg">
-              SealPay helps independent teams and global builders request and send USDC on Arc—with
-              wallet-native signing, predictable fees and a receipt anyone can verify.
+
+            <p className="mt-7 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">
+              SealPay sends USDC on Arc and turns every payment into a record both sides can check on
+              the public explorer. Testnet only — the tokens have no monetary value.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <GlowBorder radius={16} intensity={0.7}>
+
+            <div className="mt-9 max-w-md border border-[var(--border)] bg-[var(--surface)]">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                  Settlement path
+                </p>
+                <Num value="05 STEPS" tone="muted" className="text-[11px]" />
+              </div>
+              {settlementPath.map((label, index) => (
+                <TraceRow key={label} index={index + 1} label={label} state="pending" />
+              ))}
+              <div className="grid grid-cols-2 border-t border-[var(--border)]">
                 <Link
                   href="/dashboard"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--action)] px-6 text-sm font-black text-[var(--on-action)] shadow-[0_18px_45px_rgba(255,110,108,0.20)] transition hover:bg-[var(--action-hover)]"
+                  className="flex h-12 items-center justify-center gap-2 bg-[var(--action)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
                 >
-                  Open workspace <ArrowRight className="h-4 w-4" />
+                  Open workspace <ArrowRight className="size-3.5" />
                 </Link>
-              </GlowBorder>
-              <Link
-                href="/pay?mode=request"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 text-sm font-black text-[var(--text-primary)] transition hover:bg-[var(--surface-elevated)]"
+                <Link
+                  href="/pay?mode=request"
+                  className="flex h-12 items-center justify-center gap-2 border-l border-[var(--border)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-soft)]"
+                >
+                  Request payment <Link2 className="size-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <Chip tone="muted">
+                <StatusDot /> No signup
+              </Chip>
+              <Chip tone="muted">Wallet-native signing</Chip>
+              <Chip tone="muted">Testnet USDC</Chip>
+            </div>
+          </div>
+
+          <div className="border-t border-[var(--border)] lg:border-l lg:border-t-0">
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Settlement pulse
+              </p>
+              <span className="font-mono text-[11px] text-[var(--text-muted)]">DERIVED, NOT PREDICTED</span>
+            </div>
+            <div className="chaos-dot-field border-b border-[var(--border)]">
+              <button
+                type="button"
+                aria-label="Spin the settlement pulse"
+                onClick={() => setDrag((value) => value + 1)}
+                className="block w-full cursor-grab active:cursor-grabbing"
               >
-                Create payment request <Link2 className="h-4 w-4" />
-              </Link>
+                <ChaosSphere
+                  bpm={pulse.bpm}
+                  amplitude={pulse.amplitude}
+                  tone={pulse.tone}
+                  impulse={drag}
+                  height={320}
+                  interactive
+                  led
+                />
+              </button>
             </div>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[var(--text-muted)]">
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[var(--success)]" /> Non-custodial</span>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[var(--success)]" /> No signup</span>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[var(--success)]" /> Testnet USDC</span>
+            <div className="grid grid-cols-3 border-b border-[var(--border)]">
+              <MetaCell label="Rate" value={`${pulse.bpm} BPM`} note="RESTING" />
+              <MetaCell label="Finality" value="SUB-SECOND" note="ARC" bordered />
+              <MetaCell label="Fee token" value="USDC" note="NO GAS TOKEN" />
             </div>
+            <ReceiptPreview />
           </div>
-
-          <PaymentPreview />
         </div>
       </section>
 
-      <section className="border-y border-[var(--border)] bg-[var(--surface)]/70 px-4 py-6 backdrop-blur-xl md:px-8">
-        <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-4 lg:grid-cols-4">
-          <NetworkStat icon={Network} label="Network" value="Arc Testnet" />
-          <NetworkStat icon={Fuel} label="Gas token" value="USDC" />
-          <NetworkStat icon={Clock3} label="Finality" value="Sub-second" />
-          <NetworkStat icon={Globe2} label="Chain ID" value="5042002" />
-        </div>
-      </section>
-
-      <section className="px-4 py-20 md:px-8 lg:py-28">
-        <div className="mx-auto max-w-[1200px]">
+      <section className="relative border-b border-[var(--border)] py-14">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-8">
           <div className="max-w-2xl">
-            <Badge tone="blue">Product thesis</Badge>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-5xl">
-              Payments first. Infrastructure underneath.
+            <Label className="text-[var(--action)]">What it does today</Label>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.02em] md:text-4xl">
+              Four things, finished. Nothing implied.
             </h2>
-            <p className="mt-4 text-base leading-7 text-[var(--text-secondary)]">
-              The first release keeps the experience familiar: share a request, review the payment,
-              sign once, and keep a verifiable receipt.
-            </p>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {benefits.map(({ icon: Icon, title, description }) => (
-              <SpotlightCard key={title} className="p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--primary)]">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-5 font-black text-[var(--text-primary)]">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
-              </SpotlightCard>
+          <div className="mt-10 grid border-l border-t border-[var(--border)] md:grid-cols-2 xl:grid-cols-4">
+            {capabilities.map(({ id, title, body, meta }) => (
+              <article key={id} className="border-b border-r border-[var(--border)] p-6">
+                <div className="flex items-center justify-between">
+                  <Num value={id} tone="primary" className="text-[11px]" />
+                  <Label>{meta}</Label>
+                </div>
+                <h3 className="mt-6 text-base font-semibold leading-snug">{title}</h3>
+                <p className="mt-3 text-[13px] leading-6 text-[var(--text-muted)]">{body}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 pb-20 md:px-8 lg:pb-28">
-        <div className="mx-auto grid max-w-[1200px] gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-          <Card className="p-6 sm:p-8">
-            <Badge tone="green">Working today</Badge>
-            <h2 className="mt-4 text-2xl font-black text-[var(--text-primary)]">A focused Arc payment MVP</h2>
-            <div className="mt-6 space-y-4">
-              <FeatureRow icon={WalletCards} title="Wallet connect" text="RainbowKit and wagmi" />
-              <FeatureRow icon={Send} title="Real USDC transfer" text="Arc ERC-20 interface" />
-              <FeatureRow icon={ReceiptText} title="Local receipts" text="ArcScan transaction links" />
-              <FeatureRow icon={FileText} title="Payment requests" text="Portable share URLs" />
-            </div>
-          </Card>
-
-          <div className="rounded-[32px] border border-[var(--accent-violet)]/20 bg-gradient-to-br from-[var(--brand-plum)] to-[#1f1235] p-7 text-white shadow-[0_30px_100px_rgba(48,30,78,0.20)] sm:p-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-              <Code2 className="h-6 w-6 text-[var(--brand-yellow)]" />
-            </div>
-            <h2 className="mt-7 max-w-xl text-3xl font-black tracking-tight sm:text-4xl">
-              Designed to grow with Circle’s payment stack.
-            </h2>
-            <p className="mt-4 max-w-2xl leading-7 text-[var(--brand-lavender)]">
-              Next milestones can add CCTP deposits, unified balances, embedded wallets, gasless
-              checkout and merchant webhooks without changing the core payer experience.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+      <section className="relative py-14">
+        <div className="mx-auto grid max-w-[1400px] gap-8 px-4 md:px-8 lg:grid-cols-[1fr_1fr]">
+          <Panel title="Network constants" meta="ARC TESTNET" bodyClassName="p-0">
+            <ConstantRow label="Chain id" value={String(ARC_TESTNET_ID)} />
+            <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
+            <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
+            <ConstantRow label="Explorer" value="testnet.arcscan.app" />
+            <div className="flex flex-wrap gap-0 border-t border-[var(--border)]">
               <a
                 href={ARC_FAUCET_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 text-sm font-black text-[var(--on-action)]"
+                className="flex h-11 flex-1 items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
               >
-                Get testnet USDC <ArrowUpRight className="h-4 w-4" />
+                Get testnet USDC <ArrowUpRight className="size-3.5" />
               </a>
               <a
                 href={ARC_EXPLORER_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/20 px-5 text-sm font-black text-white transition hover:bg-white/10"
+                className="flex h-11 flex-1 items-center justify-center gap-2 border-l border-[var(--border)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)]"
               >
-                Explore Arc <ArrowUpRight className="h-4 w-4" />
+                Open ArcScan <ExternalLink className="size-3.5" />
               </a>
             </div>
-          </div>
+          </Panel>
+
+          {/* The limits, on the landing page rather than buried in a doc. This is
+              the one thing SealPay already did better than the projects it is
+              measured against, so it belongs where a reader arrives. */}
+          <Panel title="What this is not" meta="READ THIS FIRST" bodyClassName="p-0">
+            <LimitRow text="A public-testnet MVP, not a production payment processor." />
+            <LimitRow text="Memos and references live in the link and the local receipt. They are not written onchain." />
+            <LimitRow text="History and saved requests are stored in this browser, capped at 200 each." />
+            <LimitRow text="Requests are not reconciled against the chain — nothing marks one paid for you." />
+            <LimitRow text="Browser tests run against a mock wallet and RPC. They do not prove live settlement." />
+          </Panel>
         </div>
       </section>
     </div>
   );
 }
 
-function PaymentPreview() {
+function MetaCell({
+  label,
+  value,
+  note,
+  bordered = false,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  bordered?: boolean;
+}) {
   return (
-    <div className="relative mx-auto w-full max-w-[510px]">
-      <div className="absolute -left-8 top-12 h-28 w-28 rounded-full bg-[var(--brand-yellow)]/20 blur-2xl" />
-      <div className="absolute -right-8 bottom-10 h-36 w-36 rounded-full bg-[var(--accent-violet)]/20 blur-2xl" />
-      <Card className="relative overflow-hidden p-3 sm:p-4">
-        <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-elevated)] p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--brand-plum)] text-lg font-black text-white">$</span>
-              <div>
-                <p className="font-black text-[var(--text-primary)]">Pay request</p>
-                <p className="text-xs text-[var(--text-muted)]">SP-8F2A10BC</p>
-              </div>
-            </div>
-            <Badge tone="violet">Arc</Badge>
-          </div>
-
-          <div className="my-7 text-center">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--text-muted)]">Amount due</p>
-            <p className="mt-2 text-5xl font-black tracking-tight text-[var(--text-primary)]">250.00</p>
-            <p className="mt-1 font-black text-[var(--accent-blue)]">USDC</p>
-          </div>
-
-          <div className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm">
-            <PreviewRow label="For" value="Product design sprint" />
-            <PreviewRow label="To" value="0x84A...91F2" />
-            <PreviewRow label="Network fee" value="Paid in USDC" />
-          </div>
-
-          <div className="mt-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--action)] text-sm font-black text-[var(--on-action)]">
-            <LockKeyhole className="h-4 w-4" /> Review and pay
-          </div>
-        </div>
-        <div className="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-[var(--text-muted)]">
-          <ShieldCheck className="h-4 w-4 text-[var(--success)]" /> Non-custodial · Verified on ArcScan
-        </div>
-      </Card>
+    <div className={bordered ? "border-x border-[var(--border)] px-4 py-3" : "px-4 py-3"}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1 truncate font-mono text-xs uppercase tabular text-[var(--text-primary)]">{value}</p>
+      {note ? (
+        <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+          {note}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function PreviewRow({ label, value }: { label: string; value: string }) {
+function ConstantRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-[var(--text-muted)]">{label}</span>
-      <span className="text-right font-black text-[var(--text-primary)]">{value}</span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--border)] px-4 py-3 last:border-b-0">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">{label}</span>
+      <Num value={value} className="break-all text-right text-[11px]" />
     </div>
   );
 }
 
-function NetworkStat({ icon: Icon, label, value }: { icon: typeof Network; label: string; value: string }) {
+function LimitRow({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3 sm:p-4">
-      <Icon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{label}</p>
-        <p className="mt-0.5 text-sm font-black text-[var(--text-primary)]">{value}</p>
+    <p className="border-b border-[var(--border)] px-4 py-3.5 text-[13px] leading-6 text-[var(--text-secondary)] last:border-b-0">
+      {text}
+    </p>
+  );
+}
+
+/** The sample receipt. Kept from the previous design — it was the one element
+    already saying "payment" rather than "SaaS" — and rebuilt square. */
+function ReceiptPreview() {
+  return (
+    <div className="p-6">
+      <div className="border border-[var(--border)] bg-[var(--surface)]">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
+          <Label>Pay request</Label>
+          <Num value="SP-8F2A10BC" tone="muted" className="text-[11px]" />
+        </div>
+
+        <div className="px-4 py-7 text-center">
+          <Label>Amount due</Label>
+          <p className="mt-3 font-mono text-5xl tabular tracking-tight">250.00</p>
+          <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">USDC</p>
+        </div>
+
+        <div className="receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
+
+        <div className="px-4 py-4">
+          <ReceiptLine label="For" value="Product design sprint" />
+          <Divider className="my-3" />
+          <ReceiptLine label="To" value="0x84A2…91F2" />
+          <Divider className="my-3" />
+          <ReceiptLine label="Network fee" value="Paid in USDC" />
+        </div>
+
+        <div className="flex h-11 items-center justify-center gap-2 border-t border-[var(--border)] bg-[var(--surface-soft)] font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+          <StatusDot tone="positive" /> Sample · not a real payment
+        </div>
       </div>
     </div>
   );
 }
 
-function FeatureRow({ icon: Icon, title, text }: { icon: typeof Send; title: string; text: string }) {
+function ReceiptLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)] text-[var(--primary)]">
-        <Icon className="h-4 w-4" />
-      </span>
-      <div>
-        <p className="text-sm font-black text-[var(--text-primary)]">{title}</p>
-        <p className="text-xs text-[var(--text-muted)]">{text}</p>
-      </div>
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</span>
+      <Num value={value} className="text-right text-[11px]" />
     </div>
   );
 }

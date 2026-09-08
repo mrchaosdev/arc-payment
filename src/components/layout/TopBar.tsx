@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { AlertTriangle, CircleDollarSign, Moon, Settings, Sparkles, Sun } from "lucide-react";
-import { GlowBorder } from "@/components/chaos/GlowBorder";
+import { AlertTriangle, Moon, Settings, Sun } from "lucide-react";
 import { Skeleton } from "@/components/chaos/Skeleton";
 import { cn, compactAddress } from "@/lib/utils";
 
@@ -24,18 +23,18 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[var(--border)]/80 bg-[var(--sidebar-bg)]/85 shadow-[0_8px_30px_rgba(48,30,78,0.06)] backdrop-blur-xl dark:bg-[var(--sidebar-bg)]/82">
-      <div className="mx-auto flex h-16 w-full max-w-[1240px] items-center gap-3 overflow-hidden px-4 md:px-6">
-        <div className={cn("flex shrink-0 items-center gap-4", workspace && "lg:hidden")}>
+    <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--app-bg)]">
+      <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 overflow-hidden px-4 md:px-6">
+        <div className={cn("flex shrink-0 items-center gap-6", workspace && "lg:hidden")}>
           {/* DashboardSidebar already shows the SealPay mark at lg+; avoid a second logo there. */}
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-coral)] to-[var(--brand-yellow)] text-[var(--on-action)] shadow-[0_10px_25px_rgba(255,110,108,0.20)]">
-              <CircleDollarSign className="h-5 w-5" />
-            </div>
-            <span className="hidden text-lg font-black text-[var(--text-primary)] min-[380px]:inline">SealPay</span>
+            <span className="grid size-7 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
+              $
+            </span>
+            <span className="hidden text-base font-semibold tracking-tight min-[380px]:inline">SealPay</span>
           </Link>
 
-          <nav className={workspace ? "hidden" : "hidden items-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1 md:flex"}>
+          <nav className={workspace ? "hidden" : "hidden items-center gap-1 md:flex"}>
             {navItems.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -43,10 +42,10 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-xl px-4 py-2 text-sm font-bold transition",
+                    "px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
                     active
-                      ? "bg-[var(--surface-soft)] text-[var(--primary)]"
-                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      ? "text-[var(--action)]"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   )}
                 >
                   {item.label}
@@ -57,56 +56,46 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
         </div>
 
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2">
-          <span className="hidden h-10 items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--text-secondary)] xl:flex">
-            <Sparkles className="h-4 w-4 text-[var(--warning)]" />
+          <span className="hidden h-9 items-center gap-2 border border-[var(--border)] px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] xl:flex">
             USDC gas · Arc
           </span>
 
           <button
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="hidden h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] sm:flex"
+            className="hidden size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:flex"
           >
-            <Moon className="h-4 w-4 dark:hidden" />
-            <Sun className="hidden h-4 w-4 dark:block" />
+            <Moon className="size-4 dark:hidden" />
+            <Sun className="hidden size-4 dark:block" />
           </button>
 
           <Link
             href="/settings"
             aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+            className="flex size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="size-4" />
           </Link>
 
           {/* RainbowKit custom trigger keeps the mobile header width predictable. */}
           <ConnectButton.Custom>
-            {({
-              account,
-              chain,
-              mounted,
-              openAccountModal,
-              openChainModal,
-              openConnectModal,
-            }) => {
+            {({ account, chain, mounted, openAccountModal, openChainModal, openConnectModal }) => {
               const connected = mounted && account && chain;
 
               if (!mounted) {
-                return <Skeleton rounded="2xl" className="h-10 w-24" />;
+                return <Skeleton rounded="none" className="h-9 w-24" />;
               }
 
               if (!connected) {
                 return (
-                  <GlowBorder radius={16}>
-                    <button
-                      type="button"
-                      onClick={openConnectModal}
-                      className="h-10 rounded-2xl bg-[var(--action)] px-4 text-sm font-black text-[var(--on-action)] transition hover:bg-[var(--action-hover)]"
-                    >
-                      <span className="hidden sm:inline">Connect Wallet</span>
-                      <span className="sm:hidden">Connect</span>
-                    </button>
-                  </GlowBorder>
+                  <button
+                    type="button"
+                    onClick={openConnectModal}
+                    className="h-9 bg-[var(--action)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
+                  >
+                    <span className="hidden sm:inline">Connect wallet</span>
+                    <span className="sm:hidden">Connect</span>
+                  </button>
                 );
               }
 
@@ -122,10 +111,10 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                     }
                     title={chain.unsupported ? "Wrong network" : chain.name}
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-2xl border transition",
+                      "flex size-9 items-center justify-center border transition-colors",
                       chain.unsupported
-                        ? "border-red-500/30 bg-red-500/10 text-red-100"
-                        : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        ? "border-[var(--negative)]/50 bg-[var(--negative)]/10 text-[var(--negative)]"
+                        : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     )}
                   >
                     <NavbarChainIcon
@@ -138,7 +127,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                   <button
                     type="button"
                     onClick={openAccountModal}
-                    className="h-10 rounded-2xl bg-[var(--action)] px-3 text-sm font-black text-[var(--on-action)] transition hover:bg-[var(--action-hover)]"
+                    className="h-9 bg-[var(--action)] px-3 font-mono text-[11px] tabular text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
                   >
                     {compactAddress(account.address)}
                   </button>
@@ -164,23 +153,23 @@ function NavbarChainIcon({
   unsupported?: boolean;
 }) {
   if (unsupported) {
-    return <AlertTriangle className="h-4 w-4 text-red-400" />;
+    return <AlertTriangle className="size-4" />;
   }
 
   if (iconUrl) {
     return (
       <span
-        className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full"
+        className="flex size-5 items-center justify-center overflow-hidden"
         style={{ background: iconBackground ?? "var(--surface-elevated)" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconUrl} alt="" className="h-full w-full rounded-full object-cover" />
+        <img src={iconUrl} alt="" className="size-full object-cover" />
       </span>
     );
   }
 
   return (
-    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-soft)] text-xs font-black text-[var(--primary)]">
+    <span className="flex size-5 items-center justify-center bg-[var(--surface-soft)] font-mono text-[10px] text-[var(--action)]">
       {(name ?? "?").slice(0, 1)}
     </span>
   );

@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
-import { Kanit } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/providers/Web3Provider";
 
-const kanit = Kanit({
-  variable: "--font-kanit",
+// Two families, and the mono is not decoration: every address, hash, amount and
+// chain id in this app is scanned character by character, which a proportional
+// face makes harder than it needs to be.
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "SealPay — USDC payments on Arc",
+  title: "SealPay — USDC settlement terminal on Arc",
   description:
     "Create payment requests and settle USDC payments on Arc Testnet with predictable fees and fast finality.",
 };
 
 const themeScript = `
+// Dark is this interface's default rather than the OS preference: the terminal
+// look is the designed one, and light is the deliberate opt-out.
 try {
   const storedTheme = localStorage.getItem("seal-theme");
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const shouldUseDark = storedTheme ? storedTheme === "dark" : prefersDark;
-  document.documentElement.classList.toggle("dark", shouldUseDark);
-} catch (_) {}
+  document.documentElement.classList.toggle("dark", storedTheme !== "light");
+} catch (_) {
+  document.documentElement.classList.add("dark");
+}
 `;
 
 export default function RootLayout({
@@ -34,7 +43,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${kanit.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Web3Provider>{children}</Web3Provider>
       </body>
     </html>

@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+// Square plate on a hairline rule. No radius, no shadow: depth comes from the
+// surface step against the ground, which is what keeps the terminal flat.
 export function Card({
   children,
   className,
@@ -12,10 +14,7 @@ export function Card({
 }) {
   return (
     <section
-      className={cn(
-        "rounded-[28px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_20px_70px_rgba(48,30,78,0.08)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.24)]",
-        className
-      )}
+      className={cn("border border-[var(--border)] bg-[var(--surface)]", className)}
       style={style}
     >
       {children}
@@ -33,12 +32,10 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4">
+    <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-4 py-3">
       <div>
-        <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
-        {subtitle ? (
-          <p className="mt-1 text-xs text-[var(--text-muted)]">{subtitle}</p>
-        ) : null}
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{title}</h2>
+        {subtitle ? <p className="mt-1.5 text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
       </div>
       {action}
     </div>

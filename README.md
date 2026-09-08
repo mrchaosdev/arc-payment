@@ -67,12 +67,18 @@ Browser tests use a mock wallet/RPC and do not prove live-network settlement. Fu
 add CCTP funding, Circle Gateway unified balances, embedded wallets, merchant webhooks, and an
 optional invoice/escrow contract after security review.
 
+[The Keryx comparison](docs/COMPETITIVE-KERYX.md) reviews another Arc-testnet project against this
+one and lists the resulting gaps in the order they are worth closing.
+
 Resources: [Arc](https://www.arc.io), [Arc docs](https://docs.arc.io), and
 [Circle developer docs](https://developers.circle.com).
 
 ## UI and a future standalone repo
 
-The workspace adapts selected components from the existing ChaoUi library and uses Happy Hues
-color roles. There are no imports from an external local folder. See
-[the adaptation and migration notes](docs/CHAOUI-ADAPTATION.md) for component origins, payment
-safeguards and what to copy when creating a separate repository.
+The interface is a settlement terminal: flat ground, hairline rules, square corners, one warm
+accent, and Geist Mono on every address, hash and amount. It adapts components from the ChaoUi
+library and shares its design language — including the dot-matrix pulse sphere and the splash
+cursor — with Chaos Market AI. Neither source folder is imported at runtime. See
+[the interface sources and migration notes](docs/CHAOUI-ADAPTATION.md) for component origins,
+what the sphere is derived from, payment safeguards and what to copy when creating a separate
+repository.

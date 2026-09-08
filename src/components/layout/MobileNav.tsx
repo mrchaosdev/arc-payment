@@ -21,23 +21,27 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Mobile workspace" className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--sidebar-bg)]/96 px-2 py-2 backdrop-blur-xl lg:hidden">
-      <div className="grid grid-cols-4 gap-1">
+    <nav
+      aria-label="Mobile workspace"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] lg:hidden"
+    >
+      <div className="grid grid-cols-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-semibold transition",
-                active ? "bg-[var(--brand-coral)]/12 text-[var(--primary)]" : "text-[var(--text-muted)]"
+                "flex flex-col items-center justify-center gap-1.5 border-t-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors",
+                active
+                  ? "border-[var(--action)] text-[var(--action)]"
+                  : "border-transparent text-[var(--text-muted)]"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="size-4" />
               {item.label}
             </Link>
           );

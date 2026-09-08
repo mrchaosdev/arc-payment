@@ -1,0 +1,78 @@
+/* Happy Hues palette 13 — the same accent set Chaos Market AI runs on, so the two
+   surfaces read as one family. Dark is the primary look; light is the same terminal
+   printed on paper, not a separate theme with its own personality.
+
+   Token names are inherited from the previous lavender theme on purpose: every
+   component already reads them, so the retone lands everywhere at once. */
+
+:root {
+  --palette-ink: #0f0e17;
+  --palette-paper: #fffffe;
+  --palette-muted: #a7a9be;
+  --palette-primary: #ff8906;
+  --palette-secondary: #f25f4c;
+  --palette-tertiary: #e53170;
+
+  /* Light — ink on paper. The accent does not change between modes; only the
+     ground and the ink swap, which is what keeps the identity stable. */
+  --app-bg: #fffffe;
+  --sidebar-bg: #fffffe;
+  --surface: color-mix(in srgb, var(--palette-ink) 2%, var(--palette-paper));
+  --surface-elevated: color-mix(in srgb, var(--palette-ink) 4%, var(--palette-paper));
+  --surface-soft: color-mix(in srgb, var(--palette-ink) 8%, var(--palette-paper));
+  --border: color-mix(in srgb, var(--palette-ink) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--palette-ink) 30%, transparent);
+  --grid: color-mix(in srgb, var(--palette-ink) 7%, transparent);
+
+  --text-primary: var(--palette-ink);
+  --text-secondary: color-mix(in srgb, var(--palette-ink) 74%, var(--palette-paper));
+  --text-muted: color-mix(in srgb, var(--palette-ink) 52%, var(--palette-paper));
+
+  --primary: #b45c00;
+  --primary-hover: #8f4900;
+  --action: var(--palette-primary);
+  --action-hover: color-mix(in srgb, var(--palette-primary) 84%, var(--palette-ink));
+  --on-action: var(--palette-ink);
+
+  --positive: #1a7f4b;
+  --negative: #c8402f;
+  --highlight: var(--palette-tertiary);
+  --success: var(--positive);
+  --warning: var(--primary);
+  --danger: var(--negative);
+
+  /* Retired lavender names, kept so nothing referencing them breaks. */
+  --accent-blue: var(--text-muted);
+  --accent-violet: var(--text-muted);
+  --brand-coral: var(--palette-primary);
+  --brand-yellow: var(--palette-secondary);
+  --brand-plum: var(--palette-ink);
+  --brand-lavender: var(--palette-muted);
+}
+
+.dark {
+  --app-bg: var(--palette-ink);
+  --sidebar-bg: var(--palette-ink);
+  --surface: color-mix(in srgb, var(--palette-paper) 3%, var(--palette-ink));
+  --surface-elevated: color-mix(in srgb, var(--palette-paper) 6%, var(--palette-ink));
+  --surface-soft: color-mix(in srgb, var(--palette-paper) 9%, var(--palette-ink));
+  --border: color-mix(in srgb, var(--palette-paper) 12%, transparent);
+  --border-strong: color-mix(in srgb, var(--palette-paper) 24%, transparent);
+  --grid: color-mix(in srgb, var(--palette-paper) 6%, transparent);
+
+  --text-primary: var(--palette-paper);
+  --text-secondary: color-mix(in srgb, var(--palette-muted) 88%, var(--palette-paper));
+  --text-muted: var(--palette-muted);
+
+  --primary: var(--palette-primary);
+  --primary-hover: color-mix(in srgb, var(--palette-primary) 82%, var(--palette-paper));
+
+  --positive: color-mix(in srgb, var(--palette-primary) 72%, var(--palette-paper));
+  --negative: var(--palette-secondary);
+  --success: var(--positive);
+  --warning: var(--palette-primary);
+  --danger: var(--palette-secondary);
+
+  --accent-blue: var(--palette-muted);
+  --accent-violet: var(--palette-muted);
+}

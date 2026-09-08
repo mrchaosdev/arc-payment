@@ -3,21 +3,17 @@ import { cn } from "@/lib/utils";
 
 type BadgeTone = "teal" | "green" | "amber" | "red" | "blue" | "slate" | "violet";
 
+// The tone names are inherited from the previous theme so existing call sites
+// keep working. They now resolve into one restrained set: accent, positive,
+// negative, or plain — never a fourth hue.
 const tones: Record<BadgeTone, string> = {
-  teal:
-    "border-[var(--brand-coral)]/30 bg-[var(--brand-coral)]/10 text-[var(--primary)]",
-  green:
-    "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:border-emerald-300/30 dark:bg-emerald-300/10 dark:text-emerald-100",
-  amber:
-    "border-amber-500/30 bg-amber-500/12 text-amber-700 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100",
-  red:
-    "border-red-500/25 bg-red-500/10 text-red-700 dark:border-red-300/30 dark:bg-red-300/10 dark:text-red-100",
-  blue:
-    "border-[var(--accent-blue)]/30 bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]",
-  slate:
-    "border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]",
-  violet:
-    "border-[var(--accent-violet)]/30 bg-[var(--accent-violet)]/10 text-[var(--accent-violet)]",
+  teal: "border-[var(--action)]/45 text-[var(--action)]",
+  green: "border-[var(--positive)]/45 text-[var(--positive)]",
+  amber: "border-[var(--action)]/45 text-[var(--action)]",
+  red: "border-[var(--negative)]/45 text-[var(--negative)]",
+  blue: "border-[var(--border-strong)] text-[var(--text-muted)]",
+  slate: "border-[var(--border-strong)] text-[var(--text-muted)]",
+  violet: "border-[var(--border-strong)] text-[var(--text-secondary)]",
 };
 
 export function Badge({
@@ -32,7 +28,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold",
+        "inline-flex items-center gap-1.5 border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]",
         tones[tone],
         className
       )}

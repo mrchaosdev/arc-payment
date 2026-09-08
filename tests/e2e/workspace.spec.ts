@@ -49,14 +49,18 @@ test("workspace layout, sidebar collapse, themes and narrow mobile", async ({ pa
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Good things, in motion." })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("dashboard-light.png"), fullPage: true });
+  // Dark is the default theme, so assert the toggle flips whatever it starts on
+  // rather than pinning one direction — that survives a change of default.
+  const startedDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
+  await page.screenshot({ path: testInfo.outputPath(startedDark ? "dashboard-dark.png" : "dashboard-light.png"), fullPage: true });
   await page.getByRole("button", { name: "Collapse sidebar" }).click();
   await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
   await page.getByRole("button", { name: "Toggle theme" }).click();
-  await expect(page.locator("html")).toHaveClass(/dark/);
-  await page.screenshot({ path: testInfo.outputPath("dashboard-dark.png"), fullPage: true });
+  if (startedDark) await expect(page.locator("html")).not.toHaveClass(/dark/);
+  else await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.screenshot({ path: testInfo.outputPath(startedDark ? "dashboard-light.png" : "dashboard-dark.png"), fullPage: true });
   await page.goto("/pay");
-  await page.screenshot({ path: testInfo.outputPath("payment-dark.png"), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath("payment-after-toggle.png"), fullPage: true });
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
     await expect(page.getByRole("navigation", { name: "Mobile workspace" })).toBeVisible();
