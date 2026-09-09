@@ -17,12 +17,66 @@ this repository.
 | `navigation/animated-tabs/AnimatedTabs.tsx` | `src/components/chaos/AnimatedTabs.tsx`: keyboard arrows/Home/End and ARIA relationships kept; the sliding pill is replaced by a rule under the active tab |
 | `loaders/progress-bar/ProgressBar.tsx` | `src/components/chaos/ProgressBar.tsx`: accessible pending/complete progress, reduced to a hairline |
 | `loaders/skeleton` | `src/components/chaos/Skeleton.tsx`: shimmer as a background-position animation, square by default |
-| `cursor/splash-cursor/SplashCursor.tsx` | `src/components/chaos/SplashCursor.tsx`: the WebGL fluid simulation carried over verbatim; only the three imports are repointed and the file is marked `"use client"` |
+| `cursor/splash-cursor/SplashCursor.tsx` | `src/components/chaos/SplashCursor.tsx`: the WebGL fluid simulation, with its three imports repointed, the file marked `"use client"`, and the two additions described below |
 | `hooks/useInView`, `hooks/useMediaQuery` | `src/hooks/`: `useMediaQuery` is rewritten onto `useSyncExternalStore`, because the effect-based original trips React's set-state-in-effect rule |
 
 `src/components/chaos/CursorLayer.tsx` wraps the splash cursor: `RAINBOW_MODE` is off and the
 colour is pinned to the interface accent, and it renders nothing under `prefers-reduced-motion`
 (the upstream component opts out on coarse pointers but not on reduced motion).
+
+### Changes to the ported simulation
+
+#### The GPU memory leak on resize — a real bug, fixed
+
+Upstream never released a WebGL buffer it replaced. `resizeFBO` allocated the new texture and
+dropped the old handle; `resizeDoubleFBO` replaced its write half outright; and `initFramebuffers`
+rebuilt `divergence`, `curl` and `pressure` unconditionally on every call. A `WebGLTexture` is a
+handle to driver-side memory that JavaScript garbage collection does not free on any schedule you
+can rely on, so each of those was stranded GPU memory.
+
+`initFramebuffers` runs on every viewport size change. Measured over 30 resizes at 1920×1080,
+`deviceScaleFactor: 1`, by patching `createTexture`/`deleteTexture`:
+
+| | textures created | textures deleted | leaked |
+| --- | --- | --- | --- |
+| Before | 230 | 0 | **230** |
+| After | 230 | 230 | **0** |
+
+Eight textures and eight framebuffers per resize. The dye pair alone is roughly 7.5 MB of that.
+Opening DevTools resizes the viewport once; dragging its splitter fires `ResizeObserver`
+continuously, which is enough to exhaust GPU memory and have the browser kill the renderer. Every
+`FBO` now carries a `dispose()` and it is called wherever a buffer is replaced.
+
+The reason this did not show up in ChaoUi's own gallery is that the demo there runs in `contained`
+mode inside a small box. Here the simulation is full-viewport and mounted on every page.
+
+#### Two additions
+
+Neither is a correction — that component was written for a demo page, and here it runs behind a
+payment interface.
+
+- **`webglcontextlost` is handled, and the canvas is hidden, not just stopped.** A WebGL context
+  can be taken away at any time: the GPU process restarts, a driver resets, another tab exhausts
+  GPU memory. Upstream has no listener, so the render loop keeps issuing GL calls against a dead
+  context every frame, forever. Stopping the loop is necessary but was not sufficient on its own:
+  in non-contained mode this canvas is `fixed inset-0 z-50`, the entire viewport, above ordinary
+  page content, and a dead layer left in the DOM can still occupy that space — this is what a
+  real report of "the page goes white with a broken-image icon after resizing, but the assistant
+  widget (`z-80`, above this layer) still works" turned out to be, confirmed by forcibly losing
+  the context (`WEBGL_lose_context`) and checking `document.elementFromPoint`: before the fix, the
+  point resolved to the dead canvas; the real page content underneath was completely intact the
+  whole time. `handleContextLost` now sets `canvas.style.display = "none"`, so the canvas is fully
+  out of layout, paint and hit-testing rather than merely idle. There is no `webglcontextrestored`
+  handler and `preventDefault()` is deliberately not called in the loss handler — every buffer this
+  component owns is already gone by the time the loop stops, so reinitializing in place is the same
+  amount of work as a fresh mount, and treating the loss as permanent is the honest description of
+  what actually happened. The cursor is decoration; the page it decorates keeps working.
+- **`PIXEL_RATIO_CAP` is a prop**, defaulting to the upstream's fixed 2, and `CursorLayer` sets it
+  to 1. At `deviceScaleFactor: 2` and a 1637×936 viewport that takes the drawing buffer from
+  3274×1872 (6.13M pixels shaded per frame) to 1637×936 (1.53M). This is a per-frame cost saving
+  on retina displays only — it does nothing on a `deviceScaleFactor: 1` monitor, and it was not
+  what caused the crash above. The same wrapper also lowers `DYE_RESOLUTION` to 512,
+  `PRESSURE_ITERATIONS` to 12 and `SIM_RESOLUTION` to 96; the reasoning is in its own comment.
 
 Simple transitions use CSS instead of introducing ChaoUi's animation dependency. Financial amounts
 are rendered directly, not animated through intermediate values.

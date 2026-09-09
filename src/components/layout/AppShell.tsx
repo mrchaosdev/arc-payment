@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { CursorLayer } from "@/components/chaos/CursorLayer";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
+import { ViewportDiagnostics } from "@/components/dev/ViewportDiagnostics";
 
 export function AppShell({
   children,
@@ -34,6 +35,7 @@ export function AppShell({
           are prerendered, freezing the answer into the build. The checkout route
           has no AppShell on purpose: the payer's screen stays a payment. */}
       <AssistantWidget />
+      <ViewportDiagnostics />
     </div>
   );
 }

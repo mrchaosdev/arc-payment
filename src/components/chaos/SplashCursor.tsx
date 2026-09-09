@@ -25,6 +25,14 @@ export type SplashCursorProps = {
   TRANSPARENT?: boolean;
   RAINBOW_MODE?: boolean;
   COLOR?: string;
+  /**
+   * Upper bound on the device pixel ratio the drawing buffer is sized at.
+   * Not in the upstream component, which is fixed at 2 — on a retina display
+   * that makes the full-viewport buffer four times the pixels, and this
+   * simulation pays for every one of them on every frame. 1 halves each axis;
+   * the output is a blurred fluid, so the loss is hard to see.
+   */
+  PIXEL_RATIO_CAP?: number;
   /** Scope the simulation (and its pointer tracking) to this element instead of the whole viewport. */
   contained?: boolean;
   className?: string;
@@ -53,6 +61,13 @@ type FBO = {
   texelSizeX: number;
   texelSizeY: number;
   attach: (id: number) => number;
+  /**
+   * Release this buffer's GPU memory. Not in the upstream component, which
+   * simply drops the reference — but a WebGLTexture is a handle to driver-side
+   * memory that JS garbage collection does not free on any schedule you can
+   * rely on. See the leak note on `resizeFBO`.
+   */
+  dispose: () => void;
 };
 
 type DoubleFBO = {
@@ -391,6 +406,7 @@ export function SplashCursor({
   TRANSPARENT = true,
   RAINBOW_MODE = true,
   COLOR = "#ff0000",
+  PIXEL_RATIO_CAP = 2,
   contained = false,
   className,
 }: SplashCursorProps) {
@@ -414,6 +430,7 @@ export function SplashCursor({
     TRANSPARENT,
     RAINBOW_MODE,
     COLOR,
+    PIXEL_RATIO_CAP,
   });
   configRef.current = {
     SIM_RESOLUTION,
@@ -430,6 +447,7 @@ export function SplashCursor({
     TRANSPARENT,
     RAINBOW_MODE,
     COLOR,
+    PIXEL_RATIO_CAP,
   };
 
   useEffect(() => {
@@ -665,14 +683,33 @@ export function SplashCursor({
           glc.bindTexture(glc.TEXTURE_2D, texture);
           return id;
         },
+        dispose() {
+          glc.deleteFramebuffer(fbo);
+          glc.deleteTexture(texture);
+        },
       };
     }
 
+    /**
+     * Replace a buffer at a new size, copying the old contents across.
+     *
+     * The `dispose()` is the fix for a leak in the upstream component: it
+     * allocated the replacement and dropped the old handle, so every resize
+     * left a texture and a framebuffer stranded in GPU memory. One resize is
+     * harmless; a `ResizeObserver` firing continuously — dragging a window
+     * edge, or dragging the DevTools splitter — is not, and the renderer is
+     * killed when the GPU process runs out of memory.
+     *
+     * Deleting after `blit` is safe: WebGL defers destruction until the object
+     * is no longer referenced by an in-flight command, and deleting a bound
+     * texture unbinds it from its unit.
+     */
     function resizeFBO(target: FBO, w: number, h: number, internalFormat: number, format: number, type: number, param: number) {
       const newFBO = createFBO(w, h, internalFormat, format, type, param);
       copyProgram.bind();
       glc.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
       blit(newFBO);
+      target.dispose();
       return newFBO;
     }
 
@@ -707,6 +744,9 @@ export function SplashCursor({
     function resizeDoubleFBO(target: DoubleFBO, w: number, h: number, internalFormat: number, format: number, type: number, param: number) {
       if (target.width === w && target.height === h) return target;
       target.read = resizeFBO(target.read, w, h, internalFormat, format, type, param);
+      // The write half is not copied across — it is scratch space, overwritten
+      // on the next step — but it still has to be released before it is replaced.
+      target.write.dispose();
       target.write = createFBO(w, h, internalFormat, format, type, param);
       target.width = w;
       target.height = h;
@@ -744,6 +784,15 @@ export function SplashCursor({
       velocity = velocity
         ? resizeDoubleFBO(velocity, simRes.width, simRes.height, fmtRG.internalFormat, fmtRG.format, texType, filtering)
         : createDoubleFBO(simRes.width, simRes.height, fmtRG.internalFormat, fmtRG.format, texType, filtering);
+
+      // These three hold no state worth carrying across a resize, so they are
+      // rebuilt rather than resized — which means on every call but the first
+      // there is an existing set to release. Upstream rebuilt them the same way
+      // and released nothing, so a resize leaked these four buffers too.
+      divergence?.dispose();
+      curl?.dispose();
+      pressure?.read.dispose();
+      pressure?.write.dispose();
 
       divergence = createFBO(simRes.width, simRes.height, fmtR.internalFormat, fmtR.format, texType, glc.NEAREST);
       curl = createFBO(simRes.width, simRes.height, fmtR.internalFormat, fmtR.format, texType, glc.NEAREST);
@@ -851,7 +900,7 @@ export function SplashCursor({
     }
 
     function scaleByPixelRatio(input: number) {
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const ratio = Math.min(window.devicePixelRatio || 1, Math.max(config.current.PIXEL_RATIO_CAP, 0.5));
       return Math.floor(input * ratio);
     }
 
@@ -1033,6 +1082,40 @@ export function SplashCursor({
     target.addEventListener("touchmove", handleTouchMove as EventListener, { passive: false } as AddEventListenerOptions);
     target.addEventListener("touchend", handleTouchEnd);
 
+    // Not in the upstream component. A WebGL context can be taken away at any
+    // time — the GPU process restarts, the driver resets, another tab exhausts
+    // GPU memory — and without this the render loop keeps issuing GL calls
+    // against a dead context every frame forever.
+    //
+    // Stopping the loop is necessary but not sufficient. In non-contained
+    // mode this canvas is `fixed inset-0 z-50` — the whole viewport, above
+    // ordinary page content. A dead context left in the DOM does not just
+    // stop animating; whatever the compositor was showing for that layer can
+    // stay on screen, or repaint as a blank/broken frame, sitting over every
+    // pixel of the real page underneath it. That reads as "the app is gone"
+    // even though the DOM behind it is completely intact — which is exactly
+    // why a fixed-position overlay that sits *above* this canvas (the
+    // assistant launcher, at z-80) keeps working through it: it was never
+    // covered, everything below z-50 was.
+    //
+    // There is no `webglcontextrestored` handler because there is nothing to
+    // restore into: every buffer this component owns was already handed to
+    // `initFramebuffers`/`initBlit`, and rebuilding them mid-flight is the
+    // same amount of work as a fresh mount. So the loss is treated as
+    // permanent — `preventDefault()` is skipped on purpose, which tells the
+    // browser not to bother trying to hand the context back — and the canvas
+    // is pulled out of the layout entirely rather than left transparent,
+    // because "not drawing" and "not there" are different guarantees: the
+    // first still depends on the compositor doing the right thing with a
+    // dead layer, the second does not depend on anything.
+    function handleContextLost() {
+      isActive = false;
+      cancelAnimationFrame(animationFrameId);
+      canvas.style.display = "none";
+    }
+
+    canvas.addEventListener("webglcontextlost", handleContextLost);
+
     const ro = new ResizeObserver(() => {
       if (resizeCanvas()) initFramebuffers();
     });
@@ -1043,6 +1126,7 @@ export function SplashCursor({
     return () => {
       isActive = false;
       cancelAnimationFrame(animationFrameId);
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
       ro.disconnect();
       target.removeEventListener("mousedown", handleMouseDown as EventListener);
       target.removeEventListener("mousemove", handleMouseMove as EventListener);

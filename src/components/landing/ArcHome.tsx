@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { derivePulse } from "@/lib/visual/pulse";
 import {
   ARC_EXPLORER_URL,
@@ -28,7 +29,16 @@ const settlementPath = [
   "Await onchain receipt",
 ];
 
-const capabilities = [
+const capabilities: {
+  id: string;
+  title: string;
+  body: string;
+  meta: string;
+  href?: string;
+  hrefLabel?: string;
+  /** Used when the feature has no route of its own to link to. */
+  hint?: string;
+}[] = [
   {
     id: "01",
     title: "One currency all the way down",
@@ -43,15 +53,34 @@ const capabilities = [
   },
   {
     id: "03",
-    title: "A request is a URL",
-    body: "Recipient, amount, memo and reference travel in the link. Open it and the checkout is already filled in.",
+    title: "A request is a URL, or a QR",
+    body: "Recipient, amount, memo and reference travel in the link. Share it as a URL or scan the code — the checkout opens already filled in.",
     meta: "SHAREABLE",
+    href: "/pay?mode=request",
+    hrefLabel: "Create a request",
   },
   {
     id: "04",
     title: "Every payment ends in a receipt",
-    body: "The transaction hash goes straight to ArcScan, so the payer and the payee check the same public record.",
+    body: "The hash goes straight to ArcScan, and the same payment prints as an invoice your browser can save as a PDF. Both sides check one public record.",
     meta: "VERIFIABLE",
+    href: "/history",
+    hrefLabel: "Open activity",
+  },
+  {
+    id: "05",
+    title: "Recipients you keep",
+    body: "Addresses you pay often are saved in this browser under a name, so a transfer starts from a label instead of forty hex characters.",
+    meta: "CONTACTS",
+    href: "/contacts",
+    hrefLabel: "Open contacts",
+  },
+  {
+    id: "06",
+    title: "An assistant that only reads",
+    body: "It checks a balance, estimates a transfer and looks up a transaction, then shows the evidence with a block number and a check time. It has no tool that signs or sends.",
+    meta: "READ-ONLY",
+    hint: "Bottom right of this page",
   },
 ];
 
@@ -67,9 +96,31 @@ const capabilities = [
 export function ArcHome() {
   const [drag, setDrag] = useState(0);
   const pulse = derivePulse("idle", 0.35);
+  const root = useRef<HTMLDivElement>(null);
+
+  // GSAP is loaded on demand: the entrance is the least urgent thing here, and
+  // under reduced motion the module's own media query means it never animates,
+  // so there is no reason to make the first paint wait for it.
+  useIsomorphicLayoutEffect(() => {
+    const node = root.current;
+    if (!node) return;
+
+    let teardown: (() => void) | undefined;
+    let cancelled = false;
+
+    void import("@/lib/visual/landing-motion").then(({ initLandingMotion }) => {
+      if (cancelled) return;
+      teardown = initLandingMotion(node);
+    });
+
+    return () => {
+      cancelled = true;
+      teardown?.();
+    };
+  }, []);
 
   return (
-    <div className="landing-page relative">
+    <div className="landing-page relative" ref={root}>
       <div aria-hidden className="landing-background chaos-grid pointer-events-none absolute inset-0 opacity-60" />
 
       <div className="landing-meta-bar relative border-b border-[var(--border)]">
@@ -92,8 +143,9 @@ export function ArcHome() {
           <div className="landing-hero-copy py-12 lg:py-16 lg:pr-12">
             <Label className="landing-hero-eyebrow text-[var(--action)]">Sign once · settle in seconds · keep the proof</Label>
 
+            {/* Each line is its own span so the two can print in sequence. */}
             <h1 className="landing-hero-title mt-6 max-w-[16ch] text-5xl font-semibold leading-[0.95] tracking-[-0.03em] sm:text-6xl lg:text-7xl">
-              A link is a promise.
+              <span className="landing-hero-title-primary block">A link is a promise.</span>
               <span className="landing-hero-title-secondary mt-2 block text-[var(--text-muted)]">A receipt is proof.</span>
             </h1>
 
@@ -177,20 +229,36 @@ export function ArcHome() {
         <div className="landing-capabilities-container mx-auto max-w-[1400px] px-4 md:px-8">
           <div className="landing-capabilities-heading max-w-2xl">
             <Label className="landing-capabilities-eyebrow text-[var(--action)]">What it does today</Label>
+            {/* The heading no longer counts. A number here would have to be
+                edited every time the app grows, and the last one was already
+                wrong by four features. "Nothing implied" is the part that
+                mattered, so that is the part that stays. */}
             <h2 className="landing-capabilities-title mt-4 text-3xl font-semibold tracking-[-0.02em] md:text-4xl">
-              Four things, finished. Nothing implied.
+              Everything here is finished. Nothing implied.
             </h2>
           </div>
 
-          <div className="landing-capabilities-grid mt-10 grid border-l border-t border-[var(--border)] md:grid-cols-2 xl:grid-cols-4">
-            {capabilities.map(({ id, title, body, meta }) => (
-              <article key={id} className="landing-capability border-b border-r border-[var(--border)] p-6">
+          <div className="landing-capabilities-grid mt-10 grid border-l border-t border-[var(--border)] md:grid-cols-2 xl:grid-cols-3">
+            {capabilities.map(({ id, title, body, meta, href, hrefLabel, hint }) => (
+              <article key={id} className="landing-capability flex flex-col border-b border-r border-[var(--border)] p-6">
                 <div className="landing-capability-header flex items-center justify-between">
                   <Num value={id} tone="primary" className="landing-capability-number text-[11px]" />
                   <Label className="landing-capability-meta">{meta}</Label>
                 </div>
                 <h3 className="landing-capability-title mt-6 text-base font-semibold leading-snug">{title}</h3>
-                <p className="landing-capability-description mt-3 text-[13px] leading-6 text-[var(--text-muted)]">{body}</p>
+                <p className="landing-capability-description mt-3 pb-5 text-[13px] leading-6 text-[var(--text-muted)]">{body}</p>
+                {href ? (
+                  <Link
+                    href={href}
+                    className="landing-capability-link mt-auto inline-flex items-center gap-1.5 self-start font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
+                  >
+                    {hrefLabel} <ArrowRight className="size-3" />
+                  </Link>
+                ) : hint ? (
+                  <p className="landing-capability-hint mt-auto font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                    {hint}
+                  </p>
+                ) : null}
               </article>
             ))}
           </div>
@@ -232,6 +300,10 @@ export function ArcHome() {
             <LimitRow text="Memos and references live in the link and the local receipt. They are not written onchain." />
             <LimitRow text="History and saved requests are stored in this browser, capped at 200 each." />
             <LimitRow text="Requests are not reconciled against the chain — nothing marks one paid for you." />
+            {/* The panel calls itself READ THIS FIRST, so the one thing that
+                leaves the browser has to be named here — docs/payment-assistant.md
+                already says it, and this is the page a reader actually arrives on. */}
+            <LimitRow text="The assistant sends your question, and any address you choose to share, to the AI provider. It has no tool that signs or sends." />
             <LimitRow text="Browser tests run against a mock wallet and RPC. They do not prove live settlement." />
           </Panel>
         </div>

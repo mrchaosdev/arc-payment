@@ -174,6 +174,7 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `landing-hero-copy`
 - `landing-hero-eyebrow`
 - `landing-hero-title`
+- `landing-hero-title-primary`
 - `landing-hero-title-secondary`
 - `landing-hero-description`
 - `landing-settlement-card`
@@ -206,6 +207,8 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `landing-capability-meta`
 - `landing-capability-title`
 - `landing-capability-description`
+- `landing-capability-link`
+- `landing-capability-hint`
 - `landing-details`
 - `landing-details-grid`
 - `landing-network-panel`

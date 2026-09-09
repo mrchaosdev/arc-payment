@@ -36,10 +36,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
+        {/* Happy Hues 13, the same accent the rest of the interface uses. The
+            wallet modal is RainbowKit's own markup, so it cannot read the CSS
+            tokens in `src/styles/tokens.css` — these two values are the one
+            place the palette has to be repeated by hand. */}
         <RainbowKitProvider
           theme={(isDark ? darkTheme : lightTheme)({
-            accentColor: "#ff6e6c",
-            accentColorForeground: "#1f1235",
+            accentColor: "#ff8906",
+            accentColorForeground: "#0f0e17",
           })}
         >
           <ToastProvider>{children}</ToastProvider>
