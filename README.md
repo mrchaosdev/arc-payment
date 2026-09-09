@@ -5,10 +5,14 @@ SealPay is a non-custodial USDC payment MVP built for the Arc public testnet. It
 - connect an EVM wallet with RainbowKit;
 - switch safely to Arc Testnet;
 - send USDC through its 6-decimal ERC-20 interface;
-- create shareable payment-request links; and
-- save pending and confirmed payment records with ArcScan links in local browser storage.
+- create shareable payment-request links, with a QR code for paying from a phone;
+- save pending and confirmed payment records with ArcScan links in local browser storage;
+- print or save a receipt as PDF for any recorded payment;
+- keep named recipient contacts in the browser; and
+- ask a grounded assistant about SealPay, Arc and its own reads.
 
-The original market, swap, pool, and portfolio experiments remain available as secondary routes.
+The navigation bar carries the live USDC balance, the current network with a switch button when the
+wallet is elsewhere, and a badge for payments still awaiting a receipt.
 
 ## Local development
 
@@ -22,11 +26,20 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The payment workspace is at
 [http://localhost:3000/dashboard](http://localhost:3000/dashboard). Send payments at `/pay`,
-create and revisit links at `/requests`, open shared links at `/checkout`, and check receipts at `/history`.
+create and revisit links at `/requests`, open shared links at `/checkout`, keep recipients at
+`/contacts`, and check receipts at `/history`.
 
-`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is optional for injected wallets such as MetaMask, but a
-real Reown project ID is required for WalletConnect. `COINGECKO_API_KEY` is optional and is used only
-by the legacy market-data routes.
+### Environment variables
+
+| Variable | Side | Needed at | Without it |
+| --- | --- | --- | --- |
+| `GEMINI_API_KEY` | server | runtime | The assistant hides itself; everything else works |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | client | **build** | Only injected wallets (MetaMask); phone wallets cannot connect |
+| `COINGECKO_API_KEY` | server | — | Nothing. No code reads it yet; the token list keeps CoinGecko ids for a future price view |
+
+`NEXT_PUBLIC_*` values are inlined into the bundle by `next build`, so setting one at runtime has no
+effect — it must be present when the app is built. See [docs/handover.md](docs/handover.md) for the
+deployment steps and the traps that follow from this.
 
 ## Test an Arc payment
 
@@ -66,6 +79,11 @@ requests are local to this browser, capped at 200 each, with no automatic paid/u
 Browser tests use a mock wallet/RPC and do not prove live-network settlement. Future milestones can
 add CCTP funding, Circle Gateway unified balances, embedded wallets, merchant webhooks, and an
 optional invoice/escrow contract after security review.
+
+[The handover notes](docs/handover.md) carry the current state, the project map, the non-obvious
+traps found while building it, and the open work in the order it is worth doing. The assistant's
+read semantics and privacy boundary are in [docs/payment-assistant.md](docs/payment-assistant.md),
+and interface class names in [docs/css-classes.md](docs/css-classes.md).
 
 [The Keryx comparison](docs/COMPETITIVE-KERYX.md) reviews another Arc-testnet project against this
 one and lists the resulting gaps in the order they are worth closing.
