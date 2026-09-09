@@ -1061,6 +1061,7 @@ export function SplashCursor({
         viewRef.current = node;
       }}
       className={cn(
+        "splash-cursor-container",
         // Non-contained mode listens on `window`, so pointer-events: none
         // here is harmless (matches upstream, which is always this mode).
         // Contained mode listens on this element itself — pointer-events:
@@ -1070,7 +1071,7 @@ export function SplashCursor({
         className,
       )}
     >
-      <canvas ref={canvasRef} className="block size-full" aria-hidden />
+      <canvas ref={canvasRef} className="splash-cursor-canvas block size-full" aria-hidden />
     </div>
   );
 }

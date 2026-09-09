@@ -95,23 +95,23 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="space-y-5">
-      <Card className="p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
+    <div className="settings-panel space-y-5">
+      <Card className="settings-intro-card p-5">
+        <div className="settings-intro-content flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="settings-intro-copy">
             <Badge tone="teal">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Saved locally
             </Badge>
-            <h2 className="mt-4 text-2xl font-black text-[var(--text-primary)]">
+            <h2 className="settings-intro-title mt-4 text-2xl font-black text-[var(--text-primary)]">
               Swap defaults now apply across Seal.
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="settings-intro-description mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
               Slippage, quote refresh cadence, and disconnected default chain are stored in
               your browser and used by the swap screen.
             </p>
           </div>
-          <div className="grid gap-2 text-sm sm:grid-cols-3 lg:min-w-[460px]">
+          <div className="settings-summary grid gap-2 text-sm sm:grid-cols-3 lg:min-w-[460px]">
             <SummaryPill label="Default chain" value={defaultChain?.name ?? "BNB Chain"} />
             <SummaryPill label="Slippage" value={formatBpsAsPercent(slippageBps)} />
             <SummaryPill label="Refresh" value={`${quoteRefreshSeconds}s`} />
@@ -119,26 +119,26 @@ export function SettingsPanel() {
         </div>
       </Card>
 
-      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="space-y-5">
-          <Card>
+      <div className="settings-columns grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="settings-execution-column space-y-5">
+          <Card className="settings-execution-card">
             <CardHeader
               title="Swap defaults"
               subtitle="Used when creating new aggregator quotes"
               action={
-                <Button variant="ghost" className="h-9 px-3" onClick={reset}>
+                <Button variant="ghost" className="settings-reset-button h-9 px-3" onClick={reset}>
                   <RotateCcw className="h-4 w-4" />
                   Reset
                 </Button>
               }
             />
-            <div className="space-y-4 p-5">
+            <div className="settings-execution-fields space-y-4 p-5">
               <ControlRow
                 icon={SlidersHorizontal}
                 title="Default slippage"
                 description="Higher slippage may fill more often, but can return fewer tokens."
               >
-                <div className="flex flex-col gap-3 sm:items-end">
+                <div className="settings-slippage-field flex flex-col gap-3 sm:items-end">
                   <SegmentedControl
                     values={slippageOptions.map(formatBpsAsPercent)}
                     active={formatBpsAsPercent(slippageBps)}
@@ -147,7 +147,7 @@ export function SettingsPanel() {
                       if (next) setSlippageBps(next);
                     }}
                   />
-                  <div className="flex items-center gap-2">
+                  <div className="settings-slippage-controls flex items-center gap-2">
                     <input
                       value={customSlippage}
                       onChange={(event) => {
@@ -156,7 +156,7 @@ export function SettingsPanel() {
                       }}
                       inputMode="decimal"
                       placeholder="Custom"
-                      className="h-10 w-28 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+                      className="settings-slippage-input h-10 w-28 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
                     />
                     <Badge tone={slippageTone}>{formatBpsAsPercent(slippageBps)}</Badge>
                   </div>
@@ -189,9 +189,9 @@ export function SettingsPanel() {
             </div>
           </Card>
 
-          <Card>
+          <Card className="settings-safety-card">
             <CardHeader title="Execution safety" subtitle="Guardrails before wallet signing" />
-            <div className="space-y-4 p-5">
+            <div className="settings-safety-content space-y-4 p-5">
               <SettingBlock
                 icon={Zap}
                 title="Multi-hop routing"
@@ -205,7 +205,7 @@ export function SettingsPanel() {
                 action={<Toggle enabled={expertMode} onClick={() => setExpertMode(!expertMode)} />}
               />
               {expertMode ? (
-                <div className="flex gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100">
+                <div className="settings-expert-warning flex gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100">
                   <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                   Expert mode should only be used when you understand route risk,
                   price impact, and token approval behavior.
@@ -215,10 +215,10 @@ export function SettingsPanel() {
           </Card>
         </div>
 
-        <div className="space-y-5">
-          <Card>
+        <div className="settings-preferences-column space-y-5">
+          <Card className="settings-network-card">
             <CardHeader title="Networks" subtitle="Frontend defaults before backend config" />
-            <div className="space-y-4 p-5">
+            <div className="settings-network-fields space-y-4 p-5">
               <ControlRow
                 icon={Network}
                 title="Default chain"
@@ -227,21 +227,21 @@ export function SettingsPanel() {
                 <select
                   value={defaultChainId}
                   onChange={(event) => setDefaultChainId(Number(event.target.value))}
-                  className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-black text-[var(--text-primary)] outline-none"
+                  className="settings-chain-select h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-black text-[var(--text-primary)] outline-none"
                 >
                   {CHAIN_OPTIONS.map((chain) => (
-                    <option key={chain.id} value={chain.id}>
+                    <option className="settings-chain-option" key={chain.id} value={chain.id}>
                       {chain.name}
                     </option>
                   ))}
                 </select>
               </ControlRow>
 
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-black text-[var(--text-primary)]">RPC override</p>
-                    <p className="mt-1 text-sm text-[var(--text-muted)]">
+              <div className="settings-rpc-section rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
+                <div className="settings-rpc-heading mb-3 flex items-center justify-between gap-3">
+                  <div className="settings-rpc-copy">
+                    <p className="settings-rpc-title font-black text-[var(--text-primary)]">RPC override</p>
+                    <p className="settings-rpc-description mt-1 text-sm text-[var(--text-muted)]">
                       Saved locally for the next RPC wiring pass. Current reads still use public RPC.
                     </p>
                   </div>
@@ -253,11 +253,11 @@ export function SettingsPanel() {
                   value={customRpc}
                   onChange={(event) => setCustomRpc(event.target.value)}
                   placeholder="https://your-rpc.example"
-                  className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+                  className="settings-rpc-input h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="settings-network-summary grid gap-3 sm:grid-cols-2">
                 <NetworkStat label="Router" value="OpenOcean" tone="teal" />
                 <NetworkStat label="Market data" value="CoinGecko" tone="blue" />
                 <NetworkStat label="Pool data" value="GeckoTerminal" tone="violet" />
@@ -266,18 +266,18 @@ export function SettingsPanel() {
             </div>
           </Card>
 
-          <Card>
+          <Card className="settings-appearance-card">
             <CardHeader title="Display & notifications" subtitle="Frontend-only preferences" />
-            <div className="space-y-4 p-5">
+            <div className="settings-appearance-fields space-y-4 p-5">
               <SettingBlock
                 icon={Sun}
                 title="Theme"
                 description="Use the top bar icon on desktop to switch between light and dark."
                 action={
-                  <div className="flex rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-1">
+                  <div className="settings-theme-buttons flex rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-1">
                     <Button
                       variant={theme === "light" ? "primary" : "ghost"}
-                      className="h-8 px-3"
+                      className="settings-light-button h-8 px-3"
                       onClick={() => setTheme("light")}
                     >
                       <Sun className="h-4 w-4" />
@@ -285,7 +285,7 @@ export function SettingsPanel() {
                     </Button>
                     <Button
                       variant={theme === "dark" ? "primary" : "ghost"}
-                      className="h-8 px-3"
+                      className="settings-dark-button h-8 px-3"
                       onClick={() => setTheme("dark")}
                     >
                       <Moon className="h-4 w-4" />
@@ -310,9 +310,9 @@ export function SettingsPanel() {
 
 function SummaryPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
-      <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1 font-black text-[var(--text-primary)]">{value}</p>
+    <div className="settings-summary-item rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
+      <p className="settings-summary-label text-xs font-bold text-[var(--text-muted)]">{label}</p>
+      <p className="settings-summary-value mt-1 font-black text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }
@@ -329,15 +329,15 @@ function ControlRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex gap-3">
+    <div className="settings-control-row flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="settings-control-heading flex gap-3">
         <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--primary)]" />
-        <div>
-          <p className="font-black text-[var(--text-primary)]">{title}</p>
-          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
+        <div className="settings-control-copy">
+          <p className="settings-control-title font-black text-[var(--text-primary)]">{title}</p>
+          <p className="settings-control-description mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="settings-control-inputs shrink-0">{children}</div>
     </div>
   );
 }
@@ -354,12 +354,12 @@ function SettingBlock({
   action: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex gap-3">
+    <div className="settings-option-row flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 md:flex-row md:items-center md:justify-between">
+      <div className="settings-option-heading flex gap-3">
         <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--primary)]" />
-        <div>
-          <p className="font-black text-[var(--text-primary)]">{title}</p>
-          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
+        <div className="settings-option-copy">
+          <p className="settings-option-title font-black text-[var(--text-primary)]">{title}</p>
+          <p className="settings-option-description mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
       {action}
@@ -377,13 +377,14 @@ function SegmentedControl({
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1">
+    <div className="settings-segmented-control flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1">
       {values.map((value) => (
         <button
           key={value}
           type="button"
           onClick={() => onSelect(value)}
           className={cn(
+            "settings-segmented-option",
             "rounded-lg px-3 py-1.5 text-sm font-black transition",
             value === active
               ? "bg-[var(--primary)] text-slate-950"
@@ -404,11 +405,12 @@ function Toggle({ enabled, onClick }: { enabled: boolean; onClick: () => void })
       aria-pressed={enabled}
       onClick={onClick}
       className={cn(
+        "settings-toggle",
         "flex h-7 w-12 items-center rounded-full p-1 transition",
         enabled ? "bg-[var(--primary)]" : "bg-slate-500/45"
       )}
     >
-      <span className={cn("h-5 w-5 rounded-full bg-white shadow transition", enabled && "ml-auto")} />
+      <span className={cn("settings-toggle-thumb", "h-5 w-5 rounded-full bg-white shadow transition", enabled && "ml-auto")} />
     </button>
   );
 }
@@ -423,9 +425,9 @@ function NetworkStat({
   tone: "teal" | "blue" | "violet" | "amber" | "green";
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
-      <p className="text-xs font-bold text-[var(--text-muted)]">{label}</p>
-      <div className="mt-2">
+    <div className="settings-network-stat rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
+      <p className="settings-network-stat-label text-xs font-bold text-[var(--text-muted)]">{label}</p>
+      <div className="settings-network-stat-value mt-2">
         <Badge tone={tone}>{value}</Badge>
       </div>
     </div>

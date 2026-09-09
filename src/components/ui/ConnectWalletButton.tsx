@@ -19,12 +19,12 @@ export function ConnectWalletButton({
     <ConnectButton.Custom>
       {({ account, chain, mounted, openAccountModal, openConnectModal }) => {
         if (!mounted) {
-          return <Skeleton className={cn("h-10 w-36", className)} />;
+          return <Skeleton className={cn("wallet-button-loading", "h-10 w-36", className)} />;
         }
 
         if (account && chain) {
           return (
-            <button type="button" onClick={openAccountModal} className={cn(base, "tabular", className)}>
+            <button type="button" onClick={openAccountModal} className={cn("wallet-button-account", base, "tabular", className)}>
               <WalletCards className="size-4" />
               {compactAddress(account.address)}
             </button>
@@ -32,7 +32,7 @@ export function ConnectWalletButton({
         }
 
         return (
-          <button type="button" onClick={openConnectModal} className={cn(base, className)}>
+          <button type="button" onClick={openConnectModal} className={cn("wallet-button-connect", base, className)}>
             <WalletCards className="size-4" />
             {label}
           </button>

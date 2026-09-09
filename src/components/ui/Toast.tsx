@@ -148,7 +148,7 @@ function ToastViewport({
     <div
       aria-live="polite"
       aria-relevant="additions removals"
-      className="fixed inset-x-4 bottom-24 z-[90] flex flex-col gap-2 md:inset-x-auto md:right-5 md:top-20 md:bottom-auto md:w-[380px]"
+      className="toast-viewport fixed inset-x-4 bottom-24 z-[90] flex flex-col gap-2 md:inset-x-auto md:right-5 md:top-20 md:bottom-auto md:w-[380px]"
     >
       {toasts.map((toast) => {
         const config = toneConfig[toast.tone];
@@ -159,16 +159,17 @@ function ToastViewport({
             key={toast.id}
             role={toast.tone === "error" ? "alert" : "status"}
             className={cn(
+              "toast-item",
               "flex items-start gap-3 rounded-2xl border p-3 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl",
               "bg-[var(--surface)]",
               config.className
             )}
           >
             <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", config.iconClassName)} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-black">{toast.title}</p>
+            <div className="toast-content min-w-0 flex-1">
+              <p className="toast-title text-sm font-black">{toast.title}</p>
               {toast.description ? (
-                <p className="mt-1 line-clamp-3 text-xs opacity-85">
+                <p className="toast-description mt-1 line-clamp-3 text-xs opacity-85">
                   {toast.description}
                 </p>
               ) : null}
@@ -177,7 +178,7 @@ function ToastViewport({
               type="button"
               aria-label="Dismiss notification"
               onClick={() => onDismiss(toast.id)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+              className="toast-dismiss-button flex h-7 w-7 shrink-0 items-center justify-center rounded-lg opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
             >
               <X className="h-4 w-4" />
             </button>

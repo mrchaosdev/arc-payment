@@ -16,5 +16,5 @@ export function DotGrid({ className, size = 24, dotSize = 1.3, color = "var(--te
     maskImage: mask,
     WebkitMaskImage: mask,
   };
-  return <div aria-hidden className={cn("pointer-events-none absolute inset-0", className)} style={style} />;
+  return <div aria-hidden className={cn("dot-grid-container", "pointer-events-none absolute inset-0", className)} style={style} />;
 }

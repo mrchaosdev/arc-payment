@@ -23,6 +23,7 @@ export function Button({ className, variant = "primary", children, ...props }: B
   return (
     <button
       className={cn(
+        "ui-button-root",
         "inline-flex h-10 items-center justify-center gap-2 px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
         variants[variant],
         className

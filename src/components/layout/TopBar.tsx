@@ -23,18 +23,18 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--app-bg)]">
-      <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 overflow-hidden px-4 md:px-6">
-        <div className={cn("flex shrink-0 items-center gap-6", workspace && "lg:hidden")}>
+    <header className="top-bar-root sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--app-bg)]">
+      <div className="top-bar-container mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 overflow-hidden px-4 md:px-6">
+        <div className={cn("top-bar-branding", "flex shrink-0 items-center gap-6", workspace && "lg:hidden")}>
           {/* DashboardSidebar already shows the SealPay mark at lg+; avoid a second logo there. */}
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="grid size-7 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
+          <Link href="/" className="top-bar-brand flex shrink-0 items-center gap-2.5">
+            <span className="top-bar-brand-mark grid size-7 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
               $
             </span>
-            <span className="hidden text-base font-semibold tracking-tight min-[380px]:inline">SealPay</span>
+            <span className="top-bar-brand-name hidden text-base font-semibold tracking-tight min-[380px]:inline">SealPay</span>
           </Link>
 
-          <nav className={workspace ? "hidden" : "hidden items-center gap-1 md:flex"}>
+          <nav className={`top-bar-nav ${(workspace ? "hidden" : "hidden items-center gap-1 md:flex")}`}>
             {navItems.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -42,6 +42,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
+                    "top-bar-nav-link",
                     "px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
                     active
                       ? "text-[var(--action)]"
@@ -55,15 +56,15 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
           </nav>
         </div>
 
-        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2">
-          <span className="hidden h-9 items-center gap-2 border border-[var(--border)] px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] xl:flex">
+        <div className="top-bar-actions ml-auto flex min-w-0 shrink-0 items-center gap-2">
+          <span className="top-bar-network-label hidden h-9 items-center gap-2 border border-[var(--border)] px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] xl:flex">
             USDC gas · Arc
           </span>
 
           <button
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="hidden size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:flex"
+            className="top-bar-theme-button hidden size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:flex"
           >
             <Moon className="size-4 dark:hidden" />
             <Sun className="hidden size-4 dark:block" />
@@ -72,7 +73,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
           <Link
             href="/settings"
             aria-label="Settings"
-            className="flex size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+            className="top-bar-settings-link flex size-9 items-center justify-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
           >
             <Settings className="size-4" />
           </Link>
@@ -83,7 +84,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
               const connected = mounted && account && chain;
 
               if (!mounted) {
-                return <Skeleton rounded="none" className="h-9 w-24" />;
+                return <Skeleton rounded="none" className="top-bar-wallet-loading h-9 w-24" />;
               }
 
               if (!connected) {
@@ -91,16 +92,16 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                   <button
                     type="button"
                     onClick={openConnectModal}
-                    className="h-9 bg-[var(--action)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
+                    className="top-bar-connect-button h-9 bg-[var(--action)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
                   >
-                    <span className="hidden sm:inline">Connect wallet</span>
-                    <span className="sm:hidden">Connect</span>
+                    <span className="top-bar-connect-label-desktop hidden sm:inline">Connect wallet</span>
+                    <span className="top-bar-connect-label-mobile sm:hidden">Connect</span>
                   </button>
                 );
               }
 
               return (
-                <div className="flex items-center gap-2">
+                <div className="top-bar-wallet-controls flex items-center gap-2">
                   <button
                     type="button"
                     onClick={openChainModal}
@@ -111,6 +112,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                     }
                     title={chain.unsupported ? "Wrong network" : chain.name}
                     className={cn(
+                      "top-bar-network-button",
                       "flex size-9 items-center justify-center border transition-colors",
                       chain.unsupported
                         ? "border-[var(--negative)]/50 bg-[var(--negative)]/10 text-[var(--negative)]"
@@ -127,7 +129,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
                   <button
                     type="button"
                     onClick={openAccountModal}
-                    className="h-9 bg-[var(--action)] px-3 font-mono text-[11px] tabular text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
+                    className="top-bar-account-button h-9 bg-[var(--action)] px-3 font-mono text-[11px] tabular text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
                   >
                     {compactAddress(account.address)}
                   </button>
@@ -159,17 +161,17 @@ function NavbarChainIcon({
   if (iconUrl) {
     return (
       <span
-        className="flex size-5 items-center justify-center overflow-hidden"
+        className="top-bar-chain-icon flex size-5 items-center justify-center overflow-hidden"
         style={{ background: iconBackground ?? "var(--surface-elevated)" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconUrl} alt="" className="size-full object-cover" />
+        <img src={iconUrl} alt="" className="top-bar-chain-image size-full object-cover" />
       </span>
     );
   }
 
   return (
-    <span className="flex size-5 items-center justify-center bg-[var(--surface-soft)] font-mono text-[10px] text-[var(--action)]">
+    <span className="top-bar-chain-fallback flex size-5 items-center justify-center bg-[var(--surface-soft)] font-mono text-[10px] text-[var(--action)]">
       {(name ?? "?").slice(0, 1)}
     </span>
   );

@@ -39,11 +39,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
+    <html className="app-document" lang="en" suppressHydrationWarning>
+      <head className="app-head">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`app-body ${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Web3Provider>{children}</Web3Provider>
       </body>
     </html>

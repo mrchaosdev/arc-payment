@@ -177,11 +177,11 @@ export function AssistantWidget() {
         /* Bare on purpose: no plate, no frame. The motion is what marks it as a
            control, so the only affordance is a lift on hover. Keyboard focus
            still draws the global focus-visible outline. */
-        className="fixed bottom-24 right-4 z-[80] grid size-16 place-items-center bg-transparent transition-transform duration-200 hover:scale-110 active:scale-95 lg:bottom-6 lg:right-6"
+        className="assistant-launcher fixed bottom-24 right-4 z-[80] grid size-16 place-items-center bg-transparent transition-transform duration-200 hover:scale-110 active:scale-95 lg:bottom-6 lg:right-6"
       >
         {/* `interactive` is off on purpose: the sphere's own drag-to-spin
             handlers would swallow the click that opens the panel. */}
-        <span aria-hidden className="pointer-events-none w-16">
+        <span aria-hidden className="assistant-launcher-visual pointer-events-none w-16">
           <ChaosSphere
             bpm={pulse.bpm}
             amplitude={pulse.amplitude}
@@ -200,10 +200,10 @@ export function AssistantWidget() {
   return (
     <section
       aria-label="SealPay assistant"
-      className="fixed inset-x-4 bottom-24 z-[80] flex max-h-[min(70vh,560px)] flex-col border border-[var(--border-strong)] bg-[var(--surface)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:inset-x-auto sm:right-4 sm:w-[400px] lg:bottom-6 lg:right-6"
+      className="assistant-panel fixed inset-x-4 bottom-24 z-[80] flex max-h-[min(70vh,560px)] flex-col border border-[var(--border-strong)] bg-[var(--surface)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:inset-x-auto sm:right-4 sm:w-[400px] lg:bottom-6 lg:right-6"
     >
-      <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-        <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+      <header className="assistant-header flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
+        <p className="assistant-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
           <Bot size={14} className="text-[var(--action)]" />
           SealPay assistant
         </p>
@@ -211,27 +211,27 @@ export function AssistantWidget() {
           type="button"
           onClick={() => setOpen(false)}
           aria-label="Close the assistant"
-          className="text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+          className="assistant-close-button text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
         >
           <X size={16} />
         </button>
       </header>
 
-      <div ref={log} className="flex-1 overflow-y-auto px-4 py-4">
+      <div ref={log} className="assistant-conversation flex-1 overflow-y-auto px-4 py-4">
         {!turns.length ? (
-          <div>
-            <p className="text-[13px] leading-6 text-[var(--text-muted)]">
+          <div className="assistant-welcome">
+            <p className="assistant-introduction text-[13px] leading-6 text-[var(--text-muted)]">
               Questions about sending USDC, payment links, fees or Arc Testnet. It cannot see your wallet or your
               payments.
             </p>
-            <Label className="mt-5 mb-2">Try one</Label>
-            <div className="space-y-2">
+            <Label className="assistant-suggestions-label mt-5 mb-2">Try one</Label>
+            <div className="assistant-suggestions space-y-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => ask(suggestion)}
-                  className="block w-full border border-[var(--border)] px-3 py-2 text-left text-[12px] leading-5 text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+                  className="assistant-suggestion-button block w-full border border-[var(--border)] px-3 py-2 text-left text-[12px] leading-5 text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 >
                   {suggestion}
                 </button>
@@ -239,12 +239,13 @@ export function AssistantWidget() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="assistant-messages space-y-4">
             {turns.map((turn, index) => (
-              <div key={index} className={cn("text-[13px] leading-6", turn.role === "user" ? "text-right" : "")}>
-                <Label className="mb-1.5">{turn.role === "user" ? "You" : "Assistant"}</Label>
+              <div key={index} className={cn("assistant-message", "text-[13px] leading-6", turn.role === "user" ? "text-right" : "")}>
+                <Label className="assistant-message-role mb-1.5">{turn.role === "user" ? "You" : "Assistant"}</Label>
                 <p
                   className={cn(
+                    "assistant-message-content",
                     "whitespace-pre-wrap break-words",
                     turn.role === "user"
                       ? "inline-block border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-left"
@@ -253,7 +254,7 @@ export function AssistantWidget() {
                 >
                   {turn.content}
                   {turn.role === "assistant" && !turn.content && pending ? (
-                    <span className="seal-blink text-[var(--action)]">▍</span>
+                    <span className="assistant-typing-indicator seal-blink text-[var(--action)]">▍</span>
                   ) : null}
                 </p>
               </div>
@@ -262,7 +263,7 @@ export function AssistantWidget() {
         )}
 
         {error && (
-          <p role="alert" className="mt-4 border-l-2 border-[var(--negative)] px-3 py-2 text-[12px] leading-5 text-[var(--negative)]">
+          <p role="alert" className="assistant-error mt-4 border-l-2 border-[var(--negative)] px-3 py-2 text-[12px] leading-5 text-[var(--negative)]">
             {error}
           </p>
         )}
@@ -273,9 +274,9 @@ export function AssistantWidget() {
           event.preventDefault();
           void ask(draft);
         }}
-        className="border-t border-[var(--border)] p-3"
+        className="assistant-form border-t border-[var(--border)] p-3"
       >
-        <div className="flex items-end gap-2">
+        <div className="assistant-composer flex items-end gap-2">
           <textarea
             ref={input}
             rows={1}
@@ -290,20 +291,20 @@ export function AssistantWidget() {
             placeholder="Ask about SealPay…"
             aria-label="Your question"
             maxLength={2000}
-            className="max-h-28 min-h-[40px] flex-1 resize-y border border-[var(--border)] bg-[var(--app-bg)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--action)]"
+            className="assistant-input max-h-28 min-h-[40px] flex-1 resize-y border border-[var(--border)] bg-[var(--app-bg)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--action)]"
           />
           {pending ? (
-            <Button type="button" variant="secondary" className="h-10 px-3" onClick={() => abort.current?.abort()}>
+            <Button type="button" variant="secondary" className="assistant-stop-button h-10 px-3" onClick={() => abort.current?.abort()}>
               <Square size={13} />
               Stop
             </Button>
           ) : (
-            <Button type="submit" className="h-10 px-3" disabled={!draft.trim()} aria-label="Send question">
+            <Button type="submit" className="assistant-send-button h-10 px-3" disabled={!draft.trim()} aria-label="Send question">
               <ArrowUp size={15} />
             </Button>
           )}
         </div>
-        <p className="mt-2 text-[10px] leading-4 text-[var(--text-muted)]">
+        <p className="assistant-disclaimer mt-2 text-[10px] leading-4 text-[var(--text-muted)]">
           Answers can be wrong. Verify anything that moves money against the app and ArcScan.
         </p>
       </form>

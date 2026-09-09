@@ -5,7 +5,7 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 export default function SettingsPage() {
   return (
     <AppShell>
-      <div className="mb-6">
+      <div className="settings-page mb-6">
         <PageTitle
           title="Settings"
           subtitle="Theme, routing preferences, chain defaults, and swap execution settings."

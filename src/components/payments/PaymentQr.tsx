@@ -65,7 +65,7 @@ export function PaymentQr({
 
   if (failedFor === value)
     return (
-      <p className={cn("text-[11px] leading-5 text-[var(--text-muted)]", className)}>
+      <p className={cn("payment-qr-error", "text-[11px] leading-5 text-[var(--text-muted)]", className)}>
         The code could not be drawn. Copy the link instead.
       </p>
     );
@@ -75,7 +75,7 @@ export function PaymentQr({
       <div
         aria-hidden
         style={{ width: size, height: size }}
-        className={cn("seal-skeleton-shimmer border border-[var(--border)]", className)}
+        className={cn("payment-qr-placeholder", "seal-skeleton-shimmer border border-[var(--border)]", className)}
       />
     );
 
@@ -91,22 +91,22 @@ export function PaymentQr({
       height={size}
       viewBox={`0 0 ${modules} ${modules}`}
       shapeRendering="crispEdges"
-      className={cn("border border-[var(--border)]", className)}
+      className={cn("payment-qr-code", "border border-[var(--border)]", className)}
     >
-      <rect width={modules} height={modules} fill="#ffffff" />
+      <rect className="payment-qr-background" width={modules} height={modules} fill="#ffffff" />
       <path d={drawn.path} fill="#000000" />
       {logo && (
         <>
           {/* The plate keeps a quiet ring around the mark so the modules it
               covers end cleanly instead of bleeding into it. */}
-          <rect
+          <rect className="payment-qr-logo-background"
             x={(modules - plateSide) / 2}
             y={(modules - plateSide) / 2}
             width={plateSide}
             height={plateSide}
             fill="#ffffff"
           />
-          <image
+          <image className="payment-qr-logo"
             href="/tokens/usdc.svg"
             x={(modules - markSide) / 2}
             y={(modules - markSide) / 2}

@@ -22,19 +22,19 @@ export function Panel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn("border border-[var(--border)] bg-[var(--surface)]", className)}>
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{title}</p>
-        {meta ? <span className="font-mono text-[11px] text-[var(--text-muted)]">{meta}</span> : null}
+    <section className={cn("terminal-panel", "border border-[var(--border)] bg-[var(--surface)]", className)}>
+      <div className="terminal-panel-header flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
+        <p className="terminal-panel-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{title}</p>
+        {meta ? <span className="terminal-panel-meta font-mono text-[11px] text-[var(--text-muted)]">{meta}</span> : null}
       </div>
-      <div className={cn("p-4", bodyClassName)}>{children}</div>
+      <div className={cn("terminal-panel-body", "p-4", bodyClassName)}>{children}</div>
     </section>
   );
 }
 
 export function Label({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]", className)}>
+    <p className={cn("terminal-label", "font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]", className)}>
       {children}
     </p>
   );
@@ -42,9 +42,9 @@ export function Label({ children, className }: { children: ReactNode; className?
 
 export function Metric({ label, value, tone }: { label: string; value: ReactNode; tone?: NumberTone }) {
   return (
-    <div className="border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
-      <p className={cn("mt-1.5 font-mono text-sm tabular", toneClass(tone ?? "default"))}>{value}</p>
+    <div className="terminal-metric border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5">
+      <p className="terminal-metric-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
+      <p className={cn("terminal-metric-value", "mt-1.5 font-mono text-sm tabular", toneClass(tone ?? "default"))}>{value}</p>
     </div>
   );
 }
@@ -71,11 +71,11 @@ export function Num({
   tone?: NumberTone;
   className?: string;
 }) {
-  return <span className={cn("font-mono tabular", toneClass(tone), className)}>{value}</span>;
+  return <span className={cn("terminal-number", "font-mono tabular", toneClass(tone), className)}>{value}</span>;
 }
 
 export function Divider({ className }: { className?: string }) {
-  return <div className={cn("h-px w-full bg-[var(--border)]", className)} />;
+  return <div className={cn("terminal-divider", "h-px w-full bg-[var(--border)]", className)} />;
 }
 
 /**
@@ -102,19 +102,20 @@ export function TraceRow({
   }[state];
 
   return (
-    <div className="flex items-baseline gap-3 border-b border-[var(--border)] px-3 py-2.5 last:border-b-0">
-      <span className={cn("font-mono text-[11px] tabular", marker)}>
+    <div className="terminal-trace-row flex items-baseline gap-3 border-b border-[var(--border)] px-3 py-2.5 last:border-b-0">
+      <span className={cn("terminal-trace-index", "font-mono text-[11px] tabular", marker)}>
         {String(index).padStart(2, "0")}
       </span>
       <span
         className={cn(
+          "terminal-trace-label",
           "flex-1 font-mono text-[11px] uppercase tracking-[0.14em]",
           state === "pending" ? "text-[var(--text-muted)]" : "text-[var(--text-primary)]"
         )}
       >
         {label}
       </span>
-      {detail ? <span className="font-mono text-[11px] tabular text-[var(--text-muted)]">{detail}</span> : null}
+      {detail ? <span className="terminal-trace-detail font-mono text-[11px] tabular text-[var(--text-muted)]">{detail}</span> : null}
     </div>
   );
 }
@@ -132,6 +133,7 @@ export function Chip({
   return (
     <span
       className={cn(
+        "terminal-chip",
         "inline-flex items-center gap-1.5 border border-[var(--border-strong)] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]",
         toneClass(tone),
         className
@@ -147,7 +149,7 @@ export function StatusDot({ tone = "primary" }: { tone?: NumberTone }) {
   return (
     <span
       aria-hidden
-      className={cn("inline-block size-1.5 shrink-0 rounded-full bg-current seal-blink", toneClass(tone))}
+      className={cn("terminal-status-dot", "inline-block size-1.5 shrink-0 rounded-full bg-current seal-blink", toneClass(tone))}
     />
   );
 }

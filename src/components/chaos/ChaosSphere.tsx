@@ -255,10 +255,10 @@ export function ChaosSphere({
   }, [points, interactive, led, themeTick]);
 
   return (
-    <div className={`seal-sphere relative ${className ?? ""}`} style={{ height }}>
+    <div className={`chaos-sphere-container seal-sphere relative ${className ?? ""}`} style={{ height }}>
       <canvas
         aria-hidden
-        className={`block size-full ${interactive ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+        className={`chaos-sphere-canvas block size-full ${interactive ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         ref={canvasRef}
       />
     </div>

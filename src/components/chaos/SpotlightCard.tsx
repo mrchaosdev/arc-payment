@@ -32,6 +32,7 @@ export function SpotlightCard({ children, className, glow = true, color = "var(-
       onPointerEnter={() => setActive(true)}
       onPointerLeave={() => setActive(false)}
       className={cn(
+        "spotlight-card-surface",
         "relative h-full overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_20px_70px_rgba(48,30,78,0.08)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.24)]",
         className
       )}
@@ -39,12 +40,12 @@ export function SpotlightCard({ children, className, glow = true, color = "var(-
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[var(--spot-opacity)] transition-opacity duration-300"
+        className="spotlight-card-highlight pointer-events-none absolute inset-0 opacity-[var(--spot-opacity)] transition-opacity duration-300"
         style={{ background: `radial-gradient(360px circle at var(--spot-x, 50%) var(--spot-y, 50%), ${color}, transparent 70%)` }}
       />
       {children}
     </div>
   );
 
-  return glow ? <GlowBorder radius={28} hoverOnly className="h-full">{card}</GlowBorder> : <div className="h-full">{card}</div>;
+  return glow ? <GlowBorder radius={28} hoverOnly className="h-full">{card}</GlowBorder> : <div className="spotlight-card-wrapper h-full">{card}</div>;
 }

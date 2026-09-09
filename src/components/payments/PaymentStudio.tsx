@@ -269,75 +269,75 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const amountMark = <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />;
 
   const summary = <>
-    <div className="mb-7 flex items-start justify-between gap-3">
-      <div><p className="text-lg font-semibold tracking-tight">Payment request</p>
-        <p className="mt-1.5 text-xs text-[var(--text-muted)]">Check who is being paid and how much, then connect your wallet.</p></div>
-      <Chip tone="muted">REQUEST</Chip>
+    <div className="payment-studio-summary-header mb-7 flex items-start justify-between gap-3">
+      <div className="payment-studio-summary-heading"><p className="payment-studio-summary-title text-lg font-semibold tracking-tight">Payment request</p>
+        <p className="payment-studio-summary-description mt-1.5 text-xs text-[var(--text-muted)]">Check who is being paid and how much, then connect your wallet.</p></div>
+      <Chip className="payment-studio-summary-chip" tone="muted">REQUEST</Chip>
     </div>
-    <div className="border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-7 text-center">
-      <Label>Amount requested</Label>
-      <p className="mt-3 flex flex-wrap items-center justify-center gap-3 font-mono text-4xl tabular">
-        {amountMark}<span className="break-all">{draft.amount}</span>
-        <span className="text-sm text-[var(--text-muted)]">USDC</span>
+    <div className="payment-studio-summary-amount-block border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-7 text-center">
+      <Label className="payment-studio-summary-amount-label">Amount requested</Label>
+      <p className="payment-studio-summary-amount mt-3 flex flex-wrap items-center justify-center gap-3 font-mono text-4xl tabular">
+        {amountMark}<span className="payment-studio-summary-amount-value break-all">{draft.amount}</span>
+        <span className="payment-studio-summary-currency text-sm text-[var(--text-muted)]">USDC</span>
       </p>
     </div>
-    <div className="mt-5 space-y-3">
+    <div className="payment-studio-summary-details mt-5 space-y-3">
       <ReceiptRow label="Pay to" value={draft.to} />
-      <Divider />
+      <Divider className="payment-studio-summary-divider" />
       <ReceiptRow label="For" value={draft.memo || "No description"} />
-      <Divider />
+      <Divider className="payment-studio-summary-divider" />
       <ReceiptRow label="Reference" value={draft.reference || "—"} />
     </div>
-    <p className="mt-5 text-xs leading-5 text-[var(--text-muted)]">
+    <p className="payment-studio-summary-notice mt-5 text-xs leading-5 text-[var(--text-muted)]">
       Anyone can create a payment link. Check this address against the person who sent it to you before paying.
     </p>
   </>;
 
   const fields = <>
-    <div className="mb-7 flex items-start justify-between gap-3">
-      <div><p className="text-lg font-semibold tracking-tight">{mode === "pay" ? "Send digital dollars" : "Get paid with a link"}</p>
-        <p className="mt-1.5 text-xs text-[var(--text-muted)]">{mode === "pay" ? "One payment. One wallet signature." : "Set an amount, then share your checkout."}</p></div>
-      <Chip tone="muted">{mode === "pay" ? "TRANSFER" : "REQUEST"}</Chip>
+    <div className="payment-studio-fields-header mb-7 flex items-start justify-between gap-3">
+      <div className="payment-studio-fields-heading"><p className="payment-studio-fields-title text-lg font-semibold tracking-tight">{mode === "pay" ? "Send digital dollars" : "Get paid with a link"}</p>
+        <p className="payment-studio-fields-description mt-1.5 text-xs text-[var(--text-muted)]">{mode === "pay" ? "One payment. One wallet signature." : "Set an amount, then share your checkout."}</p></div>
+      <Chip className="payment-studio-mode-chip" tone="muted">{mode === "pay" ? "TRANSFER" : "REQUEST"}</Chip>
     </div>
-    <fieldset disabled={busy} className="space-y-5 disabled:opacity-70">
+    <fieldset disabled={busy} className="payment-studio-fields space-y-5 disabled:opacity-70">
       <Field label={mode === "pay" ? "Recipient address" : "Receive to"} error={fieldErrors.to} errorId="recipient-error"
         hint={mode === "request" ? "Your connected wallet is used if left empty." : undefined}>
         <input ref={toInput} aria-label={mode === "pay" ? "Recipient address" : "Receive to"}
           aria-invalid={fieldErrors.to ? true : undefined} aria-describedby={fieldErrors.to ? "recipient-error" : undefined}
-          className="payment-input font-mono text-xs" value={mode === "pay" ? draft.to : request.to}
+          className="payment-studio-recipient-input payment-input font-mono text-xs" value={mode === "pay" ? draft.to : request.to}
           onChange={e => edit("to", e.target.value.trim())} onBlur={e => checkField("to", e.target.value)}
           placeholder={mode === "request" ? address || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
       </Field>
       <Field label="Amount" error={fieldErrors.amount} errorId="amount-error"
         hint={isConnected ? `Arc balance: ${balanceQuery.isError ? "unavailable" : balanceQuery.data === undefined ? "loading…" : formatUnits(balanceQuery.data, 6) + " USDC"}` : "USDC on Arc Testnet"}>
-        <div className={`flex items-center gap-3 border bg-[var(--surface)] px-4 transition-colors focus-within:border-[var(--action)] ${fieldErrors.amount ? "border-[var(--negative)]" : "border-[var(--border)]"}`}>
+        <div className={`payment-studio-amount-field flex items-center gap-3 border bg-[var(--surface)] px-4 transition-colors focus-within:border-[var(--action)] ${fieldErrors.amount ? "border-[var(--negative)]" : "border-[var(--border)]"}`}>
           <input ref={amountInput} aria-label="Amount" aria-invalid={fieldErrors.amount ? true : undefined}
             aria-describedby={fieldErrors.amount ? "amount-error" : undefined} value={current.amount}
             onChange={e => edit("amount", e.target.value)} onBlur={e => checkField("amount", e.target.value)}
-            inputMode="decimal" placeholder="0.00" className="min-w-0 flex-1 bg-transparent py-5 font-mono text-4xl tabular outline-none" />
-          <span className="flex shrink-0 items-center gap-2">{amountMark}
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--action)]">USDC</span></span>
+            inputMode="decimal" placeholder="0.00" className="payment-studio-amount-input min-w-0 flex-1 bg-transparent py-5 font-mono text-4xl tabular outline-none" />
+          <span className="payment-studio-amount-icon flex shrink-0 items-center gap-2">{amountMark}
+            <span className="payment-studio-currency font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--action)]">USDC</span></span>
         </div>
       </Field>
-      <div className="flex gap-0 border border-[var(--border)]">{["1", "5", "10", "25"].map((a, i) => <button key={a} type="button" onClick={() => edit("amount", a)} className={`flex-1 py-2 font-mono text-[11px] tabular text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] ${i ? "border-l border-[var(--border)]" : ""}`}>{a}</button>)}</div>
+      <div className="payment-studio-quick-amounts flex gap-0 border border-[var(--border)]">{["1", "5", "10", "25"].map((a, i) => <button key={a} type="button" onClick={() => edit("amount", a)} className={`payment-studio-quick-amount-button flex-1 py-2 font-mono text-[11px] tabular text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] ${i ? "border-l border-[var(--border)]" : ""}`}>{a}</button>)}</div>
 
       {/* Memo and reference are optional and always were; keeping them open put
           two fields nobody has to fill between the amount and the pay button. */}
-      <div className="border-t border-[var(--border)] pt-4">
+      <div className="payment-studio-details-section border-t border-[var(--border)] pt-4">
         <button type="button" onClick={() => setShowDetails(open => !open)} aria-expanded={showDetails} aria-controls="payment-details"
-          className="flex w-full items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]">
-          <span>{showDetails ? "Hide details" : "Add details"}</span>
-          <span className="flex items-center gap-2 normal-case tracking-normal">
-            {!showDetails && (current.memo || current.reference) ? <span className="truncate text-[11px] text-[var(--text-secondary)]">{current.memo || current.reference}</span> : null}
+          className="payment-studio-details-toggle flex w-full items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]">
+          <span className="payment-studio-details-toggle-label">{showDetails ? "Hide details" : "Add details"}</span>
+          <span className="payment-studio-details-toggle-content flex items-center gap-2 normal-case tracking-normal">
+            {!showDetails && (current.memo || current.reference) ? <span className="payment-studio-details-preview truncate text-[11px] text-[var(--text-secondary)]">{current.memo || current.reference}</span> : null}
             <ChevronDown size={14} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
           </span>
         </button>
-        <div id="payment-details" hidden={!showDetails} className="mt-5 space-y-5">
+        <div id="payment-details" hidden={!showDetails} className="payment-studio-details-fields mt-5 space-y-5">
           <Field label="What is this for?" hint="Optional. Included in the link and local receipt, not onchain.">
-            <input aria-label="Memo" className="payment-input" value={current.memo} onChange={e => edit("memo", e.target.value)} maxLength={120} placeholder="Design sprint, coffee, team dinner…" />
+            <input aria-label="Memo" className="payment-studio-memo-input payment-input" value={current.memo} onChange={e => edit("memo", e.target.value)} maxLength={120} placeholder="Design sprint, coffee, team dinner…" />
           </Field>
           <Field label="Reference" hint="Optional">
-            <input aria-label="Reference" className="payment-input" value={current.reference} onChange={e => edit("reference", e.target.value)} maxLength={48} placeholder="INV-001" />
+            <input aria-label="Reference" className="payment-studio-reference-input payment-input" value={current.reference} onChange={e => edit("reference", e.target.value)} maxLength={48} placeholder="INV-001" />
           </Field>
         </div>
       </div>
@@ -345,118 +345,118 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   </>;
 
   const receipt = <>
-    <div className="mb-6 flex items-start justify-between gap-3">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">{stage === "review" ? "Review your payment" : stage === "signing" ? "Confirm in your wallet" : stage === "success" ? "Payment complete" : stage === "failed" ? "Payment not completed" : "Waiting for confirmation"}</h2>
-        <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc Testnet · USDC</p>
+    <div className="payment-studio-receipt-header mb-6 flex items-start justify-between gap-3">
+      <div className="payment-studio-receipt-heading">
+        <h2 className="payment-studio-receipt-title text-xl font-semibold tracking-tight">{stage === "review" ? "Review your payment" : stage === "signing" ? "Confirm in your wallet" : stage === "success" ? "Payment complete" : stage === "failed" ? "Payment not completed" : "Waiting for confirmation"}</h2>
+        <p className="payment-studio-receipt-network mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc Testnet · USDC</p>
       </div>
-      <Chip tone={stage === "success" ? "positive" : stage === "failed" ? "negative" : "primary"}>
+      <Chip className="payment-studio-receipt-status" tone={stage === "success" ? "positive" : stage === "failed" ? "negative" : "primary"}>
         {stage === "success" ? <><CheckCircle2 size={11} /> Settled</> : stage === "failed" ? "Reverted"
           : <><StatusDot /> {stage === "review" ? "Unsigned" : stage === "signing" ? "In your wallet" : "Broadcast"}</>}
       </Chip>
     </div>
-    <p className="mb-7 flex flex-wrap items-center gap-3 font-mono text-4xl tabular">
-      {amountMark}<span className="break-all">{review?.amount}</span>
-      <span className="text-sm text-[var(--text-muted)]">USDC</span>
+    <p className="payment-studio-receipt-amount mb-7 flex flex-wrap items-center gap-3 font-mono text-4xl tabular">
+      {amountMark}<span className="payment-studio-receipt-amount-value break-all">{review?.amount}</span>
+      <span className="payment-studio-receipt-currency text-sm text-[var(--text-muted)]">USDC</span>
     </p>
-    <div className="space-y-3">
+    <div className="payment-studio-receipt-details space-y-3">
       <ReceiptRow label="From" value={review?.from || ""} />
-      <Divider />
+      <Divider className="payment-studio-receipt-divider" />
       <ReceiptRow label="To" value={review?.to || ""} />
-      <Divider />
+      <Divider className="payment-studio-receipt-divider" />
       <ReceiptRow label="Reference" value={review?.reference || "—"} />
     </div>
-    <div className="mt-5 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
+    <div className="payment-studio-receipt-totals mt-5 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
       <TotalRow label="Amount" value={`${totals?.amount ?? "—"} USDC`} />
       <TotalRow label={actualFeeNative ? "Network fee" : "Estimated network fee"} value={`${totals?.fee ?? "—"} USDC`} muted />
-      <Divider className="my-2.5" />
+      <Divider className="payment-studio-receipt-divider my-2.5" />
       <TotalRow label="Total from your wallet" value={`${totals?.total ?? "—"} USDC`} strong />
     </div>
-    {stage === "pending" || stage === "signing" || stage === "success" ? <div className="mt-6">
+    {stage === "pending" || stage === "signing" || stage === "success" ? <div className="payment-studio-progress mt-6">
       <ProgressBar label={stage === "success" ? "Payment confirmed" : stage === "signing" ? "Waiting for you to confirm in your wallet" : "Submitted — waiting for the network to confirm"} indeterminate={stage !== "success"} />
-      <p className="mt-2.5 text-xs leading-5 text-[var(--text-muted)]">
+      <p className="payment-studio-progress-message mt-2.5 text-xs leading-5 text-[var(--text-muted)]">
         {stage === "signing" ? "Approve the transaction in your wallet. Nothing has been sent yet."
           : stage === "pending" ? "Sent to Arc. This page checks for the receipt every few seconds — you can leave it open."
           : "The receipt is onchain."}
       </p>
     </div> : null}
-    {stage === "review" && <p className="mt-5 text-xs leading-5 text-[var(--text-muted)]">Review the full recipient address. Your wallet shows the final network fee before you sign.</p>}
+    {stage === "review" && <p className="payment-studio-review-notice mt-5 text-xs leading-5 text-[var(--text-muted)]">Review the full recipient address. Your wallet shows the final network fee before you sign.</p>}
   </>;
 
-  const form = <div className="p-5 sm:p-7">
+  const form = <div className="payment-studio-form p-5 sm:p-7">
     {stage === "summary" ? summary : stage === "editing" || mode === "request" ? fields : receipt}
-    {error && <p role="alert" className="mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
-    <div className="mt-6 space-y-3">
-      {mode === "request" ? <Button type="button" onClick={createRequest} disabled={!!shareUrl} className="h-12 w-full"><Link2 size={16} />{shareUrl ? "Request created" : "Create payment link"}</Button>
-        : stage === "summary" ? <>{!isConnected ? <ConnectWalletButton className="h-12 w-full" label="Connect wallet to pay" />
-          : <Button type="button" onClick={prepare} disabled={busy} className="h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>}
-          <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="w-full"><Pencil size={14} />Edit details</Button></>
-        : stage === "editing" ? !isConnected ? <ConnectWalletButton className="h-12 w-full" label="Connect wallet to continue" />
-          : <Button type="button" onClick={prepare} disabled={busy} className="h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
-        : stage === "review" ? <><Button type="button" className="h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="w-full"><ArrowLeft size={16} />Edit payment</Button></>
-        : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now</Button>
+    {error && <p role="alert" className="payment-studio-error mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
+    <div className="payment-studio-actions mt-6 space-y-3">
+      {mode === "request" ? <Button type="button" onClick={createRequest} disabled={!!shareUrl} className="payment-studio-create-request-button h-12 w-full"><Link2 size={16} />{shareUrl ? "Request created" : "Create payment link"}</Button>
+        : stage === "summary" ? <>{!isConnected ? <ConnectWalletButton className="payment-studio-summary-connect-button h-12 w-full" label="Connect wallet to pay" />
+          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-summary-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>}
+          <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="payment-studio-edit-details-button w-full"><Pencil size={14} />Edit details</Button></>
+        : stage === "editing" ? !isConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label="Connect wallet to continue" />
+          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
+        : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />Edit payment</Button></>
+        : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="payment-studio-recheck-button w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now</Button>
         : stage === "success" || stage === "failed" ? <>
-            <Button type="button" variant="secondary" onClick={startNewPayment} className="w-full">New payment</Button>
-            <Button type="button" variant="ghost" onClick={sendAgain} className="w-full"><RotateCcw size={14} />{stage === "failed" ? "Try this payment again" : "Send again to this recipient"}</Button>
+            <Button type="button" variant="secondary" onClick={startNewPayment} className="payment-studio-new-payment-button w-full">New payment</Button>
+            <Button type="button" variant="ghost" onClick={sendAgain} className="payment-studio-send-again-button w-full"><RotateCcw size={14} />{stage === "failed" ? "Try this payment again" : "Send again to this recipient"}</Button>
           </> : null}
-      {hash && <a className="flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]" href={arcTransactionUrl(hash)} target="_blank" rel="noreferrer">View on ArcScan <ExternalLink size={13} /></a>}
+      {hash && <a className="payment-studio-explorer-link flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]" href={arcTransactionUrl(hash)} target="_blank" rel="noreferrer">View on ArcScan <ExternalLink size={13} /></a>}
     </div>
     {/* Most people reach a shared link on a desktop but keep their wallet on a
         phone. The code is the bridge, so on checkout it is shown rather than
         hidden behind a control the payer has no reason to press. */}
-    {stage === "summary" && checkoutUrl ? <div className="mt-6 flex flex-wrap items-center gap-4 border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+    {stage === "summary" && checkoutUrl ? <div className="payment-studio-mobile-checkout mt-6 flex flex-wrap items-center gap-4 border border-[var(--border)] bg-[var(--surface-soft)] p-4">
       <PaymentQr value={checkoutUrl} size={132} />
-      <div className="min-w-[180px] flex-1">
-        <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"><Smartphone size={13} />Pay from your phone</p>
-        <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">Scan this with your phone to open the same request in a mobile wallet. The details do not change.</p>
+      <div className="payment-studio-mobile-checkout-copy min-w-[180px] flex-1">
+        <p className="payment-studio-mobile-checkout-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"><Smartphone size={13} />Pay from your phone</p>
+        <p className="payment-studio-mobile-checkout-description mt-2 text-xs leading-5 text-[var(--text-muted)]">Scan this with your phone to open the same request in a mobile wallet. The details do not change.</p>
       </div>
     </div> : null}
-    {shareUrl && <div className="mt-6 border border-[var(--border)] bg-[var(--surface)] p-4">
-      <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><CheckCircle2 size={13} />Your checkout is ready</p>
-      <label className="mt-3 block"><Label>Payment link</Label><input aria-label="Payment link" readOnly value={shareUrl} onFocus={e => e.target.select()} className="payment-input mt-2" /></label>
-      <div className="mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} /></div>
-      <p className="mt-3 text-xs leading-5 text-[var(--text-muted)]">Anyone with this link can see its details. Link contents are editable; the payer should verify the recipient.</p>
+    {shareUrl && <div className="payment-studio-share-result mt-6 border border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="payment-studio-share-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><CheckCircle2 size={13} />Your checkout is ready</p>
+      <label className="payment-studio-share-link-field mt-3 block"><Label className="payment-studio-share-link-label">Payment link</Label><input aria-label="Payment link" readOnly value={shareUrl} onFocus={e => e.target.select()} className="payment-studio-share-link-input payment-input mt-2" /></label>
+      <div className="payment-studio-share-actions mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} /></div>
+      <p className="payment-studio-share-notice mt-3 text-xs leading-5 text-[var(--text-muted)]">Anyone with this link can see its details. Link contents are editable; the payer should verify the recipient.</p>
     </div>}
   </div>;
 
-  return <div className="mx-auto max-w-[1240px]">
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
-      <div><Label className="text-[var(--action)]">{checkout ? "SealPay checkout" : "Your payment workspace"}</Label>
-        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.02em]">{checkout ? "A payment for you." : initialMode === "request" ? "Payment requests" : "Move money, simply."}</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">{checkout ? "Review this shared request before you pay." : "Send USDC. Share a link. Keep the receipt."}</p></div>
-      {!checkout && <Link href="/history" className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]">View activity <ArrowRight size={13} /></Link>}
+  return <div className="payment-studio-root mx-auto max-w-[1240px]">
+    <div className="payment-studio-header mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
+      <div className="payment-studio-heading"><Label className="payment-studio-eyebrow text-[var(--action)]">{checkout ? "SealPay checkout" : "Your payment workspace"}</Label>
+        <h1 className="payment-studio-title mt-3 text-3xl font-semibold tracking-[-0.02em]">{checkout ? "A payment for you." : initialMode === "request" ? "Payment requests" : "Move money, simply."}</h1>
+        <p className="payment-studio-description mt-2 text-sm text-[var(--text-muted)]">{checkout ? "Review this shared request before you pay." : "Send USDC. Share a link. Keep the receipt."}</p></div>
+      {!checkout && <Link href="/history" className="payment-studio-activity-link flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]">View activity <ArrowRight size={13} /></Link>}
     </div>
-    <div className="grid items-start gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-      <Card className="overflow-hidden">
+    <div className="payment-studio-layout grid items-start gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <Card className="payment-studio-form-card overflow-hidden">
         {checkout ? form : <AnimatedTabs tabs={[{ id: "pay", label: "Send payment" }, { id: "request", label: "Request payment" }]} value={mode} disabled={busy || stage !== "editing"} onChange={next => { setMode(next); setError(""); setFieldErrors({}); }}>{form}</AnimatedTabs>}
       </Card>
-      <div className="space-y-5 xl:sticky xl:top-20">
+      <div className="payment-studio-aside space-y-5 xl:sticky xl:top-20">
         <SettlementPulse stage={pulseStage} confirmed={confirmed} impulse={impulse} />
         <SettlementPath stage={pulseStage} fee={totals?.fee} hash={hash} />
 
-        <Panel title={stage === "success" ? "Payment receipt" : "Payment preview"} meta="ARC TESTNET · USDC" bodyClassName="p-0">
-          <div className="px-4 py-8 text-center">
-            <Label>{stage === "success" ? "Amount sent" : "Amount"}</Label>
-            <p className="mt-3 break-all font-mono text-5xl tabular tracking-tight">{current.amount || "0.00"}</p>
-            <p className="mt-2 flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">
+        <Panel className="payment-studio-preview-panel" title={stage === "success" ? "Payment receipt" : "Payment preview"} meta="ARC TESTNET · USDC" bodyClassName="p-0">
+          <div className="payment-studio-preview-amount-block px-4 py-8 text-center">
+            <Label className="payment-studio-preview-amount-label">{stage === "success" ? "Amount sent" : "Amount"}</Label>
+            <p className="payment-studio-preview-amount mt-3 break-all font-mono text-5xl tabular tracking-tight">{current.amount || "0.00"}</p>
+            <p className="payment-studio-preview-currency mt-2 flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">
               <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />USDC
             </p>
           </div>
-          <div className="receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
-          <div className="px-4 py-4">
+          <div className="payment-studio-preview-edge receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
+          <div className="payment-studio-preview-details px-4 py-4">
             <ReceiptRow label="Recipient" value={current.to || "Add a recipient"} />
-            <Divider className="my-3" />
+            <Divider className="payment-studio-preview-divider my-3" />
             <ReceiptRow label="For" value={current.memo || "Your payment"} />
-            <Divider className="my-3" />
+            <Divider className="payment-studio-preview-divider my-3" />
             <ReceiptRow label="Reference" value={current.reference || "Optional"} />
           </div>
-          <div className="border-t border-[var(--border)] px-4 py-3">
+          <div className="payment-studio-preview-totals border-t border-[var(--border)] px-4 py-3">
             <TotalRow label="Network fee" value={totals?.fee ? `${totals.fee} USDC` : "At review"} muted />
-            {totals?.total ? <><Divider className="my-2.5" /><TotalRow label="Total from your wallet" value={`${totals.total} USDC`} strong /></> : null}
+            {totals?.total ? <><Divider className="payment-studio-preview-total-divider my-2.5" /><TotalRow label="Total from your wallet" value={`${totals.total} USDC`} strong /></> : null}
           </div>
         </Panel>
 
-        <p className="flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
+        <p className="payment-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
           <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
           Payments go directly from your wallet to the recipient. Testnet USDC has no real monetary value.
         </p>
@@ -466,26 +466,26 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 }
 
 function Field({ label, hint, error, errorId, children }: { label: string; hint?: string; error?: string; errorId?: string; children: ReactNode }) {
-  return <div>
-    <Label className="mb-2">{label}</Label>
+  return <div className="payment-studio-field">
+    <Label className="payment-studio-field-label mb-2">{label}</Label>
     {children}
     {/* The message replaces the hint in the same slot: the field keeps its height,
         and what is wrong is read directly under what is wrong with it. */}
     {error
-      ? <p id={errorId} role="alert" className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[var(--negative)]">
+      ? <p id={errorId} role="alert" className="payment-studio-field-error mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[var(--negative)]">
           <AlertCircle size={12} className="mt-0.5 shrink-0" />{error}</p>
-      : hint ? <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">{hint}</p> : null}
+      : hint ? <p className="payment-studio-field-hint mt-2 text-[11px] leading-5 text-[var(--text-muted)]">{hint}</p> : null}
   </div>;
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
-  return <div className="space-y-1.5"><p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p><p className="break-all font-mono text-[11px] leading-5">{value}</p></div>;
+  return <div className="payment-studio-receipt-row space-y-1.5"><p className="payment-studio-receipt-row-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p><p className="payment-studio-receipt-row-value break-all font-mono text-[11px] leading-5">{value}</p></div>;
 }
 
 function TotalRow({ label, value, muted = false, strong = false }: { label: string; value: string; muted?: boolean; strong?: boolean }) {
-  return <div className="flex items-baseline justify-between gap-4 py-1">
-    <span className={`font-mono text-[10px] uppercase tracking-[0.16em] ${strong ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{label}</span>
-    <Num value={value} tone={muted ? "muted" : "default"} className={strong ? "text-[13px] font-semibold" : "text-[11px]"} />
+  return <div className="payment-studio-total-row flex items-baseline justify-between gap-4 py-1">
+    <span className={`payment-studio-total-label font-mono text-[10px] uppercase tracking-[0.16em] ${strong ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{label}</span>
+    <Num value={value} tone={muted ? "muted" : "default"} className={`payment-studio-total-value ${(strong ? "text-[13px] font-semibold" : "text-[11px]")}`} />
   </div>;
 }
 

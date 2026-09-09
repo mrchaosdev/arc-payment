@@ -44,7 +44,7 @@ export function TokenAvatar({
         width={imgSizes[size]}
         height={imgSizes[size]}
         onError={() => setImgError(true)}
-        className={cn("shrink-0 rounded-full", sizes[size], className)}
+        className={cn("token-avatar-image", "shrink-0 rounded-full", sizes[size], className)}
       />
     );
   }
@@ -52,6 +52,7 @@ export function TokenAvatar({
   return (
     <span
       className={cn(
+        "token-avatar-fallback",
         "inline-flex shrink-0 items-center justify-center rounded-full border border-white/15 font-bold text-white shadow-inner",
         sizes[size],
         className
@@ -75,7 +76,7 @@ export function TokenPair({
   size?: "sm" | "md";
 }) {
   return (
-    <div className="flex -space-x-2">
+    <div className="token-avatar-root flex -space-x-2">
       <TokenAvatar symbol={symbols[0]} logoURI={logoURIs?.[0]} size={size} />
       <TokenAvatar symbol={symbols[1]} logoURI={logoURIs?.[1]} size={size} className="ring-2 ring-(--surface)" />
     </div>

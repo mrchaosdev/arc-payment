@@ -16,14 +16,14 @@ export function AppShell({
   showFooter?: boolean;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)]">
+    <div className="app-shell-root min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)]">
       <CursorLayer />
-      <div className="relative flex min-h-screen">
+      <div className="app-shell-layout relative flex min-h-screen">
         {!flush && <DashboardSidebar />}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="app-shell-column flex min-w-0 flex-1 flex-col">
           <TopBar workspace={!flush} />
-          <main className={flush ? "min-h-[calc(100svh-56px)]" : "flex-1 px-4 py-6 pb-24 md:px-8 lg:py-8"}>
-            {flush ? children : <div className="mx-auto w-full max-w-[1400px]">{children}</div>}
+          <main className={`app-shell-main ${(flush ? "min-h-[calc(100svh-56px)]" : "flex-1 px-4 py-6 pb-24 md:px-8 lg:py-8")}`}>
+            {flush ? children : <div className="app-shell-content mx-auto w-full max-w-[1400px]">{children}</div>}
           </main>
           {showFooter ? <Footer /> : null}
         </div>

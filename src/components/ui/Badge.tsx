@@ -28,6 +28,7 @@ export function Badge({
   return (
     <span
       className={cn(
+        "ui-badge-root",
         "inline-flex items-center gap-1.5 border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]",
         tones[tone],
         className

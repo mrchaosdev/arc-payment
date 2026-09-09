@@ -14,7 +14,7 @@ export function Card({
 }) {
   return (
     <section
-      className={cn("border border-[var(--border)] bg-[var(--surface)]", className)}
+      className={cn("ui-card-root", "border border-[var(--border)] bg-[var(--surface)]", className)}
       style={style}
     >
       {children}
@@ -32,10 +32,10 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-4 py-3">
-      <div>
-        <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{title}</h2>
-        {subtitle ? <p className="mt-1.5 text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
+    <div className="ui-card-header flex items-start justify-between gap-4 border-b border-[var(--border)] px-4 py-3">
+      <div className="ui-card-heading">
+        <h2 className="ui-card-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{title}</h2>
+        {subtitle ? <p className="ui-card-subtitle mt-1.5 text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
       </div>
       {action}
     </div>

@@ -37,8 +37,8 @@ export function SettlementPulse({
   const busy = stage === "signing" || stage === "settling";
 
   return (
-    <Panel title="Settlement pulse" meta="DERIVED, NOT PREDICTED" bodyClassName="p-0">
-      <div className="chaos-dot-field" style={{ minHeight: height }}>
+    <Panel className="settlement-pulse-panel" title="Settlement pulse" meta="DERIVED, NOT PREDICTED" bodyClassName="p-0">
+      <div className="settlement-pulse-visual chaos-dot-field" style={{ minHeight: height }}>
         <ChaosSphere
           bpm={pulse.bpm}
           amplitude={pulse.amplitude}
@@ -50,7 +50,7 @@ export function SettlementPulse({
           led={busy}
         />
       </div>
-      <div className="grid grid-cols-3 border-t border-[var(--border)]">
+      <div className="settlement-pulse-stats grid grid-cols-3 border-t border-[var(--border)]">
         <PulseCell label="Rate" value={`${pulse.bpm} BPM`} note={stage === "offline" ? "no wallet" : "settlement stage"} />
         <PulseCell
           label="Amplitude"
@@ -76,10 +76,10 @@ function PulseCell({
   bordered?: boolean;
 }) {
   return (
-    <div className={bordered ? "border-x border-[var(--border)] px-3 py-3" : "px-3 py-3"}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1.5 truncate font-mono text-xs uppercase tabular text-[var(--text-primary)]">{value}</p>
-      <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)]">{note}</p>
+    <div className={`settlement-stat ${(bordered ? "border-x border-[var(--border)] px-3 py-3" : "px-3 py-3")}`}>
+      <p className="settlement-stat-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
+      <p className="settlement-stat-value mt-1.5 truncate font-mono text-xs uppercase tabular text-[var(--text-primary)]">{value}</p>
+      <p className="settlement-stat-note mt-1 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)]">{note}</p>
     </div>
   );
 }
@@ -108,7 +108,7 @@ export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; f
   const active = activeIndex[stage];
 
   return (
-    <Panel
+    <Panel className="settlement-path-panel"
       title="Settlement path"
       meta={stage === "failed" ? "REVERTED" : stage === "settled" ? "COMPLETE" : "ARC TESTNET"}
       bodyClassName="p-0"
@@ -124,14 +124,14 @@ export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; f
             index={index + 1}
             label={step.label}
             state={state}
-            detail={index === 1 && fee ? <Num value={`${fee} USDC`} tone="muted" /> : undefined}
+            detail={index === 1 && fee ? <Num className="settlement-path-fee" value={`${fee} USDC`} tone="muted" /> : undefined}
           />
         );
       })}
       {hash ? (
-        <div className="border-t border-[var(--border)] px-3 py-2.5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Transaction</p>
-          <p className="mt-1 break-all font-mono text-[11px] text-[var(--text-primary)]">{hash}</p>
+        <div className="settlement-transaction border-t border-[var(--border)] px-3 py-2.5">
+          <p className="settlement-transaction-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Transaction</p>
+          <p className="settlement-transaction-hash mt-1 break-all font-mono text-[11px] text-[var(--text-primary)]">{hash}</p>
         </div>
       ) : null}
     </Panel>

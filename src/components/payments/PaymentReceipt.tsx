@@ -69,91 +69,91 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
       role="dialog"
       aria-modal="true"
       aria-label="Payment receipt"
-      className="fixed inset-0 z-[120] overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:p-8"
+      className="payment-receipt-overlay fixed inset-0 z-[120] overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:p-8"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="mx-auto w-full max-w-[780px]">
-        <div className="receipt-actions mb-3 flex items-center justify-between gap-3">
-          <Button type="button" onClick={() => window.print()}>
+      <div className="payment-receipt-container mx-auto w-full max-w-[780px]">
+        <div className="payment-receipt-actions receipt-actions mb-3 flex items-center justify-between gap-3">
+          <Button className="payment-receipt-print-button" type="button" onClick={() => window.print()}>
             <Printer size={14} />
             Print / Save as PDF
           </Button>
-          <Button type="button" variant="secondary" onClick={onClose} aria-label="Close receipt">
+          <Button className="payment-receipt-close-button" type="button" variant="secondary" onClick={onClose} aria-label="Close receipt">
             <X size={14} />
             Close
           </Button>
         </div>
 
-        <article className="receipt-sheet">
-          <header className="receipt-head">
-            <div className="receipt-brand">
-              <span className="receipt-mark">$</span>
-              <span>SealPay</span>
+        <article className="payment-receipt-sheet receipt-sheet">
+          <header className="payment-receipt-header receipt-head">
+            <div className="payment-receipt-brand receipt-brand">
+              <span className="payment-receipt-brand-mark receipt-mark">$</span>
+              <span className="payment-receipt-brand-name">SealPay</span>
             </div>
-            <div className="receipt-headline">
-              <h2>Payment receipt</h2>
-              <p className="receipt-status">{status}</p>
+            <div className="payment-receipt-heading receipt-headline">
+              <h2 className="payment-receipt-title">Payment receipt</h2>
+              <p className="payment-receipt-status receipt-status">{status}</p>
             </div>
           </header>
 
-          <dl className="receipt-meta">
+          <dl className="payment-receipt-metadata receipt-meta">
             <Meta label="Reference" value={payment.reference || "—"} />
             <Meta label="Issued" value={issued.toLocaleString()} />
             <Meta label="Network" value="Arc Testnet" />
             <Meta label="Token" value="USDC (6 decimals)" />
           </dl>
 
-          <div className="receipt-parties">
+          <div className="payment-receipt-parties receipt-parties">
             <Party label="Paid by" value={payment.from} />
             <Party label="Paid to" value={payment.to} />
           </div>
 
-          <table className="receipt-table">
-            <thead>
-              <tr>
-                <th scope="col">Description</th>
-                <th scope="col" className="receipt-right">
+          <table className="payment-receipt-table receipt-table">
+            <thead className="payment-receipt-table-head">
+              <tr className="payment-receipt-heading-row">
+                <th className="payment-receipt-description-heading" scope="col">Description</th>
+                <th scope="col" className="payment-receipt-amount-heading receipt-right">
                   Amount
                 </th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>{payment.memo || "USDC payment"}</td>
-                <td className="receipt-right receipt-num">{totals.amount} USDC</td>
+            <tbody className="payment-receipt-table-body">
+              <tr className="payment-receipt-payment-row">
+                <td className="payment-receipt-description">{payment.memo || "USDC payment"}</td>
+                <td className="payment-receipt-amount receipt-right receipt-num">{totals.amount} USDC</td>
               </tr>
-              <tr>
-                <td>Network fee</td>
-                <td className="receipt-right receipt-num">
+              <tr className="payment-receipt-fee-row">
+                <td className="payment-receipt-fee-label">Network fee</td>
+                <td className="payment-receipt-fee receipt-right receipt-num">
                   {totals.fee ? `${totals.fee} USDC` : "Not recorded"}
                 </td>
               </tr>
             </tbody>
-            <tfoot>
-              <tr>
-                <th scope="row">Total debited</th>
-                <td className="receipt-right receipt-num receipt-total">
+            <tfoot className="payment-receipt-table-foot">
+              <tr className="payment-receipt-total-row">
+                <th className="payment-receipt-total-label" scope="row">Total debited</th>
+                <td className="payment-receipt-total receipt-right receipt-num receipt-total">
                   {totals.total ? `${totals.total} USDC` : `${totals.amount} USDC`}
                 </td>
               </tr>
             </tfoot>
           </table>
 
-          <div className="receipt-tx">
-            <p className="receipt-label">Transaction hash</p>
-            <p className="receipt-mono">{payment.hash}</p>
-            <p className="receipt-label receipt-spaced">Verify at</p>
-            <p className="receipt-mono">{arcTransactionUrl(payment.hash)}</p>
+          <div className="payment-receipt-transaction receipt-tx">
+            <p className="payment-receipt-hash-label receipt-label">Transaction hash</p>
+            <p className="payment-receipt-hash receipt-mono">{payment.hash}</p>
+            <p className="payment-receipt-explorer-label receipt-label receipt-spaced">Verify at</p>
+            <p className="payment-receipt-explorer-url receipt-mono">{arcTransactionUrl(payment.hash)}</p>
           </div>
 
-          <footer className="receipt-foot">
-            <p>
+          <footer className="payment-receipt-footer receipt-foot">
+            <p className="payment-receipt-verification-note">
               The description and reference above are held by SealPay and are not written onchain. The transaction
               hash is the authoritative record; anyone can verify it at the address above.
             </p>
-            <p>
+            <p className="payment-receipt-testnet-note">
               Arc Testnet USDC has no monetary value. This document is a record of a test transfer, not a demand for
               payment or a tax invoice.
             </p>
@@ -167,18 +167,18 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="receipt-label">{label}</dt>
-      <dd className="receipt-value">{value}</dd>
+    <div className="payment-receipt-meta-item">
+      <dt className="payment-receipt-meta-label receipt-label">{label}</dt>
+      <dd className="payment-receipt-meta-value receipt-value">{value}</dd>
     </div>
   );
 }
 
 function Party({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="receipt-label">{label}</p>
-      <p className="receipt-mono">{value}</p>
+    <div className="payment-receipt-party">
+      <p className="payment-receipt-party-label receipt-label">{label}</p>
+      <p className="payment-receipt-party-address receipt-mono">{value}</p>
     </div>
   );
 }

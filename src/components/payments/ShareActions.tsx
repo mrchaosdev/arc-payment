@@ -57,16 +57,16 @@ export function ShareActions({
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="secondary" className="h-8 px-2.5" onClick={copy}>
+    <div className="share-actions-root">
+      <div className="share-actions-buttons flex flex-wrap items-center gap-2">
+        <Button type="button" variant="secondary" className="share-actions-copy-button h-8 px-2.5" onClick={copy}>
           {copied ? <Check size={13} /> : <Copy size={13} />}
           {copied ? "Copied" : "Copy link"}
         </Button>
         <Button
           type="button"
           variant="secondary"
-          className="h-8 px-2.5"
+          className="share-actions-qr-button h-8 px-2.5"
           aria-expanded={showQr}
           onClick={() => setShowQr((open) => !open)}
         >
@@ -74,7 +74,7 @@ export function ShareActions({
           {showQr ? "Hide QR" : "QR"}
         </Button>
         {canShare && (
-          <Button type="button" variant="secondary" className="h-8 px-2.5" onClick={share}>
+          <Button type="button" variant="secondary" className="share-actions-share-button h-8 px-2.5" onClick={share}>
             <Share2 size={13} />
             Share
           </Button>
@@ -84,7 +84,7 @@ export function ShareActions({
             href={url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
+            className="share-actions-preview-link inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
             Preview <ExternalLink size={12} />
           </a>
@@ -92,9 +92,9 @@ export function ShareActions({
       </div>
 
       {showQr && (
-        <div className="mt-3 flex flex-col items-start gap-2">
+        <div className="share-actions-qr-panel mt-3 flex flex-col items-start gap-2">
           <PaymentQr value={url} />
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+          <p className="share-actions-qr-hint font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
             Scan to open this checkout
           </p>
         </div>

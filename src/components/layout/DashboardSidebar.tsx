@@ -30,6 +30,7 @@ export function DashboardSidebar() {
   return (
     <aside
       className={cn(
+        "dashboard-sidebar-root",
         "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar-bg)] transition-[width] duration-200 motion-reduce:transition-none lg:flex",
         collapsed ? "w-[72px]" : "w-56"
       )}
@@ -37,21 +38,21 @@ export function DashboardSidebar() {
       <Link
         href="/"
         aria-label="SealPay home"
-        className="flex h-14 shrink-0 items-center gap-2.5 border-b border-[var(--border)] px-5"
+        className="dashboard-sidebar-brand flex h-14 shrink-0 items-center gap-2.5 border-b border-[var(--border)] px-5"
       >
-        <span className="grid size-7 shrink-0 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
+        <span className="dashboard-sidebar-brand-mark grid size-7 shrink-0 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
           $
         </span>
         {!collapsed && (
-          <span className="min-w-0">
-            <span className="block truncate text-base font-semibold tracking-tight">SealPay</span>
+          <span className="dashboard-sidebar-brand-text min-w-0">
+            <span className="dashboard-sidebar-brand-name block truncate text-base font-semibold tracking-tight">SealPay</span>
           </span>
         )}
       </Link>
 
-      <nav aria-label="Workspace" className="flex-1 px-3 pt-6">
+      <nav aria-label="Workspace" className="dashboard-sidebar-nav flex-1 px-3 pt-6">
         {!collapsed && (
-          <p className="mb-3 px-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="dashboard-sidebar-nav-label mb-3 px-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Workspace
           </p>
         )}
@@ -65,6 +66,7 @@ export function DashboardSidebar() {
               title={collapsed ? label : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
+                "dashboard-sidebar-nav-link",
                 "flex h-10 items-center gap-3 border-l-2 px-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors",
                 active
                   ? "border-[var(--action)] bg-[var(--surface)] text-[var(--action)]"
@@ -72,36 +74,36 @@ export function DashboardSidebar() {
               )}
             >
               <Icon size={16} className="shrink-0" />
-              {!collapsed && <span className="truncate">{label}</span>}
+              {!collapsed && <span className="dashboard-sidebar-nav-link-label truncate">{label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {!collapsed && (
-        <div className="mx-3 mb-4 border border-[var(--border)] p-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+        <div className="dashboard-sidebar-faucet-card mx-3 mb-4 border border-[var(--border)] p-3">
+          <p className="dashboard-sidebar-faucet-title font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
             Start with test USDC
           </p>
-          <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">
+          <p className="dashboard-sidebar-faucet-description mt-2 text-xs leading-5 text-[var(--text-muted)]">
             Try your first payment on Arc Testnet.
           </p>
           <a
             href="https://faucet.circle.com"
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
+            className="dashboard-sidebar-faucet-link mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
             Open faucet <ArrowUpRight size={12} />
           </a>
         </div>
       )}
 
-      <div className="flex items-center justify-between border-t border-[var(--border)] p-3">
+      <div className="dashboard-sidebar-footer flex items-center justify-between border-t border-[var(--border)] p-3">
         {!collapsed && (
           <Link
             href="/settings"
-            className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className="dashboard-sidebar-settings-link flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
             <Settings size={14} /> Settings
           </Link>
@@ -111,7 +113,7 @@ export function DashboardSidebar() {
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
           onClick={() => setCollapsed(!collapsed)}
-          className="grid size-8 place-items-center text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+          className="dashboard-sidebar-collapse-button grid size-8 place-items-center text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
         >
           {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>

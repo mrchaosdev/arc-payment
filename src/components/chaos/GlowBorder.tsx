@@ -17,10 +17,11 @@ export function GlowBorder({ children, className, color = "var(--brand-coral)", 
   hoverOnly?: boolean;
 }) {
   return (
-    <div className={cn("group/glow relative isolate", className)}>
+    <div className={cn("glow-border-container", "group/glow relative isolate", className)}>
       <span
         aria-hidden
         className={cn(
+          "glow-border-highlight",
           "pointer-events-none absolute -inset-px -z-10 transition-opacity duration-300",
           hoverOnly
             ? "opacity-0 group-hover/glow:opacity-[var(--glow-opacity)] group-focus-within/glow:opacity-[var(--glow-opacity)]"

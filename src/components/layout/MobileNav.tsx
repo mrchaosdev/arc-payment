@@ -23,9 +23,9 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Mobile workspace"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] lg:hidden"
+      className="mobile-nav-root fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] lg:hidden"
     >
-      <div className="grid grid-cols-4">
+      <div className="mobile-nav-list grid grid-cols-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -35,6 +35,7 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
+                "mobile-nav-link",
                 "flex flex-col items-center justify-center gap-1.5 border-t-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors",
                 active
                   ? "border-[var(--action)] text-[var(--action)]"
