@@ -18,7 +18,9 @@ export const TOKENS: TokenInfo[] = [
   // --- Arc Testnet (5042002) ---
   // Arc's native and ERC-20 USDC views share one balance. Read only the 6-decimal
   // ERC-20 view here so the portfolio never double-counts the native gas view.
-  { chainId: 5042002, address: "0x3600000000000000000000000000000000000000", symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin" },
+  // The mark ships from /public so a payment screen never waits on a CDN to tell
+  // the payer which dollar they are about to send.
+  { chainId: 5042002, address: "0x3600000000000000000000000000000000000000", symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin", logoURI: "/tokens/usdc.svg" },
 
   // --- Ethereum (1) ---
   { chainId: 1, address: "native", symbol: "ETH", name: "Ether", decimals: 18, coingeckoId: "ethereum", logoURI: `${TW}/ethereum/info/logo.png` },
@@ -51,4 +53,9 @@ export const TOKENS: TokenInfo[] = [
 
 export function tokenKey(chainId: number, address: string): string {
   return `${chainId}:${address.toLowerCase()}`;
+}
+
+export function findToken(chainId: number, address: string): TokenInfo | undefined {
+  const key = tokenKey(chainId, address);
+  return TOKENS.find((token) => tokenKey(token.chainId, token.address) === key);
 }

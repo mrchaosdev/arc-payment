@@ -1,8 +1,15 @@
 "use client";
 
-import { ChaosSphere } from "@/components/chaos/ChaosSphere";
+import dynamic from "next/dynamic";
 import { Panel, TraceRow, Num } from "@/components/chaos/Terminal";
 import { derivePulse, intensityFromConfirmed, type SettlementStage } from "@/lib/visual/pulse";
+
+// A canvas renderer with its own animation loop has no business in the bundle
+// that draws the payment form, and there is nothing about it to prerender. The
+// panel reserves its height below, so fetching it late costs no layout shift.
+const ChaosSphere = dynamic(() => import("@/components/chaos/ChaosSphere").then((m) => m.ChaosSphere), {
+  ssr: false,
+});
 
 /**
  * The sphere, wired to a real transfer.
@@ -31,7 +38,7 @@ export function SettlementPulse({
 
   return (
     <Panel title="Settlement pulse" meta="DERIVED, NOT PREDICTED" bodyClassName="p-0">
-      <div className="chaos-dot-field">
+      <div className="chaos-dot-field" style={{ minHeight: height }}>
         <ChaosSphere
           bpm={pulse.bpm}
           amplitude={pulse.amplitude}

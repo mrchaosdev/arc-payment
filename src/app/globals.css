@@ -163,6 +163,13 @@ a {
   opacity: 0.7;
 }
 
+/* A field that failed validation says so on its own edge, so the message under
+   it is a second signal rather than the only one. */
+.payment-input[aria-invalid="true"],
+.payment-input[aria-invalid="true"]:hover {
+  border-color: var(--negative);
+}
+
 /* The perforation on the receipt preview — kept from the previous design because
    it is the one motif that was already saying "payment" rather than "SaaS". */
 .receipt-edge {

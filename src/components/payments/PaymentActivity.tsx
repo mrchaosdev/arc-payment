@@ -1,15 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
+import type { Hash } from "viem";
 import { ArrowUpRight, Download, ExternalLink, RefreshCw } from "lucide-react";
 import { Chip, Label, Num, Panel } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
+import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { useHydrated } from "@/hooks/useHydrated";
 import { usePayments, type PaymentRecord } from "@/store/payments";
-import { ARC_TESTNET_ID, arcTransactionUrl } from "@/lib/arc";
+import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { findToken } from "@/lib/tokenlist/tokens";
 import { publicClients } from "@/lib/wagmi/clients";
+
+/** How often unconfirmed payments are swept without being asked. */
+const POLL_MS = 8_000;
+
+const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
 
 export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   const { address } = useAccount();
@@ -19,6 +27,39 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   const [checking, setChecking] = useState<string>();
   const [notice, setNotice] = useState("");
   const items = hydrated && address ? payments.filter((p) => p.from.toLowerCase() === address.toLowerCase()) : [];
+  // A stable key over the unconfirmed hashes: the sweep below restarts only when
+  // the set of in-flight payments actually changes, not on every render.
+  const pendingKey = items.filter((p) => p.status === "Pending").map((p) => p.hash).join(",");
+
+  // Coming back to this page should be enough to learn whether a payment landed.
+  // The sweep stays silent — the row's own status is the answer, and a failure to
+  // reach the node is not news until someone asks for it with the button.
+  useEffect(() => {
+    if (!pendingKey) return;
+    const hashes = pendingKey.split(",") as Hash[];
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const sweep = async () => {
+      await Promise.all(
+        hashes.map(async (hash) => {
+          try {
+            const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash });
+            if (active) updateStatus(hash, receipt.status === "success" ? "Success" : "Failed");
+          } catch {
+            // Still in flight. The next sweep asks again.
+          }
+        })
+      );
+      if (active) timer = setTimeout(sweep, POLL_MS);
+    };
+
+    timer = setTimeout(sweep, POLL_MS);
+    return () => {
+      active = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [pendingKey, updateStatus]);
 
   async function check(p: PaymentRecord) {
     setChecking(p.hash);
@@ -76,6 +117,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
     >
       <p className="border-b border-[var(--border)] px-4 py-2.5 text-[11px] leading-5 text-[var(--text-muted)]">
         Sent from this wallet, saved in this browser. Not a full onchain history.
+        {pendingKey ? " Unconfirmed payments refresh on their own." : ""}
       </p>
 
       {notice && (
@@ -140,10 +182,15 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
               </div>
 
               <div className="max-w-full text-right">
-                <Num value={`${p.amount} USDC`} className="break-all text-[13px]" />
+                <div className="flex items-center justify-end gap-2">
+                  <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />
+                  <Num value={`${p.amount} USDC`} className="break-all text-[13px]" />
+                </div>
                 <div className="mt-2 flex justify-end">
+                  {/* Everything stored here has already left the wallet, so the
+                      open question is the receipt, not the signature. */}
                   <Chip tone={p.status === "Success" ? "positive" : p.status === "Failed" ? "negative" : "primary"}>
-                    {p.status === "Success" ? "Confirmed" : p.status}
+                    {p.status === "Success" ? "Confirmed" : p.status === "Failed" ? "Failed" : "Awaiting receipt"}
                   </Chip>
                 </div>
               </div>

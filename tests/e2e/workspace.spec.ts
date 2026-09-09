@@ -11,6 +11,8 @@ test("send and request drafts stay independent; request survives reload", async 
   await expect(page.getByRole("textbox", { name: "Receive to", exact: true })).toHaveValue("");
   await page.getByRole("textbox", { name: "Receive to", exact: true }).fill(receiver);
   await page.getByRole("textbox", { name: "Amount", exact: true }).fill("2.000001");
+  // Memo and reference are optional, so they now live behind a disclosure.
+  await page.getByRole("button", { name: "Add details" }).click();
   await page.getByRole("textbox", { name: "Memo", exact: true }).fill("Coffee & design");
   await page.getByRole("button", { name: "Create payment link" }).click();
   const link = await page.getByRole("textbox", { name: "Payment link", exact: true }).inputValue();
@@ -22,6 +24,12 @@ test("send and request drafts stay independent; request survives reload", async 
   await expect(page.getByRole("textbox", { name: "Amount", exact: true })).toHaveValue("5");
   await page.goto(link);
   await expect(page.getByRole("heading", { name: "A payment for you." })).toBeVisible();
+  // A shared link opens as a request to read. Nothing is editable until the payer
+  // asks for it, so the recipient cannot be changed by accident on the way to pay.
+  await expect(page.getByRole("textbox", { name: "Recipient address", exact: true })).toHaveCount(0);
+  await expect(page.getByText(receiver, { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Coffee & design", { exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Edit details" }).click();
   await expect(page.getByRole("textbox", { name: "Recipient address", exact: true })).toHaveValue(receiver);
   await expect(page.getByRole("textbox", { name: "Memo", exact: true })).toHaveValue("Coffee & design");
   await expect(page.getByRole("tablist")).toHaveCount(0);
@@ -29,6 +37,24 @@ test("send and request drafts stay independent; request survives reload", async 
   await expect(page.getByRole("link", { name: "2.000001 USDC" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("link", { name: "2.000001 USDC" })).toBeVisible();
+});
+
+test("a saved request can be copied and shown as a code, not just opened", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/pay");
+  await page.getByRole("tab", { name: "Request payment" }).click();
+  await page.getByRole("textbox", { name: "Receive to", exact: true }).fill(receiver);
+  await page.getByRole("textbox", { name: "Amount", exact: true }).fill("3");
+  await page.getByRole("button", { name: "Create payment link" }).click();
+  const link = await page.getByRole("textbox", { name: "Payment link", exact: true }).inputValue();
+
+  await page.goto("/requests");
+  const row = page.locator("li").filter({ hasText: "3 USDC" }).first();
+  await row.getByRole("button", { name: "QR", exact: true }).click();
+  await expect(row.getByRole("img", { name: "Payment link as a QR code" })).toBeVisible();
+  await row.getByRole("button", { name: "Copy link" }).click();
+  await expect(row.getByRole("button", { name: "Copied" })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(link);
 });
 
 test("rejects imprecise request amount and supports keyboard tabs", async ({ page }) => {

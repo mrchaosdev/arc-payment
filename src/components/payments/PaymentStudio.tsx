@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, ExternalLink, Link2, RefreshCw, Send, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, Link2, Pencil, RefreshCw, RotateCcw, Send, ShieldCheck } from "lucide-react";
 import { erc20Abi, formatUnits, type Address, type Hash } from "viem";
 import { useAccount, useReadContract, useSwitchChain, useWriteContract } from "wagmi";
 import { getAccount } from "wagmi/actions";
@@ -10,24 +10,32 @@ import { AnimatedTabs } from "@/components/chaos/AnimatedTabs";
 import { ProgressBar } from "@/components/chaos/ProgressBar";
 import { Chip, Divider, Label, Num, Panel, StatusDot } from "@/components/chaos/Terminal";
 import { SettlementPath, SettlementPulse } from "@/components/payments/SettlementPulse";
+import { ShareActions } from "@/components/payments/ShareActions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
-import { useToast } from "@/components/ui/Toast";
+import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
-import { paymentLink, validatePayment, type PaymentDraft } from "@/lib/payments";
+import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
+import { findToken } from "@/lib/tokenlist/tokens";
 import type { SettlementStage } from "@/lib/visual/pulse";
 import { publicClients } from "@/lib/wagmi/clients";
 import { wagmiConfig } from "@/lib/wagmi/config";
 import { usePayments, type PaymentRecord } from "@/store/payments";
 
 type Mode = "pay" | "request";
-type Review = ReturnType<typeof validatePayment> & { from: Address; fee: string };
-type Stage = "editing" | "review" | "signing" | "pending" | "success" | "failed";
+type Review = ReturnType<typeof validatePayment> & { from: Address; feeNative: bigint };
+type Stage = "summary" | "editing" | "review" | "signing" | "pending" | "success" | "failed";
+type FieldErrors = Partial<Record<PaymentField, string>>;
+
+/** How often an unconfirmed transaction is re-checked without being asked. */
+const POLL_MS = 5_000;
+
+const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
 
 /** The studio's own stage vocabulary, mapped onto what the pulse understands. */
 function settlementStage(stage: Stage, connected: boolean, hasDraft: boolean): SettlementStage {
-  if (stage === "editing") {
+  if (stage === "editing" || stage === "summary") {
     if (!connected) return "offline";
     return hasDraft ? "drafting" : "idle";
   }
@@ -42,18 +50,25 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const [mode, setMode] = useState<Mode>(initialMode);
   const [draft, setDraft] = useState<PaymentDraft>(initialRequest);
   const [request, setRequest] = useState<PaymentDraft>({ to: "", amount: "", memo: "", reference: "" });
-  const [stage, setStage] = useState<Stage>("editing");
+  // A shared link that already carries a recipient and an amount is a request to
+  // read, not a form to fill: it opens as a summary and only becomes editable on
+  // purpose. An incomplete link has nothing to summarise, so it opens as a form.
+  const [stage, setStage] = useState<Stage>(() =>
+    checkout && !Object.keys(draftErrors(initialRequest)).length ? "summary" : "editing");
+  const [showDetails, setShowDetails] = useState(() => Boolean(initialRequest.memo || initialRequest.reference));
   const [review, setReview] = useState<Review>();
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [hash, setHash] = useState<Hash>();
   const [shareUrl, setShareUrl] = useState("");
-  const [actualFee, setActualFee] = useState<string>();
+  const [actualFeeNative, setActualFeeNative] = useState<bigint>();
   const lock = useRef(false);
+  const toInput = useRef<HTMLInputElement>(null);
+  const amountInput = useRef<HTMLInputElement>(null);
   const { address, chainId, isConnected } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
-  const { toast } = useToast();
   const savePayment = usePayments(s => s.savePayment);
   const updateStatus = usePayments(s => s.updateStatus);
   const saveRequest = usePayments(s => s.saveRequest);
@@ -68,9 +83,13 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const pulseStage = settlementStage(stage, isConnected, Boolean(draft.to || draft.amount));
   // One ripple per settled payment: the count only moves when a receipt lands.
   const impulse = confirmed;
+  // Amount, fee and the one number the wallet actually debits — the payer should
+  // never have to add the first two together themselves.
+  const totals = review ? paymentTotals(review.units, actualFeeNative ?? review.feeNative) : undefined;
 
   function edit(key: keyof PaymentDraft, value: string) {
     setError("");
+    if (key === "to" || key === "amount") setFieldErrors(e => ({ ...e, [key]: undefined }));
     if (mode === "pay") setDraft(d => ({ ...d, [key]: value }));
     else {
       setRequest(d => ({ ...d, [key]: value }));
@@ -78,8 +97,59 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     }
   }
 
+  /** Validate on the way out of a field, so a bad address is caught where it was typed. */
+  function checkField(field: PaymentField, value: string) {
+    // An empty field the payer has not finished with yet is not an error.
+    if (!value.trim()) return setFieldErrors(e => ({ ...e, [field]: undefined }));
+    setFieldErrors(e => ({ ...e, [field]: field === "to" ? recipientError(value) : amountError(value) }));
+  }
+
+  /** Report bad fields where they are, and put the cursor in the first one. */
+  function reportFields(candidate: PaymentDraft) {
+    const errors = draftErrors(candidate);
+    if (!errors.to && !errors.amount) return false;
+    setFieldErrors(errors);
+    (errors.to ? toInput : amountInput).current?.focus();
+    return true;
+  }
+
+  function applyReceipt(transaction: Hash, receipt: { status: string; gasUsed: bigint; effectiveGasPrice: bigint }) {
+    const success = receipt.status === "success";
+    updateStatus(transaction, success ? "Success" : "Failed");
+    setActualFeeNative(receipt.gasUsed * receipt.effectiveGasPrice);
+    setStage(success ? "success" : "failed");
+    setError(success ? "" : "The transaction reverted. The payment was not completed; a network fee may have been charged.");
+    void balanceQuery.refetch();
+  }
+
+  // Kept in a ref so the poller below can call the latest version without
+  // restarting its timer on every render.
+  const applyReceiptRef = useRef(applyReceipt);
+  useEffect(() => { applyReceiptRef.current = applyReceipt; });
+
+  // A submitted payment confirms itself. Asking the payer to press a button to
+  // find out whether their money moved is the app refusing to do its own job;
+  // the button stays as a manual override, not as the only way through.
+  useEffect(() => {
+    if (stage !== "pending" || !hash) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const poll = async () => {
+      try {
+        const receipt = await client.getTransactionReceipt({ hash });
+        if (active) applyReceiptRef.current(hash, receipt);
+      } catch {
+        // No receipt yet is the expected answer while a transaction is in flight.
+        if (active) timer = setTimeout(poll, POLL_MS);
+      }
+    };
+    timer = setTimeout(poll, POLL_MS);
+    return () => { active = false; if (timer) clearTimeout(timer); };
+  }, [stage, hash, client]);
+
   async function prepare() {
     if (lock.current) return;
+    if (reportFields(draft)) return;
     lock.current = true;
     setError("");
     setChecking(true);
@@ -97,7 +167,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       const fee = gas * price * BigInt(120) / BigInt(100);
       if (valid.units * BigInt(10 ** 12) + fee > nativeBalance)
         throw new Error("Leave enough USDC for both the payment and network fee.");
-      setReview({ ...valid, from: account.address, fee: formatUnits(fee, 18) });
+      setReview({ ...valid, from: account.address, feeNative: fee });
       setStage("review");
     } catch (e) { setError(friendlyError(e)); }
     finally { setChecking(false); lock.current = false; }
@@ -105,12 +175,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
   async function track(transaction: Hash) {
     const receipt = await client.waitForTransactionReceipt({ hash: transaction, timeout: 60_000 });
-    const success = receipt.status === "success";
-    updateStatus(transaction, success ? "Success" : "Failed");
-    setActualFee(formatUnits(receipt.gasUsed * receipt.effectiveGasPrice, 18));
-    setStage(success ? "success" : "failed");
-    if (!success) setError("The transaction reverted. The payment was not completed; a network fee may have been charged.");
-    void balanceQuery.refetch();
+    applyReceipt(transaction, receipt);
   }
 
   async function send() {
@@ -137,7 +202,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     } catch (e) {
       if (submitted) {
         setStage("pending");
-        setError("Confirmation is taking longer. Your transaction was submitted. Check its status before sending another payment.");
+        setError("Confirmation is taking longer than usual. Your transaction was submitted and is still being checked automatically.");
       } else { setStage("review"); setError(friendlyError(e)); }
     } finally { lock.current = false; }
   }
@@ -154,9 +219,11 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
   function createRequest() {
     setError("");
+    const reference = request.reference || `SP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    const candidate = { ...request, to: request.to || address || "", reference };
+    if (reportFields(candidate)) return;
     try {
-      const reference = request.reference || `SP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-      const valid = validatePayment({ ...request, to: request.to || address || "", reference });
+      const valid = validatePayment(candidate);
       const url = paymentLink(window.location.origin, valid);
       saveRequest({ id: crypto.randomUUID(), to: valid.to, amount: valid.amount, memo: valid.memo, reference, createdAt: Date.now() });
       setRequest({ to: valid.to, amount: valid.amount, memo: valid.memo, reference });
@@ -164,78 +231,168 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     } catch (e) { setError(friendlyError(e)); }
   }
 
-  async function copy() {
-    try { await navigator.clipboard.writeText(shareUrl); toast({ title: "Payment link copied", tone: "success" }); }
-    catch { toast({ title: "Copy the link from the field below", tone: "info" }); }
+  /** Drop everything the flow accumulated, keeping whatever is being drafted. */
+  function clearFlow() {
+    setReview(undefined); setHash(undefined); setActualFeeNative(undefined);
+    setError(""); setFieldErrors({});
   }
 
-  function reset() {
-    setStage("editing"); setReview(undefined); setHash(undefined); setActualFee(undefined); setError("");
+  function backToEdit() { clearFlow(); setStage("editing"); }
+
+  /** A new payment starts empty — a prefilled form is how the same money goes twice. */
+  function startNewPayment() {
+    setDraft({ to: "", amount: "", memo: "", reference: "" });
+    setShowDetails(false);
+    clearFlow();
+    setStage("editing");
   }
+
+  /** Repeating a payment is a deliberate, separately labelled act. */
+  function sendAgain() {
+    if (review) setDraft({ to: review.to, amount: review.amount, memo: review.memo, reference: review.reference });
+    clearFlow();
+    setStage("editing");
+  }
+
+  const amountMark = <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />;
+
+  const summary = <>
+    <div className="mb-7 flex items-start justify-between gap-3">
+      <div><p className="text-lg font-semibold tracking-tight">Payment request</p>
+        <p className="mt-1.5 text-xs text-[var(--text-muted)]">Check who is being paid and how much, then connect your wallet.</p></div>
+      <Chip tone="muted">REQUEST</Chip>
+    </div>
+    <div className="border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-7 text-center">
+      <Label>Amount requested</Label>
+      <p className="mt-3 flex flex-wrap items-center justify-center gap-3 font-mono text-4xl tabular">
+        {amountMark}<span className="break-all">{draft.amount}</span>
+        <span className="text-sm text-[var(--text-muted)]">USDC</span>
+      </p>
+    </div>
+    <div className="mt-5 space-y-3">
+      <ReceiptRow label="Pay to" value={draft.to} />
+      <Divider />
+      <ReceiptRow label="For" value={draft.memo || "No description"} />
+      <Divider />
+      <ReceiptRow label="Reference" value={draft.reference || "—"} />
+    </div>
+    <p className="mt-5 text-xs leading-5 text-[var(--text-muted)]">
+      Anyone can create a payment link. Check this address against the person who sent it to you before paying.
+    </p>
+  </>;
+
+  const fields = <>
+    <div className="mb-7 flex items-start justify-between gap-3">
+      <div><p className="text-lg font-semibold tracking-tight">{mode === "pay" ? "Send digital dollars" : "Get paid with a link"}</p>
+        <p className="mt-1.5 text-xs text-[var(--text-muted)]">{mode === "pay" ? "One payment. One wallet signature." : "Set an amount, then share your checkout."}</p></div>
+      <Chip tone="muted">{mode === "pay" ? "TRANSFER" : "REQUEST"}</Chip>
+    </div>
+    <fieldset disabled={busy} className="space-y-5 disabled:opacity-70">
+      <Field label={mode === "pay" ? "Recipient address" : "Receive to"} error={fieldErrors.to} errorId="recipient-error"
+        hint={mode === "request" ? "Your connected wallet is used if left empty." : undefined}>
+        <input ref={toInput} aria-label={mode === "pay" ? "Recipient address" : "Receive to"}
+          aria-invalid={fieldErrors.to ? true : undefined} aria-describedby={fieldErrors.to ? "recipient-error" : undefined}
+          className="payment-input font-mono text-xs" value={mode === "pay" ? draft.to : request.to}
+          onChange={e => edit("to", e.target.value.trim())} onBlur={e => checkField("to", e.target.value)}
+          placeholder={mode === "request" ? address || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
+      </Field>
+      <Field label="Amount" error={fieldErrors.amount} errorId="amount-error"
+        hint={isConnected ? `Arc balance: ${balanceQuery.isError ? "unavailable" : balanceQuery.data === undefined ? "loading…" : formatUnits(balanceQuery.data, 6) + " USDC"}` : "USDC on Arc Testnet"}>
+        <div className={`flex items-center gap-3 border bg-[var(--surface)] px-4 transition-colors focus-within:border-[var(--action)] ${fieldErrors.amount ? "border-[var(--negative)]" : "border-[var(--border)]"}`}>
+          <input ref={amountInput} aria-label="Amount" aria-invalid={fieldErrors.amount ? true : undefined}
+            aria-describedby={fieldErrors.amount ? "amount-error" : undefined} value={current.amount}
+            onChange={e => edit("amount", e.target.value)} onBlur={e => checkField("amount", e.target.value)}
+            inputMode="decimal" placeholder="0.00" className="min-w-0 flex-1 bg-transparent py-5 font-mono text-4xl tabular outline-none" />
+          <span className="flex shrink-0 items-center gap-2">{amountMark}
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--action)]">USDC</span></span>
+        </div>
+      </Field>
+      <div className="flex gap-0 border border-[var(--border)]">{["1", "5", "10", "25"].map((a, i) => <button key={a} type="button" onClick={() => edit("amount", a)} className={`flex-1 py-2 font-mono text-[11px] tabular text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] ${i ? "border-l border-[var(--border)]" : ""}`}>{a}</button>)}</div>
+
+      {/* Memo and reference are optional and always were; keeping them open put
+          two fields nobody has to fill between the amount and the pay button. */}
+      <div className="border-t border-[var(--border)] pt-4">
+        <button type="button" onClick={() => setShowDetails(open => !open)} aria-expanded={showDetails} aria-controls="payment-details"
+          className="flex w-full items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]">
+          <span>{showDetails ? "Hide details" : "Add details"}</span>
+          <span className="flex items-center gap-2 normal-case tracking-normal">
+            {!showDetails && (current.memo || current.reference) ? <span className="truncate text-[11px] text-[var(--text-secondary)]">{current.memo || current.reference}</span> : null}
+            <ChevronDown size={14} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
+          </span>
+        </button>
+        <div id="payment-details" hidden={!showDetails} className="mt-5 space-y-5">
+          <Field label="What is this for?" hint="Optional. Included in the link and local receipt, not onchain.">
+            <input aria-label="Memo" className="payment-input" value={current.memo} onChange={e => edit("memo", e.target.value)} maxLength={120} placeholder="Design sprint, coffee, team dinner…" />
+          </Field>
+          <Field label="Reference" hint="Optional">
+            <input aria-label="Reference" className="payment-input" value={current.reference} onChange={e => edit("reference", e.target.value)} maxLength={48} placeholder="INV-001" />
+          </Field>
+        </div>
+      </div>
+    </fieldset>
+  </>;
+
+  const receipt = <>
+    <div className="mb-6 flex items-start justify-between gap-3">
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">{stage === "review" ? "Review your payment" : stage === "signing" ? "Confirm in your wallet" : stage === "success" ? "Payment complete" : stage === "failed" ? "Payment not completed" : "Waiting for confirmation"}</h2>
+        <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc Testnet · USDC</p>
+      </div>
+      <Chip tone={stage === "success" ? "positive" : stage === "failed" ? "negative" : "primary"}>
+        {stage === "success" ? <><CheckCircle2 size={11} /> Settled</> : stage === "failed" ? "Reverted"
+          : <><StatusDot /> {stage === "review" ? "Unsigned" : stage === "signing" ? "In your wallet" : "Broadcast"}</>}
+      </Chip>
+    </div>
+    <p className="mb-7 flex flex-wrap items-center gap-3 font-mono text-4xl tabular">
+      {amountMark}<span className="break-all">{review?.amount}</span>
+      <span className="text-sm text-[var(--text-muted)]">USDC</span>
+    </p>
+    <div className="space-y-3">
+      <ReceiptRow label="From" value={review?.from || ""} />
+      <Divider />
+      <ReceiptRow label="To" value={review?.to || ""} />
+      <Divider />
+      <ReceiptRow label="Reference" value={review?.reference || "—"} />
+    </div>
+    <div className="mt-5 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
+      <TotalRow label="Amount" value={`${totals?.amount ?? "—"} USDC`} />
+      <TotalRow label={actualFeeNative ? "Network fee" : "Estimated network fee"} value={`${totals?.fee ?? "—"} USDC`} muted />
+      <Divider className="my-2.5" />
+      <TotalRow label="Total from your wallet" value={`${totals?.total ?? "—"} USDC`} strong />
+    </div>
+    {stage === "pending" || stage === "signing" || stage === "success" ? <div className="mt-6">
+      <ProgressBar label={stage === "success" ? "Payment confirmed" : stage === "signing" ? "Waiting for you to confirm in your wallet" : "Submitted — waiting for the network to confirm"} indeterminate={stage !== "success"} />
+      <p className="mt-2.5 text-xs leading-5 text-[var(--text-muted)]">
+        {stage === "signing" ? "Approve the transaction in your wallet. Nothing has been sent yet."
+          : stage === "pending" ? "Sent to Arc. This page checks for the receipt every few seconds — you can leave it open."
+          : "The receipt is onchain."}
+      </p>
+    </div> : null}
+    {stage === "review" && <p className="mt-5 text-xs leading-5 text-[var(--text-muted)]">Review the full recipient address. Your wallet shows the final network fee before you sign.</p>}
+  </>;
 
   const form = <div className="p-5 sm:p-7">
-    {stage === "editing" || mode === "request" ? <>
-      <div className="mb-7 flex items-start justify-between gap-3">
-        <div><p className="text-lg font-semibold tracking-tight">{mode === "pay" ? "Send digital dollars" : "Get paid with a link"}</p>
-          <p className="mt-1.5 text-xs text-[var(--text-muted)]">{mode === "pay" ? "One payment. One wallet signature." : "Set an amount, then share your checkout."}</p></div>
-        <Chip tone="muted">{mode === "pay" ? "TRANSFER" : "REQUEST"}</Chip>
-      </div>
-      <fieldset disabled={busy} className="space-y-5 disabled:opacity-70">
-        <Field label={mode === "pay" ? "Recipient address" : "Receive to"} hint={mode === "request" ? "Your connected wallet is used if left empty." : undefined}>
-          <input aria-label={mode === "pay" ? "Recipient address" : "Receive to"} className="payment-input font-mono text-xs" value={mode === "pay" ? draft.to : request.to} onChange={e => edit("to", e.target.value.trim())}
-            placeholder={mode === "request" ? address || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
-        </Field>
-        <Field label="Amount" hint={isConnected ? `Arc balance: ${balanceQuery.isError ? "unavailable" : balanceQuery.data === undefined ? "loading…" : formatUnits(balanceQuery.data, 6) + " USDC"}` : "USDC on Arc Testnet"}>
-          <div className="flex items-center gap-3 border border-[var(--border)] bg-[var(--surface)] px-4 transition-colors focus-within:border-[var(--action)]">
-            <input aria-label="Amount" value={current.amount} onChange={e => edit("amount", e.target.value)} inputMode="decimal" placeholder="0.00" className="min-w-0 flex-1 bg-transparent py-5 font-mono text-4xl tabular outline-none" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--action)]">USDC</span>
-          </div>
-        </Field>
-        <div className="flex gap-0 border border-[var(--border)]">{["1", "5", "10", "25"].map((a, i) => <button key={a} type="button" onClick={() => edit("amount", a)} className={`flex-1 py-2 font-mono text-[11px] tabular text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] ${i ? "border-l border-[var(--border)]" : ""}`}>{a}</button>)}</div>
-        <Field label="What is this for?" hint="Optional. Included in the link and local receipt, not onchain.">
-          <input aria-label="Memo" className="payment-input" value={current.memo} onChange={e => edit("memo", e.target.value)} maxLength={120} placeholder="Design sprint, coffee, team dinner…" />
-        </Field>
-        <Field label="Reference" hint="Optional">
-          <input aria-label="Reference" className="payment-input" value={current.reference} onChange={e => edit("reference", e.target.value)} maxLength={48} placeholder="INV-001" />
-        </Field>
-      </fieldset>
-    </> : <>
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">{stage === "review" ? "Review your payment" : stage === "signing" ? "Confirm in your wallet" : stage === "success" ? "Payment complete" : stage === "failed" ? "Payment not completed" : "Waiting for confirmation"}</h2>
-          <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc Testnet · USDC</p>
-        </div>
-        <Chip tone={stage === "success" ? "positive" : stage === "failed" ? "negative" : "primary"}>
-          {stage === "success" ? <><CheckCircle2 size={11} /> Settled</> : stage === "failed" ? "Reverted" : <><StatusDot /> {stage === "review" ? "Unsigned" : "In flight"}</>}
-        </Chip>
-      </div>
-      <p className="mb-7 font-mono text-4xl tabular">{review?.amount} <span className="text-sm text-[var(--text-muted)]">USDC</span></p>
-      <div className="space-y-3">
-        <ReceiptRow label="From" value={review?.from || ""} />
-        <Divider />
-        <ReceiptRow label="To" value={review?.to || ""} />
-        <Divider />
-        <ReceiptRow label={actualFee ? "Network fee" : "Estimated fee + buffer"} value={`${actualFee || review?.fee || "—"} USDC`} />
-        <Divider />
-        <ReceiptRow label="Reference" value={review?.reference || "—"} />
-      </div>
-      {stage === "pending" || stage === "signing" || stage === "success" ? <div className="mt-6"><ProgressBar label={stage === "success" ? "Payment confirmed" : "Waiting for payment confirmation"} indeterminate={stage !== "success"} /></div> : null}
-      {stage === "review" && <p className="mt-5 text-xs leading-5 text-[var(--text-muted)]">Review the full recipient address. Your wallet shows the final network fee before you sign.</p>}
-    </>}
+    {stage === "summary" ? summary : stage === "editing" || mode === "request" ? fields : receipt}
     {error && <p role="alert" className="mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
     <div className="mt-6 space-y-3">
       {mode === "request" ? <Button type="button" onClick={createRequest} disabled={!!shareUrl} className="h-12 w-full"><Link2 size={16} />{shareUrl ? "Request created" : "Create payment link"}</Button>
+        : stage === "summary" ? <>{!isConnected ? <ConnectWalletButton className="h-12 w-full" label="Connect wallet to pay" />
+          : <Button type="button" onClick={prepare} disabled={busy} className="h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>}
+          <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="w-full"><Pencil size={14} />Edit details</Button></>
         : stage === "editing" ? !isConnected ? <ConnectWalletButton className="h-12 w-full" label="Connect wallet to continue" />
           : <Button type="button" onClick={prepare} disabled={busy} className="h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
-        : stage === "review" ? <><Button type="button" className="h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={reset} className="w-full"><ArrowLeft size={16} />Edit payment</Button></>
-        : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="w-full">Check confirmation</Button>
-        : stage === "success" || stage === "failed" ? <Button type="button" variant="secondary" onClick={reset} className="w-full">New payment</Button> : null}
+        : stage === "review" ? <><Button type="button" className="h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="w-full"><ArrowLeft size={16} />Edit payment</Button></>
+        : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now</Button>
+        : stage === "success" || stage === "failed" ? <>
+            <Button type="button" variant="secondary" onClick={startNewPayment} className="w-full">New payment</Button>
+            <Button type="button" variant="ghost" onClick={sendAgain} className="w-full"><RotateCcw size={14} />{stage === "failed" ? "Try this payment again" : "Send again to this recipient"}</Button>
+          </> : null}
       {hash && <a className="flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]" href={arcTransactionUrl(hash)} target="_blank" rel="noreferrer">View on ArcScan <ExternalLink size={13} /></a>}
     </div>
     {shareUrl && <div className="mt-6 border border-[var(--border)] bg-[var(--surface)] p-4">
-      <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><Check size={13} />Your checkout is ready</p>
+      <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><CheckCircle2 size={13} />Your checkout is ready</p>
       <label className="mt-3 block"><Label>Payment link</Label><input aria-label="Payment link" readOnly value={shareUrl} onFocus={e => e.target.select()} className="payment-input mt-2" /></label>
-      <div className="mt-3 flex items-center gap-3"><Button type="button" variant="secondary" onClick={copy}><Copy size={14} />Copy link</Button><a href={shareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]">Preview <ExternalLink size={12} /></a></div>
+      <div className="mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} /></div>
       <p className="mt-3 text-xs leading-5 text-[var(--text-muted)]">Anyone with this link can see its details. Link contents are editable; the payer should verify the recipient.</p>
     </div>}
   </div>;
@@ -249,17 +406,19 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     </div>
     <div className="grid items-start gap-6 xl:grid-cols-[1.15fr_0.85fr]">
       <Card className="overflow-hidden">
-        {checkout ? form : <AnimatedTabs tabs={[{ id: "pay", label: "Send payment" }, { id: "request", label: "Request payment" }]} value={mode} disabled={busy || stage !== "editing"} onChange={next => { setMode(next); setError(""); }}>{form}</AnimatedTabs>}
+        {checkout ? form : <AnimatedTabs tabs={[{ id: "pay", label: "Send payment" }, { id: "request", label: "Request payment" }]} value={mode} disabled={busy || stage !== "editing"} onChange={next => { setMode(next); setError(""); setFieldErrors({}); }}>{form}</AnimatedTabs>}
       </Card>
       <div className="space-y-5 xl:sticky xl:top-20">
         <SettlementPulse stage={pulseStage} confirmed={confirmed} impulse={impulse} />
-        <SettlementPath stage={pulseStage} fee={actualFee ?? review?.fee} hash={hash} />
+        <SettlementPath stage={pulseStage} fee={totals?.fee} hash={hash} />
 
         <Panel title={stage === "success" ? "Payment receipt" : "Payment preview"} meta="ARC TESTNET · USDC" bodyClassName="p-0">
           <div className="px-4 py-8 text-center">
             <Label>{stage === "success" ? "Amount sent" : "Amount"}</Label>
             <p className="mt-3 break-all font-mono text-5xl tabular tracking-tight">{current.amount || "0.00"}</p>
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">USDC</p>
+            <p className="mt-2 flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">
+              <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />USDC
+            </p>
           </div>
           <div className="receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
           <div className="px-4 py-4">
@@ -269,9 +428,9 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
             <Divider className="my-3" />
             <ReceiptRow label="Reference" value={current.reference || "Optional"} />
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-t border-[var(--border)] px-4 py-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Network fee</span>
-            <Num value={actualFee ? `${actualFee} USDC` : review && mode === "pay" ? `~${review.fee} USDC` : "At review"} tone="muted" className="text-[11px]" />
+          <div className="border-t border-[var(--border)] px-4 py-3">
+            <TotalRow label="Network fee" value={totals?.fee ? `${totals.fee} USDC` : "At review"} muted />
+            {totals?.total ? <><Divider className="my-2.5" /><TotalRow label="Total from your wallet" value={`${totals.total} USDC`} strong /></> : null}
           </div>
         </Panel>
 
@@ -284,12 +443,30 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   </div>;
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return <div><Label className="mb-2">{label}</Label>{children}{hint && <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">{hint}</p>}</div>;
+function Field({ label, hint, error, errorId, children }: { label: string; hint?: string; error?: string; errorId?: string; children: ReactNode }) {
+  return <div>
+    <Label className="mb-2">{label}</Label>
+    {children}
+    {/* The message replaces the hint in the same slot: the field keeps its height,
+        and what is wrong is read directly under what is wrong with it. */}
+    {error
+      ? <p id={errorId} role="alert" className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[var(--negative)]">
+          <AlertCircle size={12} className="mt-0.5 shrink-0" />{error}</p>
+      : hint ? <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">{hint}</p> : null}
+  </div>;
 }
+
 function ReceiptRow({ label, value }: { label: string; value: string }) {
   return <div className="space-y-1.5"><p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p><p className="break-all font-mono text-[11px] leading-5">{value}</p></div>;
 }
+
+function TotalRow({ label, value, muted = false, strong = false }: { label: string; value: string; muted?: boolean; strong?: boolean }) {
+  return <div className="flex items-baseline justify-between gap-4 py-1">
+    <span className={`font-mono text-[10px] uppercase tracking-[0.16em] ${strong ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{label}</span>
+    <Num value={value} tone={muted ? "muted" : "default"} className={strong ? "text-[13px] font-semibold" : "text-[11px]"} />
+  </div>;
+}
+
 function friendlyError(e: unknown) {
   const message = e instanceof Error ? e.message : String(e);
   if (/rejected|denied/i.test(message)) return "The request was declined in your wallet. You can try again.";

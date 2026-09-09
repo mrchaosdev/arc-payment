@@ -68,6 +68,8 @@ async function wallet(page: Page, { pending = false, reject = false } = {}) {
 test("review locks exact transfer data, confirms once and persists receipt", async ({ page }) => {
   await wallet(page);
   await expect(page.getByRole("textbox", { name: "Recipient address", exact: true })).toHaveCount(0);
+  // The payer is told what actually leaves the wallet, not two numbers to add up.
+  await expect(page.getByText("Total from your wallet").first()).toBeVisible();
   await page.getByRole("button", { name: "Confirm & pay" }).click();
   await expect(page.getByRole("heading", { name: "Payment complete" })).toBeVisible();
   const transactions = await page.evaluate(() => (window as unknown as { testTransactions: { to: string; data: `0x${string}` }[] }).testTransactions);
@@ -95,7 +97,46 @@ test("submitted payment is stored before confirmation and survives reload", asyn
   await expect(page.getByRole("heading", { name: "Waiting for confirmation" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sealpay-workspace-v1") || '{"state":{"payments":[]}}').state.payments[0]?.status)).toBe("Pending");
   await page.goto("/history");
-  await expect(page.getByText("Pending", { exact: true })).toBeVisible();
+  // Everything in this list has already been signed and broadcast, so the open
+  // question is the receipt rather than the signature.
+  await expect(page.getByText("Awaiting receipt", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Check status" }).click();
   await expect(page.getByRole("status")).toContainText("Receipt not available yet");
+});
+
+test("a completed payment does not leave the next one prefilled", async ({ page }) => {
+  await wallet(page);
+  await page.getByRole("button", { name: "Confirm & pay" }).click();
+  await expect(page.getByRole("heading", { name: "Payment complete" })).toBeVisible();
+
+  await page.getByRole("button", { name: "New payment" }).click();
+  await expect(page.getByRole("textbox", { name: "Recipient address", exact: true })).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Amount", exact: true })).toHaveValue("");
+});
+
+test("repeating a payment is a separate, deliberate action", async ({ page }) => {
+  await wallet(page);
+  await page.getByRole("button", { name: "Confirm & pay" }).click();
+  await expect(page.getByRole("heading", { name: "Payment complete" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Send again to this recipient" }).click();
+  await expect(page.getByRole("textbox", { name: "Recipient address", exact: true })).toHaveValue(recipient);
+  await expect(page.getByRole("textbox", { name: "Amount", exact: true })).toHaveValue("1.25");
+  // Repeating still has to pass back through review and a fresh signature.
+  await expect(page.getByRole("button", { name: "Confirm & pay" })).toHaveCount(0);
+});
+
+test("a bad address is reported at the field, before review is attempted", async ({ page }) => {
+  await wallet(page);
+  await page.getByRole("button", { name: "Edit payment" }).click();
+  const to = page.getByRole("textbox", { name: "Recipient address", exact: true });
+  await to.fill("0x123");
+  await page.getByRole("textbox", { name: "Amount", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "valid, non-zero recipient" })).toBeVisible();
+  await expect(to).toHaveAttribute("aria-invalid", "true");
+
+  // Pressing on anyway puts the cursor back where the problem is.
+  await page.getByRole("button", { name: "Review payment", exact: true }).click();
+  await expect(to).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Review your payment" })).toHaveCount(0);
 });

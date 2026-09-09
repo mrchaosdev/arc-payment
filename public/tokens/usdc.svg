@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="USDC">
+  <title>USDC</title>
+  <circle cx="16" cy="16" r="16" fill="#2775CA"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.5 12.4a3.5 2.6 0 0 0-7 0c0 1.5 1.4 2.2 3.5 2.7s3.5 1.2 3.5 2.7a3.5 2.6 0 0 1-7 0" stroke-width="1.6"/>
+    <path d="M16 8.2v1.6M16 20.4v1.6" stroke-width="1.6"/>
+    <path d="M10.7 6.82a10.6 10.6 0 0 0 0 18.36" stroke-width="1.5" stroke-opacity=".92"/>
+    <path d="M21.3 6.82a10.6 10.6 0 0 1 0 18.36" stroke-width="1.5" stroke-opacity=".92"/>
+  </g>
+</svg>

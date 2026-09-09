@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
-import { ChaosSphere } from "@/components/chaos/ChaosSphere";
+import dynamic from "next/dynamic";
 import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
 import { derivePulse } from "@/lib/visual/pulse";
 import {
@@ -13,6 +13,12 @@ import {
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
+
+// The hero sphere is the heaviest thing on the landing page and the least
+// urgent: it is fetched after the copy that explains the product has rendered.
+const ChaosSphere = dynamic(() => import("@/components/chaos/ChaosSphere").then((m) => m.ChaosSphere), {
+  ssr: false,
+});
 
 const settlementPath = [
   "Validate recipient & amount",
@@ -143,6 +149,7 @@ export function ArcHome() {
                 type="button"
                 aria-label="Spin the settlement pulse"
                 onClick={() => setDrag((value) => value + 1)}
+                style={{ minHeight: 320 }}
                 className="block w-full cursor-grab active:cursor-grabbing"
               >
                 <ChaosSphere
