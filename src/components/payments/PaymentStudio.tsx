@@ -24,6 +24,8 @@ import type { SettlementStage } from "@/lib/visual/pulse";
 import { publicClients } from "@/lib/wagmi/clients";
 import { wagmiConfig } from "@/lib/wagmi/config";
 import { usePayments, type PaymentRecord } from "@/store/payments";
+import { useContacts } from "@/store/contacts";
+import { compactAddress } from "@/lib/utils";
 
 type Mode = "pay" | "request";
 type Review = ReturnType<typeof validatePayment> & { from: Address; feeNative: bigint };
@@ -66,6 +68,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const [shareUrl, setShareUrl] = useState("");
   const [actualFeeNative, setActualFeeNative] = useState<bigint>();
   const hydrated = useHydrated();
+  const contacts = useContacts(state => state.contacts);
   const lock = useRef(false);
   const toInput = useRef<HTMLInputElement>(null);
   const amountInput = useRef<HTMLInputElement>(null);
@@ -300,6 +303,12 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       <Chip className="payment-studio-mode-chip" tone="muted">{mode === "pay" ? "TRANSFER" : "REQUEST"}</Chip>
     </div>
     <fieldset disabled={busy} className="payment-studio-fields space-y-5 disabled:opacity-70">
+      {mode === "pay" && !checkout && hydrated && contacts.length > 0 && <label className="payment-studio-contact-label block text-xs text-[var(--text-muted)]">Saved recipient
+        <select aria-label="Saved recipient" className="payment-studio-contact-select payment-input mt-2" value="" onChange={event => { if (event.target.value) { edit("to", event.target.value); setFieldErrors(errors => ({ ...errors, to: undefined })); } }}>
+          <option className="payment-studio-contact-placeholder" value="">Choose a contact</option>
+          {contacts.map(contact => <option className="payment-studio-contact-option" key={contact.id} value={contact.address}>{contact.name} · {compactAddress(contact.address)}</option>)}
+        </select>
+      </label>}
       <Field label={mode === "pay" ? "Recipient address" : "Receive to"} error={fieldErrors.to} errorId="recipient-error"
         hint={mode === "request" ? "Your connected wallet is used if left empty." : undefined}>
         <input ref={toInput} aria-label={mode === "pay" ? "Recipient address" : "Receive to"}

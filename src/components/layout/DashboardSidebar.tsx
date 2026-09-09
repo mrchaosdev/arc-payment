@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   ArrowUpRight,
+  BookUser,
+  Bot,
   History,
   LayoutDashboard,
   Link2,
@@ -14,17 +16,21 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ARC_FAUCET_URL } from "@/lib/arc";
+import { useAssistant } from "@/store/assistant";
 
 // Adapted from ChaoUi/navigation/dashboard-sidebar. Next links preserve native
 // navigation semantics; CSS width transitions respect reduced motion.
 export function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const available = useAssistant(state => state.available);
+  const openAssistant = useAssistant(state => state.setOpen);
   const links = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/pay", label: "Send payment", icon: Send },
     { href: "/requests", label: "Payment requests", icon: Link2 },
     { href: "/history", label: "Activity", icon: History },
+    { href: "/contacts", label: "Contacts", icon: BookUser },
   ];
 
   return (
@@ -50,7 +56,11 @@ export function DashboardSidebar() {
         )}
       </Link>
 
-      <nav aria-label="Workspace" className="dashboard-sidebar-nav flex-1 px-3 pt-6">
+      <nav aria-label="Workspace" className="dashboard-sidebar-nav min-h-0 flex-1 overflow-y-auto px-3 pt-6">
+        <Link href="/pay" aria-label="Send USDC" title="Send USDC" aria-current={pathname === "/pay" ? "page" : undefined}
+          className="dashboard-sidebar-send-button mb-5 flex h-11 items-center justify-center gap-2 bg-[var(--action)] text-xs font-semibold text-[var(--on-action)]">
+          <Send className="dashboard-sidebar-send-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-send-label">Send USDC</span>}
+        </Link>
         {!collapsed && (
           <p className="dashboard-sidebar-nav-label mb-3 px-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Workspace
@@ -80,7 +90,12 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      {!collapsed && (
+      <button type="button" aria-label="Ask assistant" title={available ? "Ask assistant" : "Assistant unavailable"} disabled={!available}
+        onClick={() => openAssistant(true)} className="dashboard-sidebar-assistant-button mx-3 mb-3 flex min-h-10 items-center justify-center gap-2 border border-[var(--border)] px-2 text-xs text-[var(--action)] disabled:cursor-not-allowed disabled:opacity-40">
+        <Bot className="dashboard-sidebar-assistant-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-assistant-label">Ask assistant</span>}
+      </button>
+
+      {!collapsed ? (
         <div className="dashboard-sidebar-faucet-card mx-3 mb-4 border border-[var(--border)] p-3">
           <p className="dashboard-sidebar-faucet-title font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
             Start with test USDC
@@ -89,15 +104,15 @@ export function DashboardSidebar() {
             Try your first payment on Arc Testnet.
           </p>
           <a
-            href="https://faucet.circle.com"
+            href={ARC_FAUCET_URL}
             target="_blank"
             rel="noreferrer"
             className="dashboard-sidebar-faucet-link mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
-            Open faucet <ArrowUpRight size={12} />
+            Get test USDC <ArrowUpRight size={12} />
           </a>
         </div>
-      )}
+      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" aria-label="Get test USDC" title="Get test USDC"><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
 
       <div className="dashboard-sidebar-footer flex items-center justify-between border-t border-[var(--border)] p-3">
         {!collapsed && (

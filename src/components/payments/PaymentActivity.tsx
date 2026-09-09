@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAccount } from "wagmi";
-import type { Hash } from "viem";
 import { ArrowUpRight, Download, ExternalLink, Receipt, RefreshCw } from "lucide-react";
 import { Chip, Label, Num, Panel } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
@@ -14,9 +13,6 @@ import { usePayments, type PaymentRecord } from "@/store/payments";
 import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { publicClients } from "@/lib/wagmi/clients";
-
-/** How often unconfirmed payments are swept without being asked. */
-const POLL_MS = 8_000;
 
 const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
 
@@ -35,40 +31,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   // the set of in-flight payments actually changes, not on every render.
   const pendingKey = items.filter((p) => p.status === "Pending").map((p) => p.hash).join(",");
 
-  // Coming back to this page should be enough to learn whether a payment landed.
-  // The sweep stays silent — the row's own status is the answer, and a failure to
-  // reach the node is not news until someone asks for it with the button.
-  useEffect(() => {
-    if (!pendingKey) return;
-    const hashes = pendingKey.split(",") as Hash[];
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    const sweep = async () => {
-      await Promise.all(
-        hashes.map(async (hash) => {
-          try {
-            const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash });
-            if (active)
-              updateStatus(
-                hash,
-                receipt.status === "success" ? "Success" : "Failed",
-                (receipt.gasUsed * receipt.effectiveGasPrice).toString()
-              );
-          } catch {
-            // Still in flight. The next sweep asks again.
-          }
-        })
-      );
-      if (active) timer = setTimeout(sweep, POLL_MS);
-    };
-
-    timer = setTimeout(sweep, POLL_MS);
-    return () => {
-      active = false;
-      if (timer) clearTimeout(timer);
-    };
-  }, [pendingKey, updateStatus]);
+  // The navbar now watches receipts across every route; this page owns manual rechecks.
 
   const sheet = receiptHash ? items.find((p) => p.hash === receiptHash) : undefined;
 

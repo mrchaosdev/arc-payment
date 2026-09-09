@@ -8,6 +8,7 @@ import { Label } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
 import { cn, compactAddress } from "@/lib/utils";
 import { readAssistantStream, type AssistantEvent, type ReadEvidence } from "@/lib/assistant/protocol";
+import { useAssistant } from "@/store/assistant";
 
 type Turn = { role: "user" | "assistant"; content: string; evidence?: ReadEvidence[] };
 
@@ -53,8 +54,7 @@ export function AssistantWidget() {
   // Asked at runtime, not baked in at build: the pages this widget sits on are
   // prerendered, so a server-side env check would freeze the answer into the
   // build and hide the assistant on any deployment whose key arrives later.
-  const [available, setAvailable] = useState(false);
-  const [open, setOpen] = useState(false);
+  const { available, setAvailable, open, setOpen } = useAssistant();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -82,7 +82,7 @@ export function AssistantWidget() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [setAvailable]);
 
   useEffect(() => {
     if (open) input.current?.focus();
@@ -94,7 +94,7 @@ export function AssistantWidget() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, setOpen]);
 
   // Follow the answer as it streams, without yanking the view if the reader has
   // scrolled up to re-read something.

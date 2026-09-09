@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CircleDollarSign,
+  BookUser,
   History,
   LayoutDashboard,
   Link2,
@@ -15,6 +16,7 @@ const navItems = [
   { href: "/pay", label: "Pay", icon: CircleDollarSign },
   { href: "/history", label: "Activity", icon: History },
   { href: "/requests", label: "Requests", icon: Link2 },
+  { href: "/contacts", label: "Contacts", icon: BookUser },
 ];
 
 export function MobileNav() {
@@ -23,9 +25,9 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Mobile workspace"
-      className="mobile-nav-root fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] lg:hidden"
+      className="mobile-nav-root fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="mobile-nav-list grid grid-cols-4">
+      <div className="mobile-nav-list grid grid-cols-5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -34,6 +36,7 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "mobile-nav-link",
                 "flex flex-col items-center justify-center gap-1.5 border-t-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors",
