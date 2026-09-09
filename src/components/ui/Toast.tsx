@@ -42,38 +42,15 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 let nextToastId = 0;
 
-const toneConfig: Record<
-  ToastTone,
-  {
-    icon: LucideIcon;
-    className: string;
-    iconClassName: string;
-  }
-> = {
-  success: {
-    icon: CheckCircle2,
-    className:
-      "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100",
-    iconClassName: "text-emerald-600 dark:text-emerald-300",
-  },
-  error: {
-    icon: AlertTriangle,
-    className:
-      "border-red-500/30 bg-red-500/10 text-red-800 dark:text-red-100",
-    iconClassName: "text-red-600 dark:text-red-300",
-  },
-  warning: {
-    icon: AlertTriangle,
-    className:
-      "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-100",
-    iconClassName: "text-amber-600 dark:text-amber-300",
-  },
-  info: {
-    icon: Info,
-    className:
-      "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-100",
-    iconClassName: "text-sky-600 dark:text-sky-300",
-  },
+// Locked to the interface's own tokens rather than a separate toast palette —
+// four hues (emerald/red/amber/sky) would be the one surface on screen not
+// obeying the "warm accent, positive, negative, nothing else" rule everything
+// else follows.
+const toneConfig: Record<ToastTone, { icon: LucideIcon; border: string; text: string }> = {
+  success: { icon: CheckCircle2, border: "border-[var(--positive)]/50", text: "text-[var(--positive)]" },
+  error: { icon: AlertTriangle, border: "border-[var(--negative)]/50", text: "text-[var(--negative)]" },
+  warning: { icon: AlertTriangle, border: "border-[var(--warning)]/50", text: "text-[var(--warning)]" },
+  info: { icon: Info, border: "border-[var(--border-strong)]", text: "text-[var(--action)]" },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -158,18 +135,15 @@ function ToastViewport({
           <div
             key={toast.id}
             role={toast.tone === "error" ? "alert" : "status"}
-            className={cn(
-              "toast-item",
-              "flex items-start gap-3 rounded-2xl border p-3 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl",
-              "bg-[var(--surface)]",
-              config.className
-            )}
+            className={cn("toast-item", "flex items-start gap-3 border bg-[var(--surface)] p-3", config.border)}
           >
-            <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", config.iconClassName)} />
+            <Icon className={cn("mt-0.5 size-4 shrink-0", config.text)} />
             <div className="toast-content min-w-0 flex-1">
-              <p className="toast-title text-sm font-black">{toast.title}</p>
+              <p className="toast-title font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                {toast.title}
+              </p>
               {toast.description ? (
-                <p className="toast-description mt-1 line-clamp-3 text-xs opacity-85">
+                <p className="toast-description mt-1.5 line-clamp-3 text-xs leading-5 text-[var(--text-muted)]">
                   {toast.description}
                 </p>
               ) : null}
@@ -178,9 +152,9 @@ function ToastViewport({
               type="button"
               aria-label="Dismiss notification"
               onClick={() => onDismiss(toast.id)}
-              className="toast-dismiss-button flex h-7 w-7 shrink-0 items-center justify-center rounded-lg opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+              className="toast-dismiss-button flex size-7 shrink-0 items-center justify-center text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
           </div>
         );

@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   Bell,
-  CheckCircle2,
   Clock3,
   Moon,
   Network,
@@ -17,14 +16,11 @@ import {
 } from "lucide-react";
 import { useMemo, useSyncExternalStore } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Chip, Metric, StatusDot } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
+import { useThemeMorphTransition } from "@/components/layout/ThemeMorphToggle";
 import { cn } from "@/lib/utils";
-import {
-  CHAIN_OPTIONS,
-  formatBpsAsPercent,
-  useDexSettings,
-} from "@/store/settings";
+import { CHAIN_OPTIONS, formatBpsAsPercent, useDexSettings } from "@/store/settings";
 
 const slippageOptions = [10, 50, 100, 300] as const;
 const deadlineOptions = [10, 20, 30] as const;
@@ -52,6 +48,13 @@ function subscribeTheme(onStoreChange: () => void) {
   };
 }
 
+/**
+ * These are the pre-payment-pivot swap-aggregator settings the README keeps
+ * on purpose ("legacy market/swap/pool/portfolio routes are retained"). The
+ * content and every stored preference are unchanged from before this pass —
+ * only the markup that bypassed the shared `Card`/`Badge`/`Button` primitives
+ * with its own rounded, `font-black` styling was rewritten to match them.
+ */
 export function SettingsPanel() {
   const {
     defaultChainId,
@@ -79,31 +82,22 @@ export function SettingsPanel() {
     : String(slippagePercent);
   const defaultChain = CHAIN_OPTIONS.find((chain) => chain.id === defaultChainId);
   const slippageTone = useMemo(() => {
-    if (slippageBps >= 300) return "red";
-    if (slippageBps >= 100) return "amber";
-    return "green";
+    if (slippageBps >= 300) return "negative" as const;
+    if (slippageBps >= 100) return "primary" as const;
+    return "positive" as const;
   }, [slippageBps]);
-  const theme = useSyncExternalStore(
-    subscribeTheme,
-    getThemeSnapshot,
-    getServerThemeSnapshot
-  );
-
-  function setTheme(nextTheme: "light" | "dark") {
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-    window.localStorage.setItem("seal-theme", nextTheme);
-  }
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const setTheme = useThemeMorphTransition();
 
   return (
     <div className="settings-panel space-y-5">
       <Card className="settings-intro-card p-5">
         <div className="settings-intro-content flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="settings-intro-copy">
-            <Badge tone="teal">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Saved locally
-            </Badge>
-            <h2 className="settings-intro-title mt-4 text-2xl font-black text-[var(--text-primary)]">
+            <Chip tone="positive">
+              <StatusDot tone="positive" /> Saved locally
+            </Chip>
+            <h2 className="settings-intro-title mt-4 text-2xl font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
               Swap defaults now apply across Seal.
             </h2>
             <p className="settings-intro-description mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
@@ -112,9 +106,9 @@ export function SettingsPanel() {
             </p>
           </div>
           <div className="settings-summary grid gap-2 text-sm sm:grid-cols-3 lg:min-w-[460px]">
-            <SummaryPill label="Default chain" value={defaultChain?.name ?? "BNB Chain"} />
-            <SummaryPill label="Slippage" value={formatBpsAsPercent(slippageBps)} />
-            <SummaryPill label="Refresh" value={`${quoteRefreshSeconds}s`} />
+            <Metric label="Default chain" value={defaultChain?.name ?? "BNB Chain"} />
+            <Metric label="Slippage" value={formatBpsAsPercent(slippageBps)} />
+            <Metric label="Refresh" value={`${quoteRefreshSeconds}s`} />
           </div>
         </div>
       </Card>
@@ -127,12 +121,12 @@ export function SettingsPanel() {
               subtitle="Used when creating new aggregator quotes"
               action={
                 <Button variant="ghost" className="settings-reset-button h-9 px-3" onClick={reset}>
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="size-4" />
                   Reset
                 </Button>
               }
             />
-            <div className="settings-execution-fields space-y-4 p-5">
+            <div className="settings-execution-fields space-y-3 p-4">
               <ControlRow
                 icon={SlidersHorizontal}
                 title="Default slippage"
@@ -156,9 +150,10 @@ export function SettingsPanel() {
                       }}
                       inputMode="decimal"
                       placeholder="Custom"
-                      className="settings-slippage-input h-10 w-28 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+                      aria-label="Custom slippage"
+                      className="settings-slippage-input payment-input h-10 w-28"
                     />
-                    <Badge tone={slippageTone}>{formatBpsAsPercent(slippageBps)}</Badge>
+                    <Chip tone={slippageTone}>{formatBpsAsPercent(slippageBps)}</Chip>
                   </div>
                 </div>
               </ControlRow>
@@ -191,22 +186,25 @@ export function SettingsPanel() {
 
           <Card className="settings-safety-card">
             <CardHeader title="Execution safety" subtitle="Guardrails before wallet signing" />
-            <div className="settings-safety-content space-y-4 p-5">
+            <div className="settings-safety-content space-y-3 p-4">
               <SettingBlock
                 icon={Zap}
                 title="Multi-hop routing"
                 description="Preference saved for route display and future provider filters."
-                action={<Toggle enabled={multiHop} onClick={() => setMultiHop(!multiHop)} />}
+                action={<Toggle enabled={multiHop} onClick={() => setMultiHop(!multiHop)} label="Multi-hop routing" />}
               />
               <SettingBlock
                 icon={Shield}
                 title="Expert mode"
                 description="Allows high price impact warnings to be reviewed with less friction."
-                action={<Toggle enabled={expertMode} onClick={() => setExpertMode(!expertMode)} />}
+                action={<Toggle enabled={expertMode} onClick={() => setExpertMode(!expertMode)} label="Expert mode" />}
               />
               {expertMode ? (
-                <div className="settings-expert-warning flex gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div
+                  role="status"
+                  className="settings-expert-warning flex gap-3 border-l-2 border-[var(--warning)] bg-[var(--warning)]/8 p-4 text-[13px] leading-6 text-[var(--warning)]"
+                >
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                   Expert mode should only be used when you understand route risk,
                   price impact, and token approval behavior.
                 </div>
@@ -218,7 +216,7 @@ export function SettingsPanel() {
         <div className="settings-preferences-column space-y-5">
           <Card className="settings-network-card">
             <CardHeader title="Networks" subtitle="Frontend defaults before backend config" />
-            <div className="settings-network-fields space-y-4 p-5">
+            <div className="settings-network-fields space-y-3 p-4">
               <ControlRow
                 icon={Network}
                 title="Default chain"
@@ -227,7 +225,8 @@ export function SettingsPanel() {
                 <select
                   value={defaultChainId}
                   onChange={(event) => setDefaultChainId(Number(event.target.value))}
-                  className="settings-chain-select h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-black text-[var(--text-primary)] outline-none"
+                  aria-label="Default chain"
+                  className="settings-chain-select payment-input h-10 w-auto"
                 >
                   {CHAIN_OPTIONS.map((chain) => (
                     <option className="settings-chain-option" key={chain.id} value={chain.id}>
@@ -237,58 +236,57 @@ export function SettingsPanel() {
                 </select>
               </ControlRow>
 
-              <div className="settings-rpc-section rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
+              <div className="settings-rpc-section border border-[var(--border)] bg-[var(--surface)] p-4">
                 <div className="settings-rpc-heading mb-3 flex items-center justify-between gap-3">
                   <div className="settings-rpc-copy">
-                    <p className="settings-rpc-title font-black text-[var(--text-primary)]">RPC override</p>
-                    <p className="settings-rpc-description mt-1 text-sm text-[var(--text-muted)]">
+                    <p className="settings-rpc-title text-sm font-semibold text-[var(--text-primary)]">RPC override</p>
+                    <p className="settings-rpc-description mt-1 text-xs leading-5 text-[var(--text-muted)]">
                       Saved locally for the next RPC wiring pass. Current reads still use public RPC.
                     </p>
                   </div>
-                  <Badge tone={customRpc ? "amber" : "slate"}>
-                    {customRpc ? "Saved" : "Default"}
-                  </Badge>
+                  <Chip tone={customRpc ? "primary" : "muted"}>{customRpc ? "Saved" : "Default"}</Chip>
                 </div>
                 <input
                   value={customRpc}
                   onChange={(event) => setCustomRpc(event.target.value)}
                   placeholder="https://your-rpc.example"
-                  className="settings-rpc-input h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+                  aria-label="RPC override"
+                  className="settings-rpc-input payment-input"
                 />
               </div>
 
               <div className="settings-network-summary grid gap-3 sm:grid-cols-2">
-                <NetworkStat label="Router" value="OpenOcean" tone="teal" />
-                <NetworkStat label="Market data" value="CoinGecko" tone="blue" />
-                <NetworkStat label="Pool data" value="GeckoTerminal" tone="violet" />
-                <NetworkStat label="Settings" value="Persisted" tone="green" />
+                <NetworkStat label="Router" value="OpenOcean" />
+                <NetworkStat label="Market data" value="CoinGecko" />
+                <NetworkStat label="Pool data" value="GeckoTerminal" />
+                <NetworkStat label="Settings" value="Persisted" tone="positive" />
               </div>
             </div>
           </Card>
 
           <Card className="settings-appearance-card">
             <CardHeader title="Display & notifications" subtitle="Frontend-only preferences" />
-            <div className="settings-appearance-fields space-y-4 p-5">
+            <div className="settings-appearance-fields space-y-3 p-4">
               <SettingBlock
                 icon={Sun}
                 title="Theme"
                 description="Use the top bar icon on desktop to switch between light and dark."
                 action={
-                  <div className="settings-theme-buttons flex rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-1">
+                  <div className="settings-theme-buttons flex border border-[var(--border)]">
                     <Button
                       variant={theme === "light" ? "primary" : "ghost"}
-                      className="settings-light-button h-8 px-3"
+                      className="settings-light-button h-9 px-3"
                       onClick={() => setTheme("light")}
                     >
-                      <Sun className="h-4 w-4" />
+                      <Sun className="size-3.5" />
                       Light
                     </Button>
                     <Button
                       variant={theme === "dark" ? "primary" : "ghost"}
-                      className="settings-dark-button h-8 px-3"
+                      className="settings-dark-button h-9 border-l border-[var(--border)] px-3"
                       onClick={() => setTheme("dark")}
                     >
-                      <Moon className="h-4 w-4" />
+                      <Moon className="size-3.5" />
                       Dark
                     </Button>
                   </div>
@@ -298,21 +296,12 @@ export function SettingsPanel() {
                 icon={Bell}
                 title="Route and transaction alerts"
                 description="Saved preference for quote expiry, route warnings, and completed transactions."
-                action={<Toggle enabled={routeAlerts} onClick={() => setRouteAlerts(!routeAlerts)} />}
+                action={<Toggle enabled={routeAlerts} onClick={() => setRouteAlerts(!routeAlerts)} label="Route and transaction alerts" />}
               />
             </div>
           </Card>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="settings-summary-item rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
-      <p className="settings-summary-label text-xs font-bold text-[var(--text-muted)]">{label}</p>
-      <p className="settings-summary-value mt-1 font-black text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }
@@ -329,12 +318,12 @@ function ControlRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="settings-control-row flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="settings-control-row flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="settings-control-heading flex gap-3">
-        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--primary)]" />
+        <Icon className="mt-0.5 size-4 shrink-0 text-[var(--action)]" />
         <div className="settings-control-copy">
-          <p className="settings-control-title font-black text-[var(--text-primary)]">{title}</p>
-          <p className="settings-control-description mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
+          <p className="settings-control-title text-sm font-semibold text-[var(--text-primary)]">{title}</p>
+          <p className="settings-control-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
       <div className="settings-control-inputs shrink-0">{children}</div>
@@ -354,12 +343,12 @@ function SettingBlock({
   action: React.ReactNode;
 }) {
   return (
-    <div className="settings-option-row flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 md:flex-row md:items-center md:justify-between">
+    <div className="settings-option-row flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-4 md:flex-row md:items-center md:justify-between">
       <div className="settings-option-heading flex gap-3">
-        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--primary)]" />
+        <Icon className="mt-0.5 size-4 shrink-0 text-[var(--action)]" />
         <div className="settings-option-copy">
-          <p className="settings-option-title font-black text-[var(--text-primary)]">{title}</p>
-          <p className="settings-option-description mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
+          <p className="settings-option-title text-sm font-semibold text-[var(--text-primary)]">{title}</p>
+          <p className="settings-option-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
       {action}
@@ -377,18 +366,19 @@ function SegmentedControl({
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="settings-segmented-control flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1">
-      {values.map((value) => (
+    <div className="settings-segmented-control flex border border-[var(--border)]">
+      {values.map((value, index) => (
         <button
           key={value}
           type="button"
           onClick={() => onSelect(value)}
           className={cn(
             "settings-segmented-option",
-            "rounded-lg px-3 py-1.5 text-sm font-black transition",
+            "px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors",
+            index > 0 && "border-l border-[var(--border)]",
             value === active
-              ? "bg-[var(--primary)] text-slate-950"
-              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              ? "bg-[var(--action)] text-[var(--on-action)]"
+              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           )}
         >
           {value}
@@ -398,19 +388,31 @@ function SegmentedControl({
   );
 }
 
-function Toggle({ enabled, onClick }: { enabled: boolean; onClick: () => void }) {
+/** The one rounded shape left in this file on purpose: a toggle switch reads
+    as on/off by its pill silhouette everywhere, independent of whatever
+    corner radius the surrounding interface uses — squaring it off would make
+    it look like a broken button, not a safer one. */
+function Toggle({ enabled, onClick, label }: { enabled: boolean; onClick: () => void; label: string }) {
   return (
     <button
       type="button"
-      aria-pressed={enabled}
+      role="switch"
+      aria-checked={enabled}
+      aria-label={label}
       onClick={onClick}
       className={cn(
         "settings-toggle",
-        "flex h-7 w-12 items-center rounded-full p-1 transition",
-        enabled ? "bg-[var(--primary)]" : "bg-slate-500/45"
+        "flex h-6 w-11 items-center rounded-full p-1 transition-colors",
+        enabled ? "bg-[var(--action)]" : "bg-[var(--surface-soft)]"
       )}
     >
-      <span className={cn("settings-toggle-thumb", "h-5 w-5 rounded-full bg-white shadow transition", enabled && "ml-auto")} />
+      <span
+        className={cn(
+          "settings-toggle-thumb",
+          "size-4 rounded-full bg-[var(--on-action)] transition-transform",
+          enabled ? "translate-x-5" : "translate-x-0"
+        )}
+      />
     </button>
   );
 }
@@ -418,17 +420,17 @@ function Toggle({ enabled, onClick }: { enabled: boolean; onClick: () => void })
 function NetworkStat({
   label,
   value,
-  tone,
+  tone = "muted",
 }: {
   label: string;
   value: string;
-  tone: "teal" | "blue" | "violet" | "amber" | "green";
+  tone?: "primary" | "positive" | "muted";
 }) {
   return (
-    <div className="settings-network-stat rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4">
-      <p className="settings-network-stat-label text-xs font-bold text-[var(--text-muted)]">{label}</p>
+    <div className="settings-network-stat border border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="settings-network-stat-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</p>
       <div className="settings-network-stat-value mt-2">
-        <Badge tone={tone}>{value}</Badge>
+        <Chip tone={tone}>{value}</Chip>
       </div>
     </div>
   );

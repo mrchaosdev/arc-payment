@@ -65,7 +65,7 @@ export function initLandingMotion(root: HTMLElement) {
         stagger: 0.08,
       });
 
-      onScroll(".landing-capabilities-grid", ".landing-capability", {
+      onScroll(".landing-capabilities-grid", ".capability-panel", {
         opacity: 0,
         y: 16,
         duration: 0.5,

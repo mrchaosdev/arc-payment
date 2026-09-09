@@ -40,6 +40,38 @@ export function Label({ children, className }: { children: ReactNode; className?
   );
 }
 
+/**
+ * The eyebrow-label + heading + subtitle pattern every workspace page opens
+ * with (`WorkspaceOverview`, `PaymentStudio`, the landing page). Pulled out
+ * here so a page cannot drift back to a plain `<h1>` — which is what
+ * `/settings` and every route's loading skeleton were doing until this
+ * existed, the one visible seam where the terminal look broke.
+ */
+export function PageHeading({
+  eyebrow,
+  title,
+  subtitle,
+  action,
+  className,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("terminal-page-heading", "flex flex-wrap items-end justify-between gap-4", className)}>
+      <div className="terminal-page-heading-copy min-w-0">
+        <Label className="terminal-page-heading-eyebrow text-[var(--action)]">{eyebrow}</Label>
+        <h1 className="terminal-page-heading-title mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">{title}</h1>
+        {subtitle ? <p className="terminal-page-heading-subtitle mt-2 text-sm text-[var(--text-muted)]">{subtitle}</p> : null}
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export function Metric({ label, value, tone }: { label: string; value: ReactNode; tone?: NumberTone }) {
   return (
     <div className="terminal-metric border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5">

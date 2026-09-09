@@ -1,7 +1,19 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { PageTitle } from "@/components/layout/Sidebar";
+import { PageHeading, Panel } from "@/components/chaos/Terminal";
 import { Card } from "@/components/ui/Card";
 
+/**
+ * The shared route-loading skeleton, shown by every workspace `loading.tsx`
+ * for the moment between navigating and the real page mounting. The title
+ * and subtitle render as real text immediately — they are already known, so
+ * skeletoning them would hide information the app has for no reason — and
+ * only the content whose shape genuinely isn't known yet shimmers.
+ *
+ * Mirrors `checkout/loading.tsx`'s bespoke skeleton (`Bar` + `Card` +
+ * `seal-skeleton-shimmer`) rather than inventing a second visual language for
+ * "loading": a route transition should look like the terminal pausing, not
+ * like a different, older app flashing in between two terminal screens.
+ */
 export function PageLoading({
   title,
   subtitle,
@@ -13,60 +25,59 @@ export function PageLoading({
 }) {
   return (
     <AppShell>
-      <div className="page-loading-heading mb-6">
-        <PageTitle title={title} subtitle={subtitle} />
+      <div className="page-loading-heading mb-6 border-b border-[var(--border)] pb-6">
+        <PageHeading eyebrow="Your payment workspace" title={title} subtitle={subtitle} />
       </div>
       <div className="page-loading-content space-y-5">
-        <div className="page-loading-grid grid gap-4 lg:grid-cols-[1fr_360px]">
+        <div className="page-loading-grid grid gap-5 lg:grid-cols-[1fr_360px]">
           <Card className="page-loading-main-card p-5">
-            <div className="page-loading-summary-label h-6 w-32 rounded-full bg-[var(--surface-soft)]" />
-            <div className="page-loading-summary-value mt-5 h-9 w-64 max-w-full rounded-2xl bg-[var(--surface-soft)]" />
-            <div className="page-loading-metrics mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Bar className="h-3 w-32" />
+            <Bar className="mt-5 h-9 w-64" />
+            <div className="page-loading-metrics mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
-                <SkeletonBox key={index} className="h-20" />
+                <Bar key={index} className="h-20 w-full" />
               ))}
             </div>
           </Card>
           <Card className="page-loading-secondary-card p-5">
-            <div className="page-loading-secondary-title h-5 w-36 rounded-full bg-[var(--surface-soft)]" />
+            <Bar className="h-3 w-28" />
             <div className="page-loading-fields mt-4 space-y-3">
               {Array.from({ length: 3 }).map((_, index) => (
-                <SkeletonBox key={index} className="h-14" />
+                <Bar key={index} className="h-14 w-full" />
               ))}
             </div>
           </Card>
         </div>
 
-        <Card className="page-loading-table-card overflow-hidden">
-          <div className="page-loading-table-toolbar border-b border-[var(--border)] p-5">
-            <div className="page-loading-search-placeholder h-11 w-full max-w-xl rounded-2xl bg-[var(--surface-soft)]" />
+        <Panel title="Records" meta="LOADING" bodyClassName="p-0">
+          <div className="page-loading-table-toolbar border-b border-[var(--border)] p-4">
+            <Bar className="h-11 w-full max-w-xl" />
           </div>
-          <div className="page-loading-rows divide-y divide-[var(--border)]">
+          <div className="page-loading-rows">
             {Array.from({ length: rows }).map((_, index) => (
-              <div key={index} className="page-loading-row grid gap-4 p-4 md:grid-cols-[1fr_0.7fr_0.7fr_auto]">
+              <div
+                key={index}
+                className="page-loading-row grid gap-4 border-b border-[var(--border)] p-4 last:border-b-0 md:grid-cols-[1fr_0.7fr_0.7fr_auto]"
+              >
                 <div className="page-loading-row-primary flex items-center gap-3">
-                  <SkeletonBox className="h-10 w-10 rounded-full" />
-                  <div className="page-loading-row-secondary min-w-0 flex-1">
-                    <SkeletonBox className="h-4 w-40 max-w-full" />
-                    <SkeletonBox className="mt-2 h-3 w-28 max-w-full" />
+                  <Bar className="h-9 w-9" />
+                  <div className="page-loading-row-secondary min-w-0 flex-1 space-y-2">
+                    <Bar className="h-4 w-40 max-w-full" />
+                    <Bar className="h-3 w-28 max-w-full" />
                   </div>
                 </div>
-                <SkeletonBox className="h-8" />
-                <SkeletonBox className="h-8" />
-                <SkeletonBox className="h-8 w-20" />
+                <Bar className="h-8 w-full" />
+                <Bar className="h-8 w-full" />
+                <Bar className="h-8 w-20" />
               </div>
             ))}
           </div>
-        </Card>
+        </Panel>
       </div>
     </AppShell>
   );
 }
 
-function SkeletonBox({ className }: { className: string }) {
-  return (
-    <div
-      className={`page-loading-skeleton animate-pulse rounded-2xl bg-[linear-gradient(90deg,var(--surface-soft),var(--surface-elevated),var(--surface-soft))] bg-[length:200%_100%] ${className}`}
-    />
-  );
+function Bar({ className }: { className: string }) {
+  return <div aria-hidden className={`page-loading-bar seal-skeleton-shimmer max-w-full ${className}`} />;
 }

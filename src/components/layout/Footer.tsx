@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Label, Num } from "@/components/chaos/Terminal";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 const productLinks = [
   { href: "/pay", label: "Pay USDC" },
@@ -30,9 +31,7 @@ export function Footer() {
       <div className="site-footer-content mx-auto grid max-w-[1400px] border-[var(--border)] px-4 md:px-8 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.9fr]">
         <div className="site-footer-brand-column py-10 lg:pr-10">
           <Link href="/" className="site-footer-brand inline-flex items-center gap-2.5">
-            <span className="site-footer-brand-mark grid size-7 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
-              $
-            </span>
+            <BrandMark className="site-footer-brand-mark" />
             <span className="site-footer-brand-name text-base font-semibold tracking-tight">SealPay</span>
           </Link>
 

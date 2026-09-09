@@ -3,7 +3,6 @@ import { TopBar } from "@/components/layout/TopBar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Footer } from "@/components/layout/Footer";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
-import { CursorLayer } from "@/components/chaos/CursorLayer";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { ViewportDiagnostics } from "@/components/dev/ViewportDiagnostics";
 
@@ -18,7 +17,6 @@ export function AppShell({
 }) {
   return (
     <div className="app-shell-root min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)]">
-      <CursorLayer />
       <div className="app-shell-layout relative flex min-h-screen">
         {!flush && <DashboardSidebar />}
         <div className="app-shell-column flex min-w-0 flex-1 flex-col">

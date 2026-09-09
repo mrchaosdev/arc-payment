@@ -62,9 +62,6 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 
 - `history-page`
 - `history-heading`
-- `history-eyebrow`
-- `history-title`
-- `history-description`
 
 ### [app/settings/page.tsx](../src/app/settings/page.tsx)
 
@@ -104,19 +101,25 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `animated-tabs-tab`
 - `animated-tabs-content`
 
+### [components/chaos/CapabilityAccordion.tsx](../src/components/chaos/CapabilityAccordion.tsx)
+
+- `capability-accordion`
+- `capability-panel`
+- `capability-panel-header`
+- `capability-panel-number`
+- `capability-panel-meta-reveal`
+- `capability-panel-meta`
+- `capability-panel-collapsed`
+- `capability-panel-body`
+- `capability-panel-title`
+- `capability-panel-description`
+- `capability-panel-link`
+- `capability-panel-hint`
+
 ### [components/chaos/ChaosSphere.tsx](../src/components/chaos/ChaosSphere.tsx)
 
 - `chaos-sphere-container`
 - `chaos-sphere-canvas`
-
-### [components/chaos/DotGrid.tsx](../src/components/chaos/DotGrid.tsx)
-
-- `dot-grid-container`
-
-### [components/chaos/GlowBorder.tsx](../src/components/chaos/GlowBorder.tsx)
-
-- `glow-border-container`
-- `glow-border-highlight`
 
 ### [components/chaos/ProgressBar.tsx](../src/components/chaos/ProgressBar.tsx)
 
@@ -126,17 +129,6 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 ### [components/chaos/Skeleton.tsx](../src/components/chaos/Skeleton.tsx)
 
 - `ui-skeleton-block`
-
-### [components/chaos/SplashCursor.tsx](../src/components/chaos/SplashCursor.tsx)
-
-- `splash-cursor-container`
-- `splash-cursor-canvas`
-
-### [components/chaos/SpotlightCard.tsx](../src/components/chaos/SpotlightCard.tsx)
-
-- `spotlight-card-surface`
-- `spotlight-card-highlight`
-- `spotlight-card-wrapper`
 
 ### [components/chaos/Terminal.tsx](../src/components/chaos/Terminal.tsx)
 
@@ -157,6 +149,11 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `terminal-trace-detail`
 - `terminal-chip`
 - `terminal-status-dot`
+- `terminal-page-heading`
+- `terminal-page-heading-copy`
+- `terminal-page-heading-eyebrow`
+- `terminal-page-heading-title`
+- `terminal-page-heading-subtitle`
 
 ### [components/landing/ArcHome.tsx](../src/components/landing/ArcHome.tsx)
 
@@ -201,14 +198,6 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `landing-capabilities-eyebrow`
 - `landing-capabilities-title`
 - `landing-capabilities-grid`
-- `landing-capability`
-- `landing-capability-header`
-- `landing-capability-number`
-- `landing-capability-meta`
-- `landing-capability-title`
-- `landing-capability-description`
-- `landing-capability-link`
-- `landing-capability-hint`
 - `landing-details`
 - `landing-details-grid`
 - `landing-network-panel`
@@ -298,32 +287,6 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `mobile-nav-list`
 - `mobile-nav-link`
 
-### [components/layout/Sidebar.tsx](../src/components/layout/Sidebar.tsx)
-
-- `sidebar-root`
-- `sidebar-content`
-- `sidebar-brand`
-- `sidebar-brand-icon`
-- `sidebar-brand-copy`
-- `sidebar-brand-name`
-- `sidebar-brand-description`
-- `sidebar-nav`
-- `sidebar-nav-link`
-- `sidebar-routing-card`
-- `sidebar-routing-header`
-- `sidebar-routing-icon`
-- `sidebar-routing-copy`
-- `sidebar-routing-title`
-- `sidebar-routing-description`
-- `sidebar-routing-details`
-- `sidebar-router-label`
-- `sidebar-router-value`
-- `sidebar-routing-progress`
-- `sidebar-routing-progress-fill`
-- `page-title-heading`
-- `page-title-text`
-- `page-title-description`
-
 ### [components/layout/TopBar.tsx](../src/components/layout/TopBar.tsx)
 
 - `top-bar-root`
@@ -337,6 +300,7 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `top-bar-actions`
 - `top-bar-network-label`
 - `top-bar-theme-button`
+- `theme-morph-stage`
 - `top-bar-settings-link`
 - `top-bar-wallet-loading`
 - `top-bar-connect-button`
@@ -348,6 +312,39 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `top-bar-chain-icon`
 - `top-bar-chain-image`
 - `top-bar-chain-fallback`
+
+### [components/payments/ContactsPanel.tsx](../src/components/payments/ContactsPanel.tsx)
+
+- `contacts-page`
+- `contacts-heading`
+- `contacts-form`
+- `contacts-name-field`
+- `contacts-name-input`
+- `contacts-address-field`
+- `contacts-address-input`
+- `contacts-address-hint`
+- `contacts-error`
+- `contacts-notice`
+- `contacts-form-actions`
+- `contacts-save-button`
+- `contacts-cancel-button`
+- `contacts-search`
+- `contacts-search-input`
+- `contacts-empty`
+- `contacts-list`
+- `contacts-item`
+- `contacts-item-header`
+- `contacts-item-details`
+- `contacts-item-name`
+- `contacts-item-address`
+- `contacts-send-link`
+- `contacts-item-actions`
+- `contacts-edit-button`
+- `contacts-remove-button`
+- `contacts-remove-confirmation`
+- `contacts-remove-prompt`
+- `contacts-confirm-remove`
+- `contacts-cancel-remove`
 
 ### [components/payments/PaymentActivity.tsx](../src/components/payments/PaymentActivity.tsx)
 
@@ -663,9 +660,6 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `settings-theme-buttons`
 - `settings-light-button`
 - `settings-dark-button`
-- `settings-summary-item`
-- `settings-summary-label`
-- `settings-summary-value`
 - `settings-control-row`
 - `settings-control-heading`
 - `settings-control-copy`
@@ -684,6 +678,11 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `settings-network-stat`
 - `settings-network-stat-label`
 - `settings-network-stat-value`
+
+### [components/chaos/SplashCursor.tsx](../src/components/chaos/SplashCursor.tsx)
+
+- `splash-cursor-container`
+- `splash-cursor-canvas`
 
 ### [components/ui/Badge.tsx](../src/components/ui/Badge.tsx)
 
@@ -713,20 +712,15 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `page-loading-content`
 - `page-loading-grid`
 - `page-loading-main-card`
-- `page-loading-summary-label`
-- `page-loading-summary-value`
 - `page-loading-metrics`
 - `page-loading-secondary-card`
-- `page-loading-secondary-title`
 - `page-loading-fields`
-- `page-loading-table-card`
 - `page-loading-table-toolbar`
-- `page-loading-search-placeholder`
 - `page-loading-rows`
 - `page-loading-row`
 - `page-loading-row-primary`
 - `page-loading-row-secondary`
-- `page-loading-skeleton`
+- `page-loading-bar`
 
 ### [components/ui/Toast.tsx](../src/components/ui/Toast.tsx)
 

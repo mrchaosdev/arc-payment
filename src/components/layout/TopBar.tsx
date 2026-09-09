@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Moon, Settings, Sun } from "lucide-react";
+import { Settings } from "lucide-react";
 import type { Address } from "viem";
 import { Skeleton } from "@/components/chaos/Skeleton";
 import { WalletControls } from "@/components/layout/WalletControls";
+import { ThemeMorphToggle } from "@/components/layout/ThemeMorphToggle";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 const navItems = [
   { href: "/dashboard", label: "Workspace" },
@@ -17,17 +19,11 @@ const navItems = [
 
 export function TopBar({ workspace = false }: { workspace?: boolean }) {
   const pathname = usePathname();
-  function toggleTheme() {
-    const nextDark = !document.documentElement.classList.contains("dark");
-    document.documentElement.classList.toggle("dark", nextDark);
-    window.localStorage.setItem("seal-theme", nextDark ? "dark" : "light");
-  }
-
   return <header className="top-bar-root sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--app-bg)]">
     <div className="top-bar-container mx-auto flex min-h-14 w-full max-w-[1400px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 md:px-6">
       <div className={cn("top-bar-branding flex shrink-0 items-center gap-6", workspace && "lg:hidden")}>
         <Link href="/" className="top-bar-brand flex shrink-0 items-center gap-2.5">
-          <span className="top-bar-brand-mark grid size-7 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">$</span>
+          <BrandMark className="top-bar-brand-mark" />
           <span className="top-bar-brand-name text-base font-semibold tracking-tight">SealPay</span>
         </Link>
         {!workspace && <nav aria-label="Main navigation" className="top-bar-nav hidden items-center gap-1 xl:flex">
@@ -38,9 +34,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
         </nav>}
       </div>
       <div className="top-bar-actions ml-auto flex items-center gap-2">
-        <button type="button" aria-label="Toggle theme" onClick={toggleTheme} className="top-bar-theme-button grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)]">
-          <Moon className="top-bar-moon-icon size-4 dark:hidden" /><Sun className="top-bar-sun-icon hidden size-4 dark:block" />
-        </button>
+        <ThemeMorphToggle />
         <Link href="/settings" aria-label="Settings" className="top-bar-settings-link grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)]"><Settings className="top-bar-settings-icon size-4" /></Link>
       </div>
       <ConnectButton.Custom>

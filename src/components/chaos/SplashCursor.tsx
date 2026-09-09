@@ -1,12 +1,11 @@
 "use client";
 
-// Ported from ChaoUi/cursor/splash-cursor. The WebGL fluid simulation is
-// unchanged; only the three imports are repointed at this project's own
-// helpers, and the file is marked as a client component for the App Router.
+// Ported from ChaoUi/cursor/splash-cursor. The fluid solver is preserved while
+// its lifecycle, GPU cleanup and pointer scope are adapted for this app.
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/useInView";
-import { useIsTouch } from "@/hooks/useMediaQuery";
+import { useIsTouch, useReducedMotion } from "@/hooks/useMediaQuery";
 
 export type SplashCursorProps = {
   SIM_RESOLUTION?: number;
@@ -33,6 +32,8 @@ export type SplashCursorProps = {
    * the output is a blurred fluid, so the loss is hard to see.
    */
   PIXEL_RATIO_CAP?: number;
+  /** Stop requesting frames after the last interaction has fully dissipated. */
+  IDLE_TIMEOUT_MS?: number;
   /** Scope the simulation (and its pointer tracking) to this element instead of the whole viewport. */
   contained?: boolean;
   className?: string;
@@ -407,6 +408,7 @@ export function SplashCursor({
   RAINBOW_MODE = true,
   COLOR = "#ff0000",
   PIXEL_RATIO_CAP = 2,
+  IDLE_TIMEOUT_MS = 2800,
   contained = false,
   className,
 }: SplashCursorProps) {
@@ -414,6 +416,7 @@ export function SplashCursor({
   const rootRef = useRef<HTMLDivElement>(null);
   const { ref: viewRef, inView } = useInView<HTMLDivElement>({ margin: "150px" });
   const touch = useIsTouch();
+  const reducedMotion = useReducedMotion();
 
   const configRef = useRef({
     SIM_RESOLUTION,
@@ -431,6 +434,7 @@ export function SplashCursor({
     RAINBOW_MODE,
     COLOR,
     PIXEL_RATIO_CAP,
+    IDLE_TIMEOUT_MS,
   });
   configRef.current = {
     SIM_RESOLUTION,
@@ -448,12 +452,13 @@ export function SplashCursor({
     RAINBOW_MODE,
     COLOR,
     PIXEL_RATIO_CAP,
+    IDLE_TIMEOUT_MS,
   };
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
     const rootEl = rootRef.current;
-    if (!canvasEl || !rootEl || !inView || touch) return;
+    if (!canvasEl || !rootEl || !inView || touch || reducedMotion) return;
     // Rebound as new consts: TS can't carry the null-check above into the
     // function declarations below (they close over the outer refs, not a
     // narrowed snapshot), but a fresh binding narrows cleanly.
@@ -501,7 +506,11 @@ export function SplashCursor({
       const fbo = glc.createFramebuffer();
       glc.bindFramebuffer(glc.FRAMEBUFFER, fbo);
       glc.framebufferTexture2D(glc.FRAMEBUFFER, glc.COLOR_ATTACHMENT0, glc.TEXTURE_2D, texture, 0);
-      return glc.checkFramebufferStatus(glc.FRAMEBUFFER) === glc.FRAMEBUFFER_COMPLETE;
+      const supported = glc.checkFramebufferStatus(glc.FRAMEBUFFER) === glc.FRAMEBUFFER_COMPLETE;
+      glc.bindFramebuffer(glc.FRAMEBUFFER, null);
+      glc.deleteFramebuffer(fbo);
+      glc.deleteTexture(texture);
+      return supported;
     }
 
     function getSupportedFormat(internalFormat: number, format: number, type: number): { internalFormat: number; format: number } | null {
@@ -539,12 +548,16 @@ export function SplashCursor({
       config.current.SHADING = false;
     }
 
+    const shaders = new Set<WebGLShader>();
+    const programs = new Set<WebGLProgram>();
+
     function compileShader(type: number, source: string, keywords?: string[]) {
       const withKeywords = keywords ? keywords.map((k) => `#define ${k}\n`).join("") + source : source;
       const shader = glc.createShader(type);
       if (!shader) throw new Error("Unable to create shader");
       glc.shaderSource(shader, withKeywords);
       glc.compileShader(shader);
+      shaders.add(shader);
       return shader;
     }
 
@@ -554,6 +567,7 @@ export function SplashCursor({
       glc.attachShader(program, vertex);
       glc.attachShader(program, fragment);
       glc.linkProgram(program);
+      programs.add(program);
       return program;
     }
 
@@ -633,9 +647,12 @@ export function SplashCursor({
     const gradientSubtractProgram = new Program(baseVertexShader, gradientSubtractShader);
     const displayMaterial = new Material(baseVertexShader, displaySource);
 
-    glc.bindBuffer(glc.ARRAY_BUFFER, glc.createBuffer());
+    const vertexBuffer = glc.createBuffer();
+    const indexBuffer = glc.createBuffer();
+    if (!vertexBuffer || !indexBuffer) return;
+    glc.bindBuffer(glc.ARRAY_BUFFER, vertexBuffer);
     glc.bufferData(glc.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), glc.STATIC_DRAW);
-    glc.bindBuffer(glc.ELEMENT_ARRAY_BUFFER, glc.createBuffer());
+    glc.bindBuffer(glc.ELEMENT_ARRAY_BUFFER, indexBuffer);
     glc.bufferData(glc.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), glc.STATIC_DRAW);
     glc.vertexAttribPointer(0, 2, glc.FLOAT, false, 0, 0);
     glc.enableVertexAttribArray(0);
@@ -1020,8 +1037,21 @@ export function SplashCursor({
       drawDisplay(target);
     }
 
-    function updateFrame() {
-      if (!isActive) return;
+    let lastInteractionAt = 0;
+
+    function scheduleFrame() {
+      if (!isActive || document.hidden || animationFrameId) return;
+      animationFrameId = requestAnimationFrame(updateFrame);
+    }
+
+    function wake() {
+      lastInteractionAt = performance.now();
+      scheduleFrame();
+    }
+
+    function updateFrame(now: number) {
+      animationFrameId = 0;
+      if (!isActive || document.hidden) return;
       const dt = calcDeltaTime();
       if (resizeCanvas()) initFramebuffers();
       updateKeywords();
@@ -1029,27 +1059,35 @@ export function SplashCursor({
       applyInputs();
       step(dt);
       render(null);
-      animationFrameId = requestAnimationFrame(updateFrame);
+      if (now - lastInteractionAt < config.current.IDLE_TIMEOUT_MS) scheduleFrame();
     }
 
-    const target = contained ? root : window;
+    // Window-level tracking lets the contained canvas stay behind interactive
+    // hero content. Pointer coordinates outside the canvas are ignored below.
+    const target = window;
 
     function getOffset(clientX: number, clientY: number) {
       if (!contained) return { x: scaleByPixelRatio(clientX), y: scaleByPixelRatio(clientY) };
       const rect = root.getBoundingClientRect();
+      if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null;
       return { x: scaleByPixelRatio(clientX - rect.left), y: scaleByPixelRatio(clientY - rect.top) };
     }
 
     let firstMove = false;
     function handleMouseDown(e: Event) {
       const me = e as MouseEvent;
-      const { x, y } = getOffset(me.clientX, me.clientY);
+      const offset = getOffset(me.clientX, me.clientY);
+      if (!offset) return;
+      const { x, y } = offset;
       updatePointerDownData(pointer, -1, x, y);
       clickSplat(pointer);
+      wake();
     }
     function handleMouseMove(e: Event) {
       const me = e as MouseEvent;
-      const { x, y } = getOffset(me.clientX, me.clientY);
+      const offset = getOffset(me.clientX, me.clientY);
+      if (!offset) return;
+      const { x, y } = offset;
       if (!firstMove) {
         const c = generateColor();
         updatePointerMoveData(pointer, x, y, [c.r, c.g, c.b]);
@@ -1057,19 +1095,26 @@ export function SplashCursor({
       } else {
         updatePointerMoveData(pointer, x, y, pointer.color);
       }
+      wake();
     }
     function handleTouchStart(e: Event) {
       const te = e as TouchEvent;
       for (const t of Array.from(te.targetTouches)) {
-        const { x, y } = getOffset(t.clientX, t.clientY);
+        const offset = getOffset(t.clientX, t.clientY);
+        if (!offset) continue;
+        const { x, y } = offset;
         updatePointerDownData(pointer, t.identifier, x, y);
+        wake();
       }
     }
     function handleTouchMove(e: Event) {
       const te = e as TouchEvent;
       for (const t of Array.from(te.targetTouches)) {
-        const { x, y } = getOffset(t.clientX, t.clientY);
+        const offset = getOffset(t.clientX, t.clientY);
+        if (!offset) continue;
+        const { x, y } = offset;
         updatePointerMoveData(pointer, x, y, pointer.color);
+        wake();
       }
     }
     function handleTouchEnd() {
@@ -1081,6 +1126,14 @@ export function SplashCursor({
     target.addEventListener("touchstart", handleTouchStart as EventListener);
     target.addEventListener("touchmove", handleTouchMove as EventListener, { passive: false } as AddEventListenerOptions);
     target.addEventListener("touchend", handleTouchEnd);
+
+    function handleVisibilityChange() {
+      if (!document.hidden) return;
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = 0;
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Not in the upstream component. A WebGL context can be taken away at any
     // time — the GPU process restarts, the driver resets, another tab exhausts
@@ -1111,6 +1164,7 @@ export function SplashCursor({
     function handleContextLost() {
       isActive = false;
       cancelAnimationFrame(animationFrameId);
+      animationFrameId = 0;
       canvas.style.display = "none";
     }
 
@@ -1121,22 +1175,36 @@ export function SplashCursor({
     });
     if (contained) ro.observe(root);
 
-    updateFrame();
-
     return () => {
       isActive = false;
       cancelAnimationFrame(animationFrameId);
       canvas.removeEventListener("webglcontextlost", handleContextLost);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       ro.disconnect();
       target.removeEventListener("mousedown", handleMouseDown as EventListener);
       target.removeEventListener("mousemove", handleMouseMove as EventListener);
       target.removeEventListener("touchstart", handleTouchStart as EventListener);
       target.removeEventListener("touchmove", handleTouchMove as EventListener);
       target.removeEventListener("touchend", handleTouchEnd);
-      const lose = glc.getExtension("WEBGL_lose_context");
-      if (lose) lose.loseContext();
+
+      // React can reuse this exact canvas after an IntersectionObserver change
+      // or a development Strict Mode effect replay. Losing its context here
+      // would leave the reused element as a broken gray surface. Release every
+      // owned resource explicitly so the live context remains reusable.
+      dye.read.dispose();
+      dye.write.dispose();
+      velocity.read.dispose();
+      velocity.write.dispose();
+      divergence.dispose();
+      curl.dispose();
+      pressure.read.dispose();
+      pressure.write.dispose();
+      glc.deleteBuffer(vertexBuffer);
+      glc.deleteBuffer(indexBuffer);
+      programs.forEach((program) => glc.deleteProgram(program));
+      shaders.forEach((shader) => glc.deleteShader(shader));
     };
-  }, [contained, inView, touch]);
+  }, [contained, inView, reducedMotion, touch]);
 
   return (
     <div
@@ -1146,14 +1214,12 @@ export function SplashCursor({
       }}
       className={cn(
         "splash-cursor-container",
-        // Non-contained mode listens on `window`, so pointer-events: none
-        // here is harmless (matches upstream, which is always this mode).
-        // Contained mode listens on this element itself — pointer-events:
-        // none would drop it from hit-testing entirely and it would never
-        // receive a mousemove/mousedown to react to.
-        contained ? "pointer-events-auto absolute inset-0 z-[2] overflow-hidden" : "pointer-events-none fixed inset-0 z-50",
+        // Input is tracked on window and filtered to this box, so the canvas
+        // never competes with the real controls layered above it.
+        contained ? "pointer-events-none absolute inset-0 z-[2] overflow-hidden" : "pointer-events-none fixed inset-0 z-50",
         className,
       )}
+      aria-hidden
     >
       <canvas ref={canvasRef} className="splash-cursor-canvas block size-full" aria-hidden />
     </div>

@@ -17,69 +17,56 @@ this repository.
 | `navigation/animated-tabs/AnimatedTabs.tsx` | `src/components/chaos/AnimatedTabs.tsx`: keyboard arrows/Home/End and ARIA relationships kept; the sliding pill is replaced by a rule under the active tab |
 | `loaders/progress-bar/ProgressBar.tsx` | `src/components/chaos/ProgressBar.tsx`: accessible pending/complete progress, reduced to a hairline |
 | `loaders/skeleton` | `src/components/chaos/Skeleton.tsx`: shimmer as a background-position animation, square by default |
-| `cursor/splash-cursor/SplashCursor.tsx` | `src/components/chaos/SplashCursor.tsx`: the WebGL fluid simulation, with its three imports repointed, the file marked `"use client"`, and the two additions described below |
-| `hooks/useInView`, `hooks/useMediaQuery` | `src/hooks/`: `useMediaQuery` is rewritten onto `useSyncExternalStore`, because the effect-based original trips React's set-state-in-effect rule |
-
-`src/components/chaos/CursorLayer.tsx` wraps the splash cursor: `RAINBOW_MODE` is off and the
-colour is pinned to the interface accent, and it renders nothing under `prefers-reduced-motion`
-(the upstream component opts out on coarse pointers but not on reduced motion).
-
-### Changes to the ported simulation
-
-#### The GPU memory leak on resize — a real bug, fixed
-
-Upstream never released a WebGL buffer it replaced. `resizeFBO` allocated the new texture and
-dropped the old handle; `resizeDoubleFBO` replaced its write half outright; and `initFramebuffers`
-rebuilt `divergence`, `curl` and `pressure` unconditionally on every call. A `WebGLTexture` is a
-handle to driver-side memory that JavaScript garbage collection does not free on any schedule you
-can rely on, so each of those was stranded GPU memory.
-
-`initFramebuffers` runs on every viewport size change. Measured over 30 resizes at 1920×1080,
-`deviceScaleFactor: 1`, by patching `createTexture`/`deleteTexture`:
-
-| | textures created | textures deleted | leaked |
-| --- | --- | --- | --- |
-| Before | 230 | 0 | **230** |
-| After | 230 | 230 | **0** |
-
-Eight textures and eight framebuffers per resize. The dye pair alone is roughly 7.5 MB of that.
-Opening DevTools resizes the viewport once; dragging its splitter fires `ResizeObserver`
-continuously, which is enough to exhaust GPU memory and have the browser kill the renderer. Every
-`FBO` now carries a `dispose()` and it is called wherever a buffer is replaced.
-
-The reason this did not show up in ChaoUi's own gallery is that the demo there runs in `contained`
-mode inside a small box. Here the simulation is full-viewport and mounted on every page.
-
-#### Two additions
-
-Neither is a correction — that component was written for a demo page, and here it runs behind a
-payment interface.
-
-- **`webglcontextlost` is handled, and the canvas is hidden, not just stopped.** A WebGL context
-  can be taken away at any time: the GPU process restarts, a driver resets, another tab exhausts
-  GPU memory. Upstream has no listener, so the render loop keeps issuing GL calls against a dead
-  context every frame, forever. Stopping the loop is necessary but was not sufficient on its own:
-  in non-contained mode this canvas is `fixed inset-0 z-50`, the entire viewport, above ordinary
-  page content, and a dead layer left in the DOM can still occupy that space — this is what a
-  real report of "the page goes white with a broken-image icon after resizing, but the assistant
-  widget (`z-80`, above this layer) still works" turned out to be, confirmed by forcibly losing
-  the context (`WEBGL_lose_context`) and checking `document.elementFromPoint`: before the fix, the
-  point resolved to the dead canvas; the real page content underneath was completely intact the
-  whole time. `handleContextLost` now sets `canvas.style.display = "none"`, so the canvas is fully
-  out of layout, paint and hit-testing rather than merely idle. There is no `webglcontextrestored`
-  handler and `preventDefault()` is deliberately not called in the loss handler — every buffer this
-  component owns is already gone by the time the loop stops, so reinitializing in place is the same
-  amount of work as a fresh mount, and treating the loss as permanent is the honest description of
-  what actually happened. The cursor is decoration; the page it decorates keeps working.
-- **`PIXEL_RATIO_CAP` is a prop**, defaulting to the upstream's fixed 2, and `CursorLayer` sets it
-  to 1. At `deviceScaleFactor: 2` and a 1637×936 viewport that takes the drawing buffer from
-  3274×1872 (6.13M pixels shaded per frame) to 1637×936 (1.53M). This is a per-frame cost saving
-  on retina displays only — it does nothing on a `deviceScaleFactor: 1` monitor, and it was not
-  what caused the crash above. The same wrapper also lowers `DYE_RESOLUTION` to 512,
-  `PRESSURE_ITERATIONS` to 12 and `SIM_RESOLUTION` to 96; the reasoning is in its own comment.
+| `media/morph-slider/MorphSlider.tsx` | `src/components/layout/ThemeMorphToggle.tsx` + `src/app/globals.css`: its melt gesture is applied to old/new whole-page theme snapshots without the image slider's WebGL runtime |
+| `cursor/splash-cursor/SplashCursor.tsx` | `src/components/chaos/SplashCursor.tsx`: the WebGL fluid simulation, scoped to the landing route with the safeguards below |
+| `hooks/useInView`, `hooks/useMediaQuery` | `src/hooks/`: visibility, coarse-pointer and reduced-motion gates used by the cursor |
+| `media/accordion-gallery/AccordionGallery.tsx` | `src/components/chaos/CapabilityAccordion.tsx`: the expand-on-hover mechanic (one GSAP timeline, `flexGrow` driving the growing panel), rebuilt for text — see below |
 
 Simple transitions use CSS instead of introducing ChaoUi's animation dependency. Financial amounts
 are rendered directly, not animated through intermediate values.
+
+### The capability accordion — what stayed, what didn't
+
+Upstream's `AccordionGallery` is a photo gallery: a row of panels, one growing on hover to reveal an
+image with 3D tilt, parallax drift and a grayscale-to-colour fade. The landing page's six
+capability cards have no photos, so the port keeps only the mechanic and drops everything that
+mechanic existed to serve:
+
+- **Kept.** One `gsap.timeline()` built fresh per active-index change, `flexGrow` driving the
+  growing panel, hover/focus/click all setting the same state, arrow-key navigation, a
+  reduced-motion check before every run.
+- **Dropped.** `perspective`/`rotateY` tilt, image parallax drift, the grayscale filter — all
+  photographic, and the tilt specifically would have been the one 3D transform on a page that is
+  everywhere else deliberately flat (see "Visual direction" below: transform and opacity only,
+  square corners, no depth). A collapsed panel shows its title as vertical text instead of a
+  thumbnail.
+- **Fixed, not carried over.** Upstream's keyboard handler computes `active + 1` from the DOM
+  element that has focus, but never moves focus to the new active panel — so a second ArrowRight
+  computes `current + 1` from the same starting point instead of advancing from where the first
+  press landed. Confirmed with Playwright before and after: two ArrowRight presses from panel 0
+  reached panel 1 both times upstream-style, panel 2 once focus follows `active`.
+- **Responsive.** Upstream escapes to a stacked vertical layout under 520px via CSS overrides on
+  the JS-set inline styles. This port takes the same approach at this project's own `md` breakpoint
+  (768px) instead of an arbitrary pixel width, and `applyLayout` skips its `ResizeObserver` work
+  entirely below it rather than computing a layout nothing will read.
+
+### The splash cursor — landing-only and budgeted
+
+The first port mounted a `fixed inset-0 z-50` simulation in `AppShell`, so it ran forever on every
+route. Testing exposed a GPU memory leak during resize (230 textures over 30 resizes) and a dead
+full-screen layer after WebGL context loss. The component keeps the fixes: replaced framebuffers
+are explicitly disposed, effect cleanup deletes every owned GPU resource without forcing context
+loss on a reusable canvas, and a real context loss stops and hides the canvas.
+
+The current integration is deliberately smaller. `ArcHome` dynamically loads it for the landing
+route only. Its fixed viewport canvas follows the reader through the meta bar, hero, capabilities
+and details, sits above the landing sections but below persistent controls, and never receives
+pointer events. It opts out on coarse
+pointers and `prefers-reduced-motion`, pauses when the tab is hidden, and stops requesting frames
+2.4 seconds after the latest interaction. Retina DPR is capped at 1, dye resolution at 512, the
+simulation grid at 96, and the pressure solve at 12 passes. The cursor cycles through its rainbow
+palette. It is not rendered by `AppShell`, so dashboard, payment and checkout routes carry none of
+its runtime cost.
 
 ## From Chaos Market AI
 
@@ -95,7 +82,7 @@ its own data.
 | `lib/visual/led-ring.ts` | folded into `src/lib/visual/pulse.ts` as `rampStops` |
 | `chaos-panel`, `-label`, `-metric`, `-number`, `-badge`, `-divider`, `-trace-row` | `src/components/chaos/Terminal.tsx`: one file holding `Panel`, `Label`, `Metric`, `Num`, `Divider`, `TraceRow`, `Chip` and `StatusDot` |
 | `chaos-grid`, `chaos-dot-field`, `chaos-scanlines`, `chaos-cut` | `src/app/globals.css`, same rules |
-| `styles/tokens.css` | `src/styles/tokens.css`: the same Happy Hues 13 accents, extended with a light mode |
+| `styles/tokens.css` | `src/styles/tokens.css`: Happy Hues 13 for dark mode and Happy Hues 17 for light mode |
 
 ### What the sphere means here
 
@@ -106,24 +93,29 @@ beats the same way. Amplitude comes from the browser-local confirmed-payment cou
 travelling ripple fires once per settled payment. None of it is random, and none of it is a
 forecast.
 
+Dark mode keeps the original sphere ramp and depth fade. Light mode mixes the palette's pink and
+cyan toward navy, raises the back-point opacity and minimum dot size, and draws a navy outer ring;
+this also keeps the 62px assistant launcher legible on the cream background.
+
 `SettlementPath` in `src/components/payments/SettlementPulse.tsx` renders the five stages
 `PaymentStudio` actually moves a transfer through, so the numbering stops advancing exactly when
 the payment does.
 
 ## Visual direction
 
-A settlement terminal: one flat ground, hairline rules instead of shadows, square corners instead
-of radii, and a single warm accent. Colour is never decoration — the accent marks the one action on
-screen that spends money, and positive/negative are reserved for settled and reverted.
+A settlement terminal: one flat ground, hairline rules instead of shadows, and square corners
+instead of radii. Dark mode keeps its warm action accent; light mode uses pink for actions and cyan
+as a supporting hue. Positive/negative remain reserved for settled and reverted.
 
-- **Palette** — [Happy Hues](https://www.happyhues.co/) 13 (`#0f0e17` ink, `#fffffe` paper,
-  `#a7a9be` muted, `#ff8906` accent), the same set Chaos Market AI runs on. Tokens live in
-  `src/styles/tokens.css`.
+- **Palette** — dark uses [Happy Hues 13](https://www.happyhues.co/palettes/13)
+  (`#0f0e17` ink, `#ff8906` accent). Light uses [Happy Hues 17](https://www.happyhues.co/palettes/17)
+  (`#fef6e4` ground, `#001858` ink, `#f3d2c1` surface, `#8bd3dd` secondary and `#f582ae` action).
+  Tokens live in `src/styles/tokens.css`.
 - **Type** — Geist Sans for prose, Geist Mono for everything the reader scans character by
   character: addresses, hashes, amounts, chain ids and all metadata labels. The previous design had
   one family at one weight scale and no typographic contrast at all.
-- **Theme** — dark is the default and the designed state; light is the same terminal printed on
-  paper, and is a deliberate opt-out rather than an OS preference.
+- **Theme** — dark remains the default; light is a warmer companion theme selected explicitly by
+  the user rather than inferred from the OS preference.
 - **Motion** — transform and opacity only. The sphere stops rendering off-screen through an
   `IntersectionObserver` and paints one resting frame under reduced motion.
 

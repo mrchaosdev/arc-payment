@@ -1,10 +1,20 @@
 import { AppShell } from "@/components/layout/AppShell";
+import { PageHeading } from "@/components/chaos/Terminal";
 import { PaymentActivity } from "@/components/payments/PaymentActivity";
 
 export default function HistoryPage() {
   return (
     <AppShell>
-      <div className="history-page mx-auto max-w-[1120px]"><div className="history-heading mb-8"><p className="history-eyebrow mb-2 text-xs text-[var(--primary)]">YOUR PAYMENT WORKSPACE</p><h1 className="history-title text-3xl font-semibold tracking-tight">Activity</h1><p className="history-description mt-2 text-sm text-[var(--text-muted)]">A clear trail for every payment you send here.</p></div><PaymentActivity /></div>
+      <div className="history-page mx-auto max-w-[1120px] space-y-6">
+        <div className="history-heading border-b border-[var(--border)] pb-6">
+          <PageHeading
+            eyebrow="Your payment workspace"
+            title="Activity"
+            subtitle="A clear trail for every payment you send here."
+          />
+        </div>
+        <PaymentActivity />
+      </div>
     </AppShell>
   );
 }

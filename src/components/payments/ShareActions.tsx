@@ -80,11 +80,16 @@ export function ShareActions({
           </Button>
         )}
         {preview && (
+          // `ml-auto`: two content-sized buttons on their own left the rest of
+          // a full-width row empty, next to a link with a different visual
+          // weight sitting right after them — the row read as unfinished, not
+          // just short. Anchoring Preview to the far edge instead makes the
+          // leftover width read as deliberate spacing between two groups.
           <a
             href={url}
             target="_blank"
             rel="noreferrer"
-            className="share-actions-preview-link inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
+            className="share-actions-preview-link ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
             Preview <ExternalLink size={12} />
           </a>

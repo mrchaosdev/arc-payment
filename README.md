@@ -95,8 +95,8 @@ Resources: [Arc](https://www.arc.io), [Arc docs](https://docs.arc.io), and
 
 The interface is a settlement terminal: flat ground, hairline rules, square corners, one warm
 accent, and Geist Mono on every address, hash and amount. It adapts components from the ChaoUi
-library and shares its design language — including the dot-matrix pulse sphere and the splash
-cursor — with Chaos Market AI. Neither source folder is imported at runtime. See
+library and shares its design language — including the dot-matrix pulse sphere and a landing-only
+fluid cursor that follows the viewport — with Chaos Market AI. Neither source folder is imported at runtime. See
 [the interface sources and migration notes](docs/CHAOUI-ADAPTATION.md) for component origins,
-what the sphere is derived from, payment safeguards and what to copy when creating a separate
+what the sphere is derived from, payment safeguards, how the WebGL effect is bounded, and what to copy when creating a separate
 repository.

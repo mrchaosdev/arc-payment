@@ -128,8 +128,12 @@ là lệch. CSS anchor positioning là lời giải đúng nhưng hỗ trợ tr�
 dùng liên hệ nào. Trong `onChange` cũng có một dòng `setFieldErrors` thừa vì `edit()` đã tự xoá
 lỗi trường.
 
-**6. `components/chaos/SplashCursor.tsx` là code chết** — 1078 dòng WebGL, không được import ở
-đâu. Không nằm trong bundle nên không ảnh hưởng hiệu năng; xoá hay dùng là quyết định để ngỏ.
+**6. `SplashCursor` chỉ được phép chạy ở route landing.** Bản từng nối vào `AppShell` đã gây rò rỉ
+bộ nhớ GPU khi resize và có thể để canvas chết phủ toàn trang khi mất WebGL context. Bản hiện tại
+giữ các bản vá đó, tải động từ `ArcHome`, dùng canvas fixed theo viewport và không nhận pointer event,
+bỏ qua thiết bị coarse-pointer và reduced-motion, rồi tự ngừng render sau 2,4 giây không tương tác.
+Không chuyển nó trở lại `AppShell`; xem
+[docs/CHAOUI-ADAPTATION.md](CHAOUI-ADAPTATION.md#the-splash-cursor--landing-only-and-budgeted).
 
 ## Quy ước khi sửa tiếp
 

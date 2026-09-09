@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { CapabilityAccordion } from "@/components/chaos/CapabilityAccordion";
 import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { derivePulse } from "@/lib/visual/pulse";
@@ -18,6 +19,12 @@ import {
 // The hero sphere is the heaviest thing on the landing page and the least
 // urgent: it is fetched after the copy that explains the product has rendered.
 const ChaosSphere = dynamic(() => import("@/components/chaos/ChaosSphere").then((m) => m.ChaosSphere), {
+  ssr: false,
+});
+
+// The fluid code is isolated to the landing route. Its fixed viewport canvas
+// follows the pointer while the reader scrolls, then idles between gestures.
+const SplashCursor = dynamic(() => import("@/components/chaos/SplashCursor").then((m) => m.SplashCursor), {
   ssr: false,
 });
 
@@ -120,10 +127,26 @@ export function ArcHome() {
   }, []);
 
   return (
-    <div className="landing-page relative" ref={root}>
-      <div aria-hidden className="landing-background chaos-grid pointer-events-none absolute inset-0 opacity-60" />
+    <div className="landing-page relative isolate" ref={root}>
+      <div aria-hidden className="landing-background chaos-grid pointer-events-none absolute inset-0 z-0 opacity-60" />
 
-      <div className="landing-meta-bar relative border-b border-[var(--border)]">
+      <SplashCursor
+        RAINBOW_MODE
+        COLOR_UPDATE_SPEED={7}
+        PIXEL_RATIO_CAP={1}
+        SIM_RESOLUTION={96}
+        DYE_RESOLUTION={512}
+        PRESSURE_ITERATIONS={12}
+        DENSITY_DISSIPATION={4.2}
+        VELOCITY_DISSIPATION={2.4}
+        SPLAT_RADIUS={0.14}
+        SPLAT_FORCE={4800}
+        CURL={2}
+        IDLE_TIMEOUT_MS={2400}
+        className="!z-20 opacity-90"
+      />
+
+      <div className="landing-meta-bar relative z-10 border-b border-[var(--border)]">
         <div className="landing-meta-container mx-auto grid max-w-[1400px] gap-0 px-4 md:grid-cols-[1fr_auto] md:px-8">
           <div className="landing-meta-labels flex flex-wrap items-center gap-x-3 gap-y-1 py-5">
             <Label className="landing-network-label">Arc public testnet</Label>
@@ -138,8 +161,8 @@ export function ArcHome() {
         </div>
       </div>
 
-      <section className="landing-hero relative border-b border-[var(--border)]">
-        <div className="landing-hero-container mx-auto grid max-w-[1400px] items-start gap-0 px-4 md:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="landing-hero relative z-10 overflow-hidden border-b border-[var(--border)]">
+        <div className="landing-hero-container relative z-10 mx-auto grid max-w-[1400px] items-start gap-0 px-4 md:px-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="landing-hero-copy py-12 lg:py-16 lg:pr-12">
             <Label className="landing-hero-eyebrow text-[var(--action)]">Sign once · settle in seconds · keep the proof</Label>
 
@@ -225,7 +248,7 @@ export function ArcHome() {
         </div>
       </section>
 
-      <section className="landing-capabilities relative border-b border-[var(--border)] py-14">
+      <section className="landing-capabilities relative z-10 border-b border-[var(--border)] py-14">
         <div className="landing-capabilities-container mx-auto max-w-[1400px] px-4 md:px-8">
           <div className="landing-capabilities-heading max-w-2xl">
             <Label className="landing-capabilities-eyebrow text-[var(--action)]">What it does today</Label>
@@ -238,34 +261,13 @@ export function ArcHome() {
             </h2>
           </div>
 
-          <div className="landing-capabilities-grid mt-10 grid border-l border-t border-[var(--border)] md:grid-cols-2 xl:grid-cols-3">
-            {capabilities.map(({ id, title, body, meta, href, hrefLabel, hint }) => (
-              <article key={id} className="landing-capability flex flex-col border-b border-r border-[var(--border)] p-6">
-                <div className="landing-capability-header flex items-center justify-between">
-                  <Num value={id} tone="primary" className="landing-capability-number text-[11px]" />
-                  <Label className="landing-capability-meta">{meta}</Label>
-                </div>
-                <h3 className="landing-capability-title mt-6 text-base font-semibold leading-snug">{title}</h3>
-                <p className="landing-capability-description mt-3 pb-5 text-[13px] leading-6 text-[var(--text-muted)]">{body}</p>
-                {href ? (
-                  <Link
-                    href={href}
-                    className="landing-capability-link mt-auto inline-flex items-center gap-1.5 self-start font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
-                  >
-                    {hrefLabel} <ArrowRight className="size-3" />
-                  </Link>
-                ) : hint ? (
-                  <p className="landing-capability-hint mt-auto font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
-                    {hint}
-                  </p>
-                ) : null}
-              </article>
-            ))}
+          <div className="landing-capabilities-grid mt-10">
+            <CapabilityAccordion items={capabilities} />
           </div>
         </div>
       </section>
 
-      <section className="landing-details relative py-14">
+      <section className="landing-details relative z-10 py-14">
         <div className="landing-details-grid mx-auto grid max-w-[1400px] gap-8 px-4 md:px-8 lg:grid-cols-[1fr_1fr]">
           <Panel className="landing-network-panel" title="Network constants" meta="ARC TESTNET" bodyClassName="p-0">
             <ConstantRow label="Chain id" value={String(ARC_TESTNET_ID)} />

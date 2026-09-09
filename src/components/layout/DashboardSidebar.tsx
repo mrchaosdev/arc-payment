@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ARC_FAUCET_URL } from "@/lib/arc";
 import { useAssistant } from "@/store/assistant";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 // Adapted from ChaoUi/navigation/dashboard-sidebar. Next links preserve native
 // navigation semantics; CSS width transitions respect reduced motion.
@@ -46,9 +47,7 @@ export function DashboardSidebar() {
         aria-label="SealPay home"
         className="dashboard-sidebar-brand flex h-14 shrink-0 items-center gap-2.5 border-b border-[var(--border)] px-5"
       >
-        <span className="dashboard-sidebar-brand-mark grid size-7 shrink-0 place-items-center bg-[var(--action)] font-mono text-sm text-[var(--on-action)]">
-          $
-        </span>
+        <BrandMark className="dashboard-sidebar-brand-mark" />
         {!collapsed && (
           <span className="dashboard-sidebar-brand-text min-w-0">
             <span className="dashboard-sidebar-brand-name block truncate text-base font-semibold tracking-tight">SealPay</span>

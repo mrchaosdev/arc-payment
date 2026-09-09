@@ -178,6 +178,20 @@ a {
   background-repeat: repeat-x;
 }
 
+/* Theme change adapted from ChaoUi MorphSlider's `melt` transition. The View
+   Transition API supplies live old/new page snapshots; soft masks make the
+   incoming theme dissolve through the outgoing one in uneven blobs. */
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  display: block;
+  mix-blend-mode: normal;
+}
+
 @media (min-width: 640px) {
   html {
     scrollbar-width: thin;

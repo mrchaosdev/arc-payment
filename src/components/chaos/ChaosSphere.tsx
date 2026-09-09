@@ -99,6 +99,7 @@ export function ChaosSphere({
     }
 
     const host = canvas.parentElement ?? canvas;
+    const isDark = document.documentElement.classList.contains("dark");
     const palette = {
       positive: resolveTokenChannels(host, "--positive"),
       negative: resolveTokenChannels(host, "--negative"),
@@ -106,15 +107,25 @@ export function ChaosSphere({
       muted: resolveTokenChannels(host, "--text-muted"),
       accent: resolveTokenChannels(host, "--action"),
       highlight: resolveTokenChannels(host, "--highlight"),
+      ink: resolveTokenChannels(host, "--text-primary"),
+      secondary: resolveTokenChannels(host, "--accent-blue"),
     };
+    const lightAccent = mixChannels(palette.accent, palette.ink, 0.34);
+    const lightSecondary = mixChannels(palette.secondary, palette.ink, 0.28);
 
-    // Locked to the Happy Hues 13 accents — a warm orange/red/pink cycle, never
-    // a rainbow. The ramp differs per tone so colour still carries state.
-    const ledRamps: Record<PulseTone, RgbChannels[]> = {
-      neutral: [palette.accent, palette.negative, palette.highlight],
-      positive: [palette.accent, palette.positive, palette.highlight],
-      negative: [palette.negative, palette.highlight],
-    };
+    // Dark keeps the original warm ramp exactly. Happy Hues 17 gives light
+    // mode a wider navy/cyan/pink range so the dots do not wash into cream.
+    const ledRamps: Record<PulseTone, RgbChannels[]> = isDark
+      ? {
+          neutral: [palette.accent, palette.negative, palette.highlight],
+          positive: [palette.accent, palette.positive, palette.highlight],
+          negative: [palette.negative, palette.highlight],
+        }
+      : {
+          neutral: [palette.ink, lightAccent, lightSecondary],
+          positive: [palette.positive, lightSecondary, palette.ink],
+          negative: [palette.negative, lightAccent, palette.ink],
+        };
 
     const lattice = buildLattice(points);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -173,16 +184,21 @@ export function ChaosSphere({
         const tiltedY = point.y * Math.cos(tilt) - spunZ * Math.sin(tilt);
         const tiltedZ = point.y * Math.sin(tilt) + spunZ * Math.cos(tilt);
 
-        const depth = Math.pow((tiltedZ + 1) / 2, 1.6);
+        const depth = Math.pow((tiltedZ + 1) / 2, isDark ? 1.6 : 1.4);
         const energy = beat + ripple + restingLift;
-        const surface = led ? ledColour(ledRamps[liveTone], localPhase) : toneChannels;
+        const lightTone = liveTone === "neutral" ? palette.ink : toneChannels;
+        const surface = led ? ledColour(ledRamps[liveTone], localPhase) : (isDark ? toneChannels : lightTone);
         const channels = mixChannels(
           palette.muted,
           ripple > 0.15 ? palette.accent : surface,
-          0.2 + depth * 0.55 + energy * 0.25
+          (isDark ? 0.2 : 0.38) + depth * (isDark ? 0.55 : 0.5) + energy * 0.25
         );
-        const alpha = Math.min(1, (0.08 + depth * 0.92) * (0.7 + energy * 0.3));
-        const size = (0.75 + depth * 2.05) * (1 + energy * 0.4);
+        const alpha = Math.min(
+          1,
+          ((isDark ? 0.08 : 0.34) + depth * (isDark ? 0.92 : 0.66))
+            * ((isDark ? 0.7 : 0.94) + energy * 0.3),
+        );
+        const size = ((isDark ? 0.75 : 1.1) + depth * (isDark ? 2.05 : 2.25)) * (1 + energy * 0.4);
 
         context.fillStyle = `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${alpha.toFixed(3)})`;
         context.beginPath();
@@ -197,9 +213,10 @@ export function ChaosSphere({
         radius,
         liveAmplitude,
         cyclePhase,
-        palette.accent,
+        isDark ? palette.accent : palette.ink,
         reduced,
-        rippleActive ? rippleAge : null
+        rippleActive ? rippleAge : null,
+        isDark,
       );
 
       if (!reduced && visible) {
@@ -348,14 +365,15 @@ function drawRing(
   cyclePhase: number,
   accent: RgbChannels,
   reduced: boolean,
-  rippleAge: number | null
+  rippleAge: number | null,
+  isDark: boolean,
 ) {
   const beat = reduced ? 0 : heartbeat(wrap(cyclePhase));
   const ringRadius = radius * (1 + amplitude * beat) * 1.08;
   const rippleGlow = rippleAge === null ? 0 : Math.sin(Math.PI * rippleAge) * 0.35;
 
-  context.strokeStyle = `rgba(${accent[0]}, ${accent[1]}, ${accent[2]}, ${(0.1 + beat * 0.22 + rippleGlow).toFixed(3)})`;
-  context.lineWidth = 1;
+  context.strokeStyle = `rgba(${accent[0]}, ${accent[1]}, ${accent[2]}, ${((isDark ? 0.1 : 0.3) + beat * 0.22 + rippleGlow).toFixed(3)})`;
+  context.lineWidth = isDark ? 1 : 1.25;
   context.beginPath();
   context.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
   context.stroke();
