@@ -57,6 +57,25 @@ test("a saved request can be copied and shown as a code, not just opened", async
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(link);
 });
 
+test("opening the wallet picker makes no doomed third-party calls", async ({ page }) => {
+  // Without a real WalletConnect project id, offering WalletConnect-backed
+  // wallets made AppKit fetch its remote config (403) and post telemetry (400)
+  // every time this dialog opened. Only wallets that work without a key are
+  // listed, so nothing reaches out at all.
+  const offsite: string[] = [];
+  const watch = (url: string) => {
+    if (/walletconnect|web3modal|reown/i.test(url) && !url.includes("localhost")) offsite.push(url);
+  };
+  page.on("request", (req) => watch(req.url()));
+
+  await page.goto("/pay");
+  await page.getByRole("button", { name: "Connect wallet to continue" }).click();
+  await expect(page.getByRole("button", { name: "Browser Wallet" })).toBeVisible();
+  await page.waitForTimeout(2500);
+
+  expect(offsite).toEqual([]);
+});
+
 test("rejects imprecise request amount and supports keyboard tabs", async ({ page }) => {
   await page.goto("/pay");
   await page.getByRole("tab", { name: "Send payment" }).focus();

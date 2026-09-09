@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import type { Hash } from "viem";
-import { ArrowUpRight, Download, ExternalLink, RefreshCw } from "lucide-react";
+import { ArrowUpRight, Download, ExternalLink, Receipt, RefreshCw } from "lucide-react";
 import { Chip, Label, Num, Panel } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
+import { PaymentReceipt } from "@/components/payments/PaymentReceipt";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { useHydrated } from "@/hooks/useHydrated";
 import { usePayments, type PaymentRecord } from "@/store/payments";
@@ -26,6 +27,9 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   const updateStatus = usePayments((s) => s.updateStatus);
   const [checking, setChecking] = useState<string>();
   const [notice, setNotice] = useState("");
+  // The receipt tracks a hash rather than a snapshot, so a fee filled in while
+  // the sheet is open reaches the sheet.
+  const [receiptHash, setReceiptHash] = useState<string>();
   const items = hydrated && address ? payments.filter((p) => p.from.toLowerCase() === address.toLowerCase()) : [];
   // A stable key over the unconfirmed hashes: the sweep below restarts only when
   // the set of in-flight payments actually changes, not on every render.
@@ -45,7 +49,12 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
         hashes.map(async (hash) => {
           try {
             const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash });
-            if (active) updateStatus(hash, receipt.status === "success" ? "Success" : "Failed");
+            if (active)
+              updateStatus(
+                hash,
+                receipt.status === "success" ? "Success" : "Failed",
+                (receipt.gasUsed * receipt.effectiveGasPrice).toString()
+              );
           } catch {
             // Still in flight. The next sweep asks again.
           }
@@ -61,12 +70,18 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
     };
   }, [pendingKey, updateStatus]);
 
+  const sheet = receiptHash ? items.find((p) => p.hash === receiptHash) : undefined;
+
   async function check(p: PaymentRecord) {
     setChecking(p.hash);
     setNotice("");
     try {
       const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash: p.hash });
-      updateStatus(p.hash, receipt.status === "success" ? "Success" : "Failed");
+      updateStatus(
+        p.hash,
+        receipt.status === "success" ? "Success" : "Failed",
+        (receipt.gasUsed * receipt.effectiveGasPrice).toString()
+      );
       setNotice("Receipt verified on Arc Testnet.");
     } catch {
       setNotice("Receipt not available yet. Check ArcScan before sending another payment.");
@@ -166,6 +181,12 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
                       ArcScan <ExternalLink size={11} />
                     </a>
                     <button
+                      onClick={() => setReceiptHash(p.hash)}
+                      className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    >
+                      <Receipt size={11} /> Receipt
+                    </button>
+                    <button
                       onClick={() => download(p)}
                       className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     >
@@ -204,6 +225,8 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
           <Label>Capped at 200 records per browser</Label>
         </div>
       ) : null}
+
+      {sheet ? <PaymentReceipt payment={sheet} onClose={() => setReceiptHash(undefined)} /> : null}
     </Panel>
   );
 }

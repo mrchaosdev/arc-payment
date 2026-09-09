@@ -198,3 +198,197 @@ a {
     animation: none;
   }
 }
+
+/* ── Printable receipt ─────────────────────────────────────────────────────
+   The one surface that ignores the theme. An invoice leaves the app as paper
+   or a PDF someone else opens, so it is always dark ink on white. */
+
+.receipt-sheet {
+  background: #ffffff;
+  color: #111827;
+  padding: 40px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.receipt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 2px solid #111827;
+  padding-bottom: 20px;
+}
+
+.receipt-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.receipt-mark {
+  display: inline-flex;
+  height: 26px;
+  width: 26px;
+  align-items: center;
+  justify-content: center;
+  background: #f97316;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.receipt-headline {
+  text-align: right;
+}
+
+.receipt-headline h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.receipt-status {
+  margin: 6px 0 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #374151;
+}
+
+.receipt-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 24px 0 0;
+}
+
+.receipt-parties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
+}
+
+.receipt-label {
+  margin: 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #6b7280;
+}
+
+.receipt-spaced {
+  margin-top: 14px;
+}
+
+.receipt-value {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
+
+.receipt-mono {
+  margin: 5px 0 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.receipt-table {
+  width: 100%;
+  margin-top: 28px;
+  border-collapse: collapse;
+}
+
+.receipt-table th,
+.receipt-table td {
+  padding: 11px 0;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.receipt-table thead th {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #6b7280;
+  border-bottom-color: #111827;
+}
+
+.receipt-table tfoot th,
+.receipt-table tfoot td {
+  border-bottom: 0;
+  padding-top: 14px;
+  font-weight: 700;
+}
+
+/* Scoped to the table because `.receipt-table td` sets text-align and would
+   otherwise out-specify a bare class. */
+.receipt-table .receipt-right {
+  text-align: right;
+}
+
+.receipt-num {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-total {
+  font-size: 15px;
+}
+
+.receipt-tx {
+  margin-top: 28px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+
+.receipt-foot {
+  margin-top: 28px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 18px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+.receipt-foot p + p {
+  margin-top: 8px;
+}
+
+@media print {
+  /* Only the receipt reaches the paper: the overlay is portalled to the body,
+     so hiding every other top-level child leaves exactly the sheet. */
+  body > *:not([data-receipt-overlay]) {
+    display: none !important;
+  }
+
+  [data-receipt-overlay] {
+    position: static !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+  }
+
+  .receipt-actions {
+    display: none !important;
+  }
+
+  .receipt-sheet {
+    border: 0;
+    padding: 0;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+}

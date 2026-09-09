@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 
 type DrawnCode = { value: string; modules: number; path: string };
 
+/** How much of the code's width the mark covers. Kept well inside what level H can lose. */
+const LOGO_RATIO = 0.22;
+
 /**
  * The QR for a checkout link.
  *
@@ -12,14 +15,22 @@ type DrawnCode = { value: string; modules: number; path: string };
  * asks for one, so its bytes have no business in the bundle that renders the
  * form. The modules are pinned dark-on-light on their own white plate in both
  * themes: scanners read contrast, not the app's colour scheme.
+ *
+ * With a mark in the middle the symbol is encoded at error-correction level H,
+ * which can lose about 30% of its modules and still decode. The mark covers far
+ * less than that, so punching it out costs nothing a scanner will notice.
+ * Without a mark the default level keeps the code sparser and easier to read at
+ * small sizes.
  */
 export function PaymentQr({
   value,
   size = 168,
+  logo = true,
   className,
 }: {
   value: string;
   size?: number;
+  logo?: boolean;
   className?: string;
 }) {
   const [code, setCode] = useState<DrawnCode>();
@@ -31,7 +42,7 @@ export function PaymentQr({
     import("qr")
       .then(({ default: encodeQR }) => {
         if (cancelled) return;
-        const grid = encodeQR(value, "raw", { border: 2 });
+        const grid = encodeQR(value, "raw", { border: 2, ecc: logo ? "high" : "medium" });
         // One path beats one rect per module: a mid-size code is well over a
         // thousand nodes otherwise, and this redraws whenever a row opens.
         const path = grid
@@ -46,7 +57,7 @@ export function PaymentQr({
     return () => {
       cancelled = true;
     };
-  }, [value]);
+  }, [value, logo]);
 
   // Only a code drawn for the link currently on screen may be shown; anything
   // left over from a previous link reads as the placeholder until it is redrawn.
@@ -68,18 +79,42 @@ export function PaymentQr({
       />
     );
 
+  const { modules } = drawn;
+  const markSide = Math.round(modules * LOGO_RATIO);
+  const plateSide = markSide + 2;
+
   return (
     <svg
       role="img"
       aria-label="Payment link as a QR code"
       width={size}
       height={size}
-      viewBox={`0 0 ${drawn.modules} ${drawn.modules}`}
+      viewBox={`0 0 ${modules} ${modules}`}
       shapeRendering="crispEdges"
       className={cn("border border-[var(--border)]", className)}
     >
-      <rect width={drawn.modules} height={drawn.modules} fill="#ffffff" />
+      <rect width={modules} height={modules} fill="#ffffff" />
       <path d={drawn.path} fill="#000000" />
+      {logo && (
+        <>
+          {/* The plate keeps a quiet ring around the mark so the modules it
+              covers end cleanly instead of bleeding into it. */}
+          <rect
+            x={(modules - plateSide) / 2}
+            y={(modules - plateSide) / 2}
+            width={plateSide}
+            height={plateSide}
+            fill="#ffffff"
+          />
+          <image
+            href="/tokens/usdc.svg"
+            x={(modules - markSide) / 2}
+            y={(modules - markSide) / 2}
+            width={markSide}
+            height={markSide}
+          />
+        </>
+      )}
     </svg>
   );
 }

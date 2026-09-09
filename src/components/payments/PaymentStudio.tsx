@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, Link2, Pencil, RefreshCw, RotateCcw, Send, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, Link2, Pencil, RefreshCw, RotateCcw, Send, ShieldCheck, Smartphone } from "lucide-react";
 import { erc20Abi, formatUnits, type Address, type Hash } from "viem";
 import { useAccount, useReadContract, useSwitchChain, useWriteContract } from "wagmi";
 import { getAccount } from "wagmi/actions";
@@ -10,6 +10,7 @@ import { AnimatedTabs } from "@/components/chaos/AnimatedTabs";
 import { ProgressBar } from "@/components/chaos/ProgressBar";
 import { Chip, Divider, Label, Num, Panel, StatusDot } from "@/components/chaos/Terminal";
 import { SettlementPath, SettlementPulse } from "@/components/payments/SettlementPulse";
+import { PaymentQr } from "@/components/payments/PaymentQr";
 import { ShareActions } from "@/components/payments/ShareActions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -18,6 +19,7 @@ import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
+import { useHydrated } from "@/hooks/useHydrated";
 import type { SettlementStage } from "@/lib/visual/pulse";
 import { publicClients } from "@/lib/wagmi/clients";
 import { wagmiConfig } from "@/lib/wagmi/config";
@@ -63,6 +65,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const [hash, setHash] = useState<Hash>();
   const [shareUrl, setShareUrl] = useState("");
   const [actualFeeNative, setActualFeeNative] = useState<bigint>();
+  const hydrated = useHydrated();
   const lock = useRef(false);
   const toInput = useRef<HTMLInputElement>(null);
   const amountInput = useRef<HTMLInputElement>(null);
@@ -86,6 +89,12 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   // Amount, fee and the one number the wallet actually debits — the payer should
   // never have to add the first two together themselves.
   const totals = review ? paymentTotals(review.units, actualFeeNative ?? review.feeNative) : undefined;
+  // The canonical link for this request, rebuilt from the draft rather than read
+  // off the address bar so a code never carries stray query junk.
+  const checkoutUrl = useMemo(() => {
+    if (!hydrated || !checkout) return "";
+    try { return paymentLink(window.location.origin, draft); } catch { return ""; }
+  }, [hydrated, checkout, draft]);
 
   function edit(key: keyof PaymentDraft, value: string) {
     setError("");
@@ -115,8 +124,11 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
   function applyReceipt(transaction: Hash, receipt: { status: string; gasUsed: bigint; effectiveGasPrice: bigint }) {
     const success = receipt.status === "success";
-    updateStatus(transaction, success ? "Success" : "Failed");
-    setActualFeeNative(receipt.gasUsed * receipt.effectiveGasPrice);
+    const feeNative = receipt.gasUsed * receipt.effectiveGasPrice;
+    // The fee is kept on the record so the printed receipt states what was
+    // really paid instead of re-deriving an estimate months later.
+    updateStatus(transaction, success ? "Success" : "Failed", feeNative.toString());
+    setActualFeeNative(feeNative);
     setStage(success ? "success" : "failed");
     setError(success ? "" : "The transaction reverted. The payment was not completed; a network fee may have been charged.");
     void balanceQuery.refetch();
@@ -389,6 +401,16 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
           </> : null}
       {hash && <a className="flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]" href={arcTransactionUrl(hash)} target="_blank" rel="noreferrer">View on ArcScan <ExternalLink size={13} /></a>}
     </div>
+    {/* Most people reach a shared link on a desktop but keep their wallet on a
+        phone. The code is the bridge, so on checkout it is shown rather than
+        hidden behind a control the payer has no reason to press. */}
+    {stage === "summary" && checkoutUrl ? <div className="mt-6 flex flex-wrap items-center gap-4 border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+      <PaymentQr value={checkoutUrl} size={132} />
+      <div className="min-w-[180px] flex-1">
+        <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"><Smartphone size={13} />Pay from your phone</p>
+        <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">Scan this with your phone to open the same request in a mobile wallet. The details do not change.</p>
+      </div>
+    </div> : null}
     {shareUrl && <div className="mt-6 border border-[var(--border)] bg-[var(--surface)] p-4">
       <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><CheckCircle2 size={13} />Your checkout is ready</p>
       <label className="mt-3 block"><Label>Payment link</Label><input aria-label="Payment link" readOnly value={shareUrl} onFocus={e => e.target.select()} className="payment-input mt-2" /></label>

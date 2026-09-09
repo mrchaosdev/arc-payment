@@ -4,6 +4,7 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { Footer } from "@/components/layout/Footer";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { CursorLayer } from "@/components/chaos/CursorLayer";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 export function AppShell({
   children,
@@ -28,6 +29,10 @@ export function AppShell({
         </div>
       </div>
       <MobileNav />
+      {/* Read on the server so a deployment without a key ships no launcher at all,
+          rather than a button that fails when pressed. The checkout route has no
+          AppShell on purpose: the payer's screen stays a payment, not a chat. */}
+      {process.env.GEMINI_API_KEY ? <AssistantWidget /> : null}
     </div>
   );
 }
