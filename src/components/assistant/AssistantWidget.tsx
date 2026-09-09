@@ -24,6 +24,13 @@ const ChaosSphere = dynamic(() => import("@/components/chaos/ChaosSphere").then(
 const RESTING = { bpm: 52, amplitude: 0.032, tone: "neutral" } as const;
 const ANSWERING = { bpm: 96, amplitude: 0.062, tone: "positive" } as const;
 
+/**
+ * The backstop. The route gives up on the model sooner than this; this covers
+ * the rest — a stalled connection, a proxy holding the stream open — so the
+ * panel can never sit blinking forever with no way out but the Stop button.
+ */
+const ANSWER_TIMEOUT_MS = 60_000;
+
 /** Opening prompts, kept here so the server-side reference never enters this bundle. */
 const SUGGESTIONS = [
   "How do I get test USDC?",
@@ -40,6 +47,10 @@ const SUGGESTIONS = [
  * into a request. Answers stream in as plain text, which is all the route sends.
  */
 export function AssistantWidget() {
+  // Asked at runtime, not baked in at build: the pages this widget sits on are
+  // prerendered, so a server-side env check would freeze the answer into the
+  // build and hide the assistant on any deployment whose key arrives later.
+  const [available, setAvailable] = useState(false);
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
@@ -50,6 +61,21 @@ export function AssistantWidget() {
   const abort = useRef<AbortController>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const log = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/chat")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((status) => {
+        if (!cancelled && status?.configured) setAvailable(true);
+      })
+      .catch(() => {
+        // No answer means no assistant. The rest of the app is unaffected.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (open) input.current?.focus();
@@ -86,6 +112,11 @@ export function AssistantWidget() {
 
     const controller = new AbortController();
     abort.current = controller;
+    let timedOut = false;
+    const guard = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, ANSWER_TIMEOUT_MS);
 
     try {
       const response = await fetch("/api/chat", {
@@ -114,17 +145,27 @@ export function AssistantWidget() {
       }
     } catch (failure) {
       // Stopping on purpose is not an error; whatever streamed stays on screen.
-      if (failure instanceof DOMException && failure.name === "AbortError") return;
+      // Running out of time is, and it needs saying — otherwise the answer just
+      // stops mid-sentence with no explanation.
+      if (failure instanceof DOMException && failure.name === "AbortError") {
+        if (!timedOut) return;
+        setError("The assistant took too long to answer. Ask again, or try a shorter question.");
+        setTurns((current) => current.filter((turn, index) => !(index === current.length - 1 && !turn.content)));
+        return;
+      }
       setError(failure instanceof Error ? failure.message : "The assistant could not answer.");
       setTurns((current) => current.filter((turn, index) => !(index === current.length - 1 && !turn.content)));
       setAnswered((count) => count + 1);
     } finally {
+      clearTimeout(guard);
       setPending(false);
       abort.current = null;
     }
   }
 
   const pulse = pending ? ANSWERING : RESTING;
+
+  if (!available) return null;
 
   if (!open)
     return (

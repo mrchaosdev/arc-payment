@@ -6,6 +6,8 @@ async function stubAssistant(
   { body, status = 200, delayMs = 0 }: { body: string; status?: number; delayMs?: number }
 ) {
   await page.route("**/api/chat", async (route) => {
+    // The widget's availability probe is a GET; only the answer is stubbed.
+    if (route.request().method() !== "POST") return route.fallback();
     if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
     await route.fulfill({
       status,
@@ -50,6 +52,7 @@ test("a suggestion streams an answer into the panel", async ({ page }) => {
 test("the panel sends the whole exchange and keeps its own turn order", async ({ page }) => {
   const sent: unknown[] = [];
   await page.route("**/api/chat", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
     sent.push(JSON.parse(route.request().postData() ?? "{}"));
     await route.fulfill({ status: 200, headers: { "Content-Type": "text/plain" }, body: "Second answer." });
   });

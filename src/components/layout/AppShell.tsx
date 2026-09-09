@@ -29,10 +29,11 @@ export function AppShell({
         </div>
       </div>
       <MobileNav />
-      {/* Read on the server so a deployment without a key ships no launcher at all,
-          rather than a button that fails when pressed. The checkout route has no
-          AppShell on purpose: the payer's screen stays a payment, not a chat. */}
-      {process.env.GEMINI_API_KEY ? <AssistantWidget /> : null}
+      {/* The widget asks the API whether it is configured and hides itself if not.
+          Gating here on process.env instead would be evaluated when these pages
+          are prerendered, freezing the answer into the build. The checkout route
+          has no AppShell on purpose: the payer's screen stays a payment. */}
+      <AssistantWidget />
     </div>
   );
 }

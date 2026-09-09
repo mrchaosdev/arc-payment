@@ -13,6 +13,8 @@ const MODEL = "gemini-3.5-flash-lite";
 const MAX_OUTPUT_TOKENS = 2_000;
 const MAX_TURNS = 20;
 const MAX_CHARS = 2_000;
+/** A support answer that has not started after this long is not coming. */
+const UPSTREAM_TIMEOUT_MS = 45_000;
 
 /**
  * A crude per-address budget. It lives in module memory, so it protects a single
@@ -87,6 +89,14 @@ function translate(error: unknown) {
   return fail(502, "The assistant is unavailable right now.");
 }
 
+/** Whether the assistant can answer at all, asked at runtime rather than at build. */
+export async function GET() {
+  return Response.json(
+    { configured: Boolean(process.env.GEMINI_API_KEY) },
+    { headers: { "Cache-Control": "no-store" } }
+  );
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return fail(503, "The assistant is not configured on this deployment.");
@@ -117,7 +127,7 @@ export async function POST(request: NextRequest) {
       generation_config: { max_output_tokens: MAX_OUTPUT_TOKENS, thinking_level: "low" },
       // Nothing a user types into a payments app needs to be retained upstream.
       store: false,
-    });
+    }, { timeout_ms: UPSTREAM_TIMEOUT_MS });
   } catch (error) {
     console.error("[assistant] upstream failed before streaming", error);
     return translate(error);
