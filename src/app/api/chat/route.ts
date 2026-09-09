@@ -1,12 +1,18 @@
-import { ApiError, GoogleGenAI } from "@google/genai";
+import { ApiError, GoogleGenAI, type Interactions } from "@google/genai";
 import type { NextRequest } from "next/server";
+import { createPublicClient, http, isAddress } from "viem";
+import { arcTestnet } from "viem/chains";
 import { ASSISTANT_SYSTEM_PROMPT } from "@/lib/assistant/knowledge";
+import { PAYMENT_TOOLS, runPaymentTool } from "@/lib/assistant/tools";
+import type { AssistantEvent } from "@/lib/assistant/protocol";
+import { ARC_TESTNET_RPC } from "@/lib/arc";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
  * Flash-lite is the cheap end of the range and has a free tier — right for a
- * support widget that reads a fixed reference and answers in a few sentences.
+ * support widget that reads reference material and live payment evidence.
  */
 const MODEL = "gemini-3.5-flash-lite";
 /** The panel is a support widget, not an essay generator; long answers are a bug here. */
@@ -14,7 +20,7 @@ const MAX_OUTPUT_TOKENS = 2_000;
 const MAX_TURNS = 20;
 const MAX_CHARS = 2_000;
 /** A support answer that has not started after this long is not coming. */
-const UPSTREAM_TIMEOUT_MS = 45_000;
+const UPSTREAM_TIMEOUT_MS = 18_000;
 
 /**
  * A crude per-address budget. It lives in module memory, so it protects a single
@@ -68,7 +74,7 @@ function readTurns(value: unknown): Turn[] | null {
 }
 
 /** Gemini takes the history as typed steps rather than role-tagged messages. */
-function toSteps(turns: Turn[]) {
+function toSteps(turns: Turn[]): Interactions.Step[] {
   return turns.map((turn) => ({
     type: turn.role === "user" ? ("user_input" as const) : ("model_output" as const),
     content: [{ type: "text" as const, text: turn.content }],
@@ -109,10 +115,20 @@ export async function POST(request: NextRequest) {
     return fail(400, "Malformed request body.");
   }
 
-  const messages = readTurns((payload as { messages?: unknown })?.messages);
+  const envelope = payload as { messages?: unknown; walletAddress?: unknown } | null;
+  const messages = readTurns(envelope?.messages);
   if (!messages) return fail(400, "Send a non-empty conversation ending in a user message.");
+  const walletAddress = envelope?.walletAddress;
+  if (walletAddress !== undefined && (typeof walletAddress !== "string" || !isAddress(walletAddress)))
+    return fail(400, "Invalid shared wallet address.");
 
   const ai = new GoogleGenAI({ apiKey });
+  const input = toSteps(messages);
+  const systemInstruction = `${ASSISTANT_SYSTEM_PROMPT}\n\nCurrent shared wallet on this request: ${walletAddress ?? "none"}. Never assume a previous wallet is still shared.`;
+  const client = createPublicClient({
+    chain: arcTestnet,
+    transport: http(ARC_TESTNET_RPC, { timeout: 5_000, retryCount: 0, fetchOptions: { signal: request.signal } }),
+  });
 
   // The request is made here, so auth, quota and validation failures land as real
   // status codes rather than as a 200 whose body happens to say "something broke".
@@ -120,48 +136,84 @@ export async function POST(request: NextRequest) {
   try {
     result = await ai.interactions.create({
       model: MODEL,
-      stream: true,
-      input: toSteps(messages),
-      system_instruction: ASSISTANT_SYSTEM_PROMPT,
-      // Support answers are short and factual; depth buys nothing here.
+      stream: false,
+      input,
+      tools: PAYMENT_TOOLS,
+      system_instruction: systemInstruction,
       generation_config: { max_output_tokens: MAX_OUTPUT_TOKENS, thinking_level: "low" },
       // Nothing a user types into a payments app needs to be retained upstream.
       store: false,
-    }, { timeout_ms: UPSTREAM_TIMEOUT_MS });
+    }, { timeout_ms: UPSTREAM_TIMEOUT_MS, signal: request.signal });
   } catch (error) {
-    console.error("[assistant] upstream failed before streaming", error);
+    console.error("[assistant] upstream failed before responding");
     return translate(error);
   }
 
-  // `stream: true` returns the SSE stream, but the declared return type still
-  // unions it with a completed interaction. The SDK's `Stream` class is only in
-  // its type declarations — it is not a runtime export — so the narrowing is
-  // done on the async-iterator symbol the stream actually carries.
-  if (!(Symbol.asyncIterator in result)) {
-    console.error("[assistant] expected a stream, got a completed interaction");
+  if (Symbol.asyncIterator in result) {
     return fail(502, "The assistant is unavailable right now.");
   }
+  const planned = result;
+  const steps = planned.steps ?? [];
+  const calls = steps.filter(step => step.type === "function_call");
+  if (calls.length > 3) return fail(400, "Please ask for at most three payment checks at a time.");
 
   const encoder = new TextEncoder();
+  let cancelled = false;
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const emit = (event: AssistantEvent) => {
+        if (!cancelled && !request.signal.aborted) controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      };
       try {
-        for await (const event of result) {
-          if (event.event_type === "step.delta" && event.delta.type === "text")
-            controller.enqueue(encoder.encode(event.delta.text));
+        if (!calls.length) {
+          const text = planned.output_text || steps.filter(step => step.type === "model_output")
+            .flatMap(step => step.content ?? []).map(content => content.type === "text" ? content.text : "").join("");
+          if (!text) throw new Error("Empty answer");
+          emit({ type: "text", text });
+        } else {
+          emit({ type: "status", text: "Checking Arc Testnet…" });
+          input.push(...steps);
+          // Independent reads run together; results are emitted and returned to the model in call order.
+          const evidence = await Promise.all(calls.map(call => runPaymentTool(call.name, call.arguments, {
+            walletAddress,
+            userText: messages.filter(turn => turn.role === "user").map(turn => turn.content).join("\n"),
+          }, client)));
+          if (request.signal.aborted || cancelled) return;
+          for (let index = 0; index < calls.length; index++) {
+            emit({ type: "evidence", evidence: evidence[index] });
+            input.push({ type: "function_result", call_id: calls[index].id, name: calls[index].name,
+              result: JSON.stringify(evidence[index]), is_error: !evidence[index].ok });
+          }
+          emit({ type: "status", text: "Explaining the results…" });
+          const explanation = await ai.interactions.create({
+            model: MODEL, input, stream: true, store: false, tools: PAYMENT_TOOLS,
+            system_instruction: systemInstruction,
+            generation_config: { max_output_tokens: MAX_OUTPUT_TOKENS, thinking_level: "low", tool_choice: "none" },
+          }, { timeout_ms: UPSTREAM_TIMEOUT_MS, signal: request.signal });
+          if (!(Symbol.asyncIterator in explanation)) throw new Error("Missing explanation stream");
+          let hasText = false;
+          for await (const event of explanation) {
+            if (cancelled || request.signal.aborted) break;
+            if (event.event_type === "step.delta" && event.delta.type === "text") {
+              hasText = true;
+              emit({ type: "text", text: event.delta.text });
+            }
+          }
+          if (!hasText) throw new Error("Empty explanation");
         }
-      } catch (error) {
-        console.error("[assistant] stream broke", error);
-        controller.enqueue(encoder.encode("\n\n(The answer was cut off. Please ask again.)"));
+      } catch {
+        emit({ type: "error", text: "The explanation could not finish. Any RPC results shown below remain available; please try again." });
       } finally {
-        controller.close();
+        emit({ type: "done" });
+        if (!cancelled) controller.close();
       }
     },
+    cancel() { cancelled = true; },
   });
 
   return new Response(body, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": "application/x-ndjson; charset=utf-8",
       "Cache-Control": "no-store",
       // Keeps proxies from holding the whole answer back until it is complete.
       "X-Accel-Buffering": "no",

@@ -3,11 +3,13 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Bot, Square, X } from "lucide-react";
+import { useAccount } from "wagmi";
 import { Label } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
+import { cn, compactAddress } from "@/lib/utils";
+import { readAssistantStream, type AssistantEvent, type ReadEvidence } from "@/lib/assistant/protocol";
 
-type Turn = { role: "user" | "assistant"; content: string };
+type Turn = { role: "user" | "assistant"; content: string; evidence?: ReadEvidence[] };
 
 // The launcher's sphere is the renderer the settlement pulse already uses,
 // fetched on the client the same way. It honours prefers-reduced-motion and
@@ -29,22 +31,23 @@ const ANSWERING = { bpm: 96, amplitude: 0.062, tone: "positive" } as const;
  * the rest — a stalled connection, a proxy holding the stream open — so the
  * panel can never sit blinking forever with no way out but the Stop button.
  */
-const ANSWER_TIMEOUT_MS = 60_000;
+const ANSWER_TIMEOUT_MS = 65_000;
 
 /** Opening prompts, kept here so the server-side reference never enters this bundle. */
 const SUGGESTIONS = [
   "How do I get test USDC?",
   "Why is the fee paid in USDC?",
-  "Is my memo visible onchain?",
-  "My payment is still pending — what now?",
+  "What is my USDC balance on Arc?",
+  "Help me estimate a USDC payment.",
+  "Check a transaction on Arc Testnet.",
 ];
 
 /**
  * The support panel.
  *
- * It knows nothing about the wallet and is never handed the store: the whole
- * conversation is what the user typed, so nothing about their payments can leak
- * into a request. Answers stream in as plain text, which is all the route sends.
+ * Wallet context is opt-in and only contains a public address. Browser history
+ * and payment drafts stay outside chat. RPC evidence is rendered separately
+ * from model prose so it survives an explanation failure.
  */
 export function AssistantWidget() {
   // Asked at runtime, not baked in at build: the pages this widget sits on are
@@ -56,6 +59,10 @@ export function AssistantWidget() {
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+  const [sharedAddress, setSharedAddress] = useState<string>();
+  const { address } = useAccount();
+  const walletAddress = sharedAddress === address ? address : undefined;
   // Bumped once per answer that actually landed, which fires a single ripple.
   const [answered, setAnswered] = useState(0);
   const abort = useRef<AbortController>(null);
@@ -109,6 +116,7 @@ export function AssistantWidget() {
     setDraft("");
     setError("");
     setPending(true);
+    setStatus("Reading your question…");
 
     const controller = new AbortController();
     abort.current = controller;
@@ -122,7 +130,9 @@ export function AssistantWidget() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        // Evidence is displayed locally; never accept a previous client-supplied
+        // tool result as authoritative context for the model.
+        body: JSON.stringify({ messages: next.filter(turn => turn.content.trim()).map(({ role, content }) => ({ role, content })), ...(walletAddress ? { walletAddress } : {}) }),
         signal: controller.signal,
       });
 
@@ -131,18 +141,28 @@ export function AssistantWidget() {
         throw new Error(payload?.error || "The assistant could not answer.");
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        setTurns((current) =>
-          current.map((turn, index) =>
-            index === current.length - 1 ? { ...turn, content: turn.content + chunk } : turn
-          )
-        );
+      const receive = (event: AssistantEvent) => {
+        if (event.type === "status") setStatus(event.text);
+        if (event.type === "error") setError(event.text);
+        if (event.type === "text" || event.type === "evidence") {
+          setTurns(current => current.map((turn, index) => index !== current.length - 1 ? turn :
+            event.type === "text" ? { ...turn, content: turn.content + event.text } :
+              { ...turn, evidence: [...(turn.evidence ?? []), event.evidence] }));
+        }
+      };
+      if (response.headers.get("Content-Type")?.includes("application/x-ndjson")) {
+        await readAssistantStream(response.body, receive);
+      } else {
+        // Allows an in-flight browser to continue talking to the previous route during deployment.
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          receive({ type: "text", text: done ? decoder.decode() : decoder.decode(value, { stream: true }) });
+          if (done) break;
+        }
       }
+      setAnswered(count => count + 1);
     } catch (failure) {
       // Stopping on purpose is not an error; whatever streamed stays on screen.
       // Running out of time is, and it needs saying — otherwise the answer just
@@ -150,15 +170,14 @@ export function AssistantWidget() {
       if (failure instanceof DOMException && failure.name === "AbortError") {
         if (!timedOut) return;
         setError("The assistant took too long to answer. Ask again, or try a shorter question.");
-        setTurns((current) => current.filter((turn, index) => !(index === current.length - 1 && !turn.content)));
         return;
       }
       setError(failure instanceof Error ? failure.message : "The assistant could not answer.");
-      setTurns((current) => current.filter((turn, index) => !(index === current.length - 1 && !turn.content)));
-      setAnswered((count) => count + 1);
     } finally {
       clearTimeout(guard);
+      setTurns(current => current.filter((turn, index) => !(index === current.length - 1 && turn.role === "assistant" && !turn.content && !turn.evidence?.length)));
       setPending(false);
+      setStatus("");
       abort.current = null;
     }
   }
@@ -217,12 +236,23 @@ export function AssistantWidget() {
         </button>
       </header>
 
+      <div className="assistant-wallet-context border-b border-[var(--border)] px-4 py-3">
+        <label className="assistant-wallet-label flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <input className="assistant-wallet-checkbox" type="checkbox" disabled={!address || pending}
+            checked={!!walletAddress} onChange={event => setSharedAddress(event.target.checked ? address : undefined)} />
+          Use connected wallet {address ? `(${compactAddress(address)})` : "— connect a wallet first"}
+        </label>
+        <p className="assistant-context-notice mt-1.5 text-[11px] leading-5 text-[var(--text-muted)]">
+          Addresses you share and public read results are sent to the AI. Payment history stays in this browser.
+        </p>
+      </div>
+
       <div ref={log} className="assistant-conversation flex-1 overflow-y-auto px-4 py-4">
         {!turns.length ? (
           <div className="assistant-welcome">
             <p className="assistant-introduction text-[13px] leading-6 text-[var(--text-muted)]">
-              Questions about sending USDC, payment links, fees or Arc Testnet. It cannot see your wallet or your
-              payments.
+              Check a USDC balance, estimate a payment, or look up a transaction on Arc Testnet.
+              Share a wallet address or transaction hash to start. Reads never send a payment.
             </p>
             <Label className="assistant-suggestions-label mt-5 mb-2">Try one</Label>
             <div className="assistant-suggestions space-y-2">
@@ -253,10 +283,13 @@ export function AssistantWidget() {
                   )}
                 >
                   {turn.content}
-                  {turn.role === "assistant" && !turn.content && pending ? (
+                  {turn.role === "assistant" && index === turns.length - 1 && !turn.content && pending ? (
                     <span className="assistant-typing-indicator seal-blink text-[var(--action)]">▍</span>
                   ) : null}
                 </p>
+                {turn.evidence?.map((evidence, resultIndex) => (
+                  <EvidenceCard key={resultIndex} evidence={evidence} />
+                ))}
               </div>
             ))}
           </div>
@@ -268,6 +301,8 @@ export function AssistantWidget() {
           </p>
         )}
       </div>
+
+      {pending && <p role="status" className="assistant-read-status px-4 py-2 text-xs text-[var(--text-muted)]">{status}</p>}
 
       <form
         onSubmit={(event) => {
@@ -310,4 +345,24 @@ export function AssistantWidget() {
       </form>
     </section>
   );
+}
+
+function EvidenceCard({ evidence }: { evidence: ReadEvidence }) {
+  return <details open className="assistant-evidence mt-3 border border-[var(--border)] p-3 text-left">
+    <summary className="assistant-evidence-title cursor-pointer text-xs font-semibold">
+      {evidence.title}{!evidence.ok ? " — could not complete" : ""}
+    </summary>
+    <dl className="assistant-evidence-rows mt-2 space-y-2">
+      {evidence.rows.map((row, index) => <div className="assistant-evidence-row" key={index}>
+        <dt className="assistant-evidence-label text-[11px] text-[var(--text-muted)]">{row.label}</dt>
+        <dd className="assistant-evidence-value break-words font-mono text-xs">{row.value}</dd>
+      </div>)}
+    </dl>
+    <p className="assistant-evidence-source mt-3 text-[11px] text-[var(--text-muted)]">Source: {evidence.source}</p>
+    <time className="assistant-evidence-time block text-[11px] text-[var(--text-muted)]" dateTime={evidence.checkedAt}>
+      Checked {new Date(evidence.checkedAt).toLocaleString()}
+    </time>
+    {evidence.url && /^https:\/\/testnet\.arcscan\.app\/(?:tx|address)\/0x[a-fA-F0-9]+$/.test(evidence.url) &&
+      <a className="assistant-evidence-link mt-2 inline-block text-xs text-[var(--action)]" href={evidence.url} target="_blank" rel="noreferrer">Verify on ArcScan ↗</a>}
+  </details>;
 }

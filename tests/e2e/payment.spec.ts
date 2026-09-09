@@ -43,7 +43,7 @@ async function wallet(page: Page, { pending = false, reject = false } = {}) {
     const answer = (rpc: { id: number; method: string }) => {
       const values: Record<string, unknown> = {
         eth_chainId: "0x4cef52", eth_blockNumber: "0x10", eth_gasPrice: "0x4a817c800", eth_estimateGas: "0xc350",
-        eth_getBalance: "0x56bc75e2d63100000", eth_call: `0x${(100000000n).toString(16).padStart(64, "0")}`,
+        eth_getBalance: "0x56bc75e2d63100000", eth_call: `0x${BigInt(100000000).toString(16).padStart(64, "0")}`,
         eth_getTransactionCount: "0x0",
         eth_getTransactionReceipt: pending ? null : {
           transactionHash: hash, transactionIndex: "0x0", blockHash: `0x${"cd".repeat(32)}`, blockNumber: "0x10",
@@ -77,7 +77,7 @@ test("review locks exact transfer data, confirms once and persists receipt", asy
   expect(transactions[0].to.toLowerCase()).toBe("0x3600000000000000000000000000000000000000");
   const decoded = decodeFunctionData({ abi: erc20Abi, data: transactions[0].data });
   expect(decoded.functionName).toBe("transfer");
-  expect(decoded.args).toEqual([recipient, 1250000n]);
+  expect(decoded.args).toEqual([recipient, BigInt(1250000)]);
   await page.goto("/history");
   await expect(page.getByText("Confirmed", { exact: true })).toBeVisible();
   await expect(page.getByText("1.25 USDC", { exact: true })).toBeVisible();

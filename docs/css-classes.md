@@ -30,6 +30,8 @@ Các tên bên dưới dành cho giao diện do source này render. Nội dung v
 
 ## Danh sách theo file
 
+Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ liệu RPC của trợ lý nằm trong [hướng dẫn Payment assistant](payment-assistant.md#css-classes).
+
 ### [app/layout.tsx](../src/app/layout.tsx)
 
 - `app-document`
