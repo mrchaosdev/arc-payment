@@ -6,7 +6,9 @@ import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { CapabilityAccordion } from "@/components/chaos/CapabilityAccordion";
 import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
+import { GithubMark } from "@/components/ui/GithubMark";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
+import { CHAOSPAY_LIMITS } from "@/lib/limits";
 import { derivePulse } from "@/lib/visual/pulse";
 import {
   ARC_EXPLORER_URL,
@@ -88,6 +90,14 @@ const capabilities: {
     body: "It checks a balance, estimates a transfer and looks up a transaction, then shows the evidence with a block number and a check time. It has no tool that signs or sends.",
     meta: "READ-ONLY",
     hint: "Bottom right of this page",
+  },
+  {
+    id: "07",
+    title: "Or trade what you're holding",
+    body: "Swap USDC, EURC and cirBTC on Arc Testnet through Circle's Swap Kit — same chain, one signature, no bridge leg.",
+    meta: "SAME-CHAIN SWAP",
+    href: "/swap",
+    hrefLabel: "Open swap",
   },
 ];
 
@@ -209,6 +219,14 @@ export function ArcHome() {
               </Chip>
               <Chip className="landing-wallet-chip" tone="muted">Wallet-native signing</Chip>
               <Chip className="landing-testnet-chip" tone="muted">Testnet USDC</Chip>
+              <a
+                href="https://github.com/mrchaosdev/arc-payment"
+                target="_blank"
+                rel="noreferrer"
+                className="landing-github-link inline-flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                <GithubMark size={13} /> Source
+              </a>
             </div>
           </div>
 
@@ -298,15 +316,7 @@ export function ArcHome() {
               the one thing ChaosPay already did better than the projects it is
               measured against, so it belongs where a reader arrives. */}
           <Panel className="landing-limits-panel" title="What this is not" meta="READ THIS FIRST" bodyClassName="p-0">
-            <LimitRow text="A public-testnet MVP, not a production payment processor." />
-            <LimitRow text="Memos and references live in the link and the local receipt. They are not written onchain." />
-            <LimitRow text="History and saved requests are stored in this browser, capped at 200 each." />
-            <LimitRow text="Requests are not reconciled against the chain — nothing marks one paid for you." />
-            {/* The panel calls itself READ THIS FIRST, so the one thing that
-                leaves the browser has to be named here — docs/payment-assistant.md
-                already says it, and this is the page a reader actually arrives on. */}
-            <LimitRow text="The assistant sends your question, and any address you choose to share, to the AI provider. It has no tool that signs or sends." />
-            <LimitRow text="Browser tests run against a mock wallet and RPC. They do not prove live settlement." />
+            {CHAOSPAY_LIMITS.map((text) => <LimitRow key={text} text={text} />)}
           </Panel>
         </div>
       </section>

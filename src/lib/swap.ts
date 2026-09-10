@@ -13,19 +13,9 @@ import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
 import type { EIP1193Provider } from "viem";
 import { getAccount } from "wagmi/actions";
 import { wagmiConfig } from "@/lib/wagmi/config";
+import { DEFAULT_SLIPPAGE_BPS, SWAP_CHAIN, type SwapToken } from "@/lib/swap-constants";
 
-/**
- * Same-chain swap on Arc Testnet, between the two stablecoins Arc issues
- * there. Both ends are Circle-controlled tokens on the same chain, so this
- * never needs a bridge leg — only `estimate`/`swap` with `to` omitted.
- */
-export const SWAP_CHAIN = "Arc_Testnet" as const;
-/** The three tokens Circle's Swap Kit lists as available on Arc Testnet today. */
-export const SWAP_TOKENS = ["USDC", "EURC", "cirBTC"] as const;
-export type SwapToken = (typeof SWAP_TOKENS)[number];
-
-/** Kit default (3%); passed explicitly so a UI slippage control has something real to change. */
-export const DEFAULT_SLIPPAGE_BPS = 300;
+export { DEFAULT_SLIPPAGE_BPS, SWAP_CHAIN, SWAP_TOKENS, type SwapToken } from "@/lib/swap-constants";
 
 const context = createSwapKitContext();
 

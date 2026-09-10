@@ -185,6 +185,7 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `landing-signup-chip`
 - `landing-wallet-chip`
 - `landing-testnet-chip`
+- `landing-github-link`
 - `landing-pulse-column`
 - `landing-pulse-header`
 - `landing-pulse-title`
@@ -703,6 +704,27 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `settings-theme-buttons`
 - `settings-light-button`
 - `settings-dark-button`
+
+### [components/docs/DocsPage.tsx](../src/components/docs/DocsPage.tsx)
+
+- `docs-page`
+- `docs-sections`
+- `docs-section-panel`
+- `docs-section-body`
+- `docs-network`
+- `docs-network-panel`
+- `docs-network-links`
+- `docs-faucet-link`
+- `docs-github-link`
+- `docs-limits-panel`
+- `docs-limit-row`
+- `docs-more-notice`
+- `docs-repo-docs-link`
+- `docs-footer-divider`
+- `docs-back-link`
+- `docs-constant-row`
+- `docs-constant-label`
+- `docs-constant-value`
 
 ### [components/chaos/SplashCursor.tsx](../src/components/chaos/SplashCursor.tsx)
 

@@ -35,7 +35,11 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
       </div>
       <div className="top-bar-actions ml-auto flex items-center gap-2">
         <ThemeMorphToggle />
-        <Link href="/settings" aria-label="Settings" className="top-bar-settings-link grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)]"><Settings className="top-bar-settings-icon size-4" /></Link>
+        {/* DashboardSidebar carries its own Settings link once it's visible
+            (lg+), so this would otherwise duplicate it there — it stays the
+            only way to reach Settings below lg, where the sidebar is hidden
+            and MobileNav has no Settings entry. */}
+        <Link href="/settings" aria-label="Settings" className={cn("top-bar-settings-link grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)]", workspace && "lg:hidden")}><Settings className="top-bar-settings-icon size-4" /></Link>
       </div>
       <ConnectButton.Custom>
         {({ account, chain, mounted, openAccountModal, openConnectModal }) => {

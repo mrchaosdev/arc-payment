@@ -2,15 +2,18 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Label, Num } from "@/components/chaos/Terminal";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { GithubMark } from "@/components/ui/GithubMark";
 
 const productLinks = [
   { href: "/pay", label: "Pay USDC" },
   { href: "/pay?mode=request", label: "Request payment" },
   { href: "/history", label: "Payment activity" },
   { href: "/settings", label: "Settings" },
+  { href: "/docs", label: "Docs" },
 ];
 
 const resourceLinks = [
+  { href: "https://github.com/mrchaosdev/arc-payment", label: "GitHub", icon: GithubMark },
   { href: "https://faucet.circle.com", label: "Circle Faucet" },
   { href: "https://testnet.arcscan.app", label: "ArcScan Explorer" },
   { href: "https://www.arc.io", label: "Arc" },
@@ -50,11 +53,14 @@ export function Footer() {
         </FooterColumn>
 
         <FooterColumn title="Resources">
-          {resourceLinks.map((link) => (
-            <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className={`site-footer-external-link ${(linkClass)}`}>
-              {link.label} <ArrowUpRight className="size-3" />
-            </a>
-          ))}
+          {resourceLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className={`site-footer-external-link ${(linkClass)}`}>
+                {Icon ? <Icon size={13} /> : null}{link.label} <ArrowUpRight className="size-3" />
+              </a>
+            );
+          })}
         </FooterColumn>
 
         <div className="site-footer-stack py-10">
