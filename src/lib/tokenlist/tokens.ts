@@ -21,6 +21,7 @@ export const TOKENS: TokenInfo[] = [
   // The mark ships from /public so a payment screen never waits on a CDN to tell
   // the payer which dollar they are about to send.
   { chainId: 5042002, address: "0x3600000000000000000000000000000000000000", symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin", logoURI: "/tokens/usdc.svg" },
+  { chainId: 5042002, address: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", symbol: "EURC", name: "Euro Coin", decimals: 6, coingeckoId: "euro-coin", logoURI: "/tokens/eurc.svg" },
 
   // --- Ethereum (1) ---
   { chainId: 1, address: "native", symbol: "ETH", name: "Ether", decimals: 18, coingeckoId: "ethereum", logoURI: `${TW}/ethereum/info/logo.png` },
@@ -58,4 +59,8 @@ export function tokenKey(chainId: number, address: string): string {
 export function findToken(chainId: number, address: string): TokenInfo | undefined {
   const key = tokenKey(chainId, address);
   return TOKENS.find((token) => tokenKey(token.chainId, token.address) === key);
+}
+
+export function findTokenBySymbol(chainId: number, symbol: string): TokenInfo | undefined {
+  return TOKENS.find((token) => token.chainId === chainId && token.symbol === symbol);
 }

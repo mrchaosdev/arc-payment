@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  ArrowLeftRight,
   ArrowUpRight,
   BookUser,
   Bot,
@@ -30,6 +31,7 @@ export function DashboardSidebar() {
   const links = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
     { href: "/requests", label: "Payment requests", icon: Link2 },
+    { href: "/swap", label: "Swap", icon: ArrowLeftRight },
     { href: "/history", label: "Activity", icon: History },
     { href: "/contacts", label: "Contacts", icon: BookUser },
   ];

@@ -27,6 +27,7 @@ const facts = `
 - Token: USDC at ${ARC_USDC_ADDRESS}, ${ARC_USDC_DECIMALS} decimals.
 - Arc exposes that one USDC balance through two views: a native view with 18 decimals and the ERC-20 view with ${ARC_USDC_DECIMALS} decimals. They are the same money, not two balances, and are never added together. This app reads and transfers through the ERC-20 view, so a wallet showing the native view can print the same balance with a different number of decimal places.
 - Arc pays network fees in USDC. There is no separate gas token to acquire first.
+- The fee per unit of gas moves with recent network usage (an EIP-1559-style base fee smoothed by a moving average), so the fee on one payment can differ from the fee on the next even for the same transfer. That is normal, not an error.
 - Arc finality is deterministic and takes under a second: once a transfer is confirmed it cannot be undone by a chain reorganisation, so there is no need to wait out extra blocks.
 - Test USDC comes from the Circle faucet: ${ARC_FAUCET_URL}.
 - Arc Testnet USDC has no monetary value. Nothing on this app is real money.
@@ -45,6 +46,13 @@ const facts = `
 - A shared link opens as a read-only summary. The payer must press "Edit details" before any field becomes editable.
 - Saved requests can be copied, shown as a QR code, or shared. The checkout page also shows a QR so a desktop payer can pay from a phone.
 - Creating a request does not prove payment. Settlement must be verified separately.
+
+## Swapping USDC and EURC
+- The Swap page exchanges USDC and EURC on Arc Testnet, same-chain, through Circle's Swap Kit — not a custom exchange this app runs itself.
+- Flow: enter an amount, get a quote (estimated output and the minimum received after slippage), review, sign in the wallet, wait for confirmation.
+- Default slippage is 3%. The minimum-received figure in the quote already accounts for it.
+- Swapping is a separate action from sending a payment: it changes which token the connected wallet holds, it does not send anything to another address.
+- You have no live tool for a swap quote or swap status — do not estimate an exchange rate or report whether a swap settled. Point the user to the Swap page or the transaction hash on ${ARC_EXPLORER_URL} instead.
 
 ## Records, receipts and privacy
 - Memo and reference travel in the link and in the local record. They are NOT written onchain.

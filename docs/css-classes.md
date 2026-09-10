@@ -623,6 +623,52 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `workspace-metric-note`
 - `workspace-metric-link`
 
+### [components/swap/SwapStudio.tsx](../src/components/swap/SwapStudio.tsx)
+
+- `swap-studio-root`
+- `swap-studio-header`
+- `swap-studio-eyebrow`
+- `swap-studio-title`
+- `swap-studio-description`
+- `swap-studio-form-card`
+- `swap-studio-form`
+- `swap-studio-fields`
+- `swap-studio-flip-row`
+- `swap-studio-flip-button`
+- `swap-studio-error`
+- `swap-studio-actions`
+- `swap-studio-connect-button`
+- `swap-studio-quote-button`
+- `swap-studio-confirm-button`
+- `swap-studio-back-button`
+- `swap-studio-recheck-button`
+- `swap-studio-new-swap-button`
+- `swap-studio-explorer-link`
+- `swap-studio-testnet-notice`
+- `swap-studio-token-field`
+- `swap-studio-token-field-label`
+- `swap-studio-token-field-row`
+- `swap-studio-token-symbol`
+- `swap-studio-token-field-input`
+- `swap-studio-token-field-placeholder`
+- `swap-studio-review`
+- `swap-studio-review-header`
+- `swap-studio-review-title`
+- `swap-studio-review-amounts`
+- `swap-studio-review-in`
+- `swap-studio-review-in-value`
+- `swap-studio-review-arrow`
+- `swap-studio-review-out`
+- `swap-studio-review-out-value`
+- `swap-studio-review-details`
+- `swap-studio-review-divider`
+- `swap-studio-progress`
+- `swap-studio-progress-message`
+- `swap-studio-success-notice`
+- `swap-studio-detail-row`
+- `swap-studio-detail-label`
+- `swap-studio-detail-value`
+
 ### [components/settings/SettingsPanel.tsx](../src/components/settings/SettingsPanel.tsx)
 
 - `settings-panel`
