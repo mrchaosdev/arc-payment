@@ -47,8 +47,8 @@ const facts = `
 - Saved requests can be copied, shown as a QR code, or shared. The checkout page also shows a QR so a desktop payer can pay from a phone.
 - Creating a request does not prove payment. Settlement must be verified separately.
 
-## Swapping USDC and EURC
-- The Swap page exchanges USDC and EURC on Arc Testnet, same-chain, through Circle's Swap Kit — not a custom exchange this app runs itself.
+## Swapping USDC, EURC and cirBTC
+- The Swap page exchanges between USDC, EURC and cirBTC on Arc Testnet, same-chain, through Circle's Swap Kit — not a custom exchange this app runs itself. Those three are the tokens Circle lists as swappable on Arc Testnet today.
 - Flow: enter an amount, get a quote (estimated output and the minimum received after slippage), review, sign in the wallet, wait for confirmation.
 - Default slippage is 3%. The minimum-received figure in the quote already accounts for it.
 - Swapping is a separate action from sending a payment: it changes which token the connected wallet holds, it does not send anything to another address.

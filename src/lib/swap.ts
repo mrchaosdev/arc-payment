@@ -20,7 +20,8 @@ import { wagmiConfig } from "@/lib/wagmi/config";
  * never needs a bridge leg — only `estimate`/`swap` with `to` omitted.
  */
 export const SWAP_CHAIN = "Arc_Testnet" as const;
-export const SWAP_TOKENS = ["USDC", "EURC"] as const;
+/** The three tokens Circle's Swap Kit lists as available on Arc Testnet today. */
+export const SWAP_TOKENS = ["USDC", "EURC", "cirBTC"] as const;
 export type SwapToken = (typeof SWAP_TOKENS)[number];
 
 /** Kit default (3%); passed explicitly so a UI slippage control has something real to change. */

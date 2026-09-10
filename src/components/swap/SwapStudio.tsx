@@ -1,24 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, ArrowRight, CheckCircle2, ExternalLink, RefreshCw, RotateCcw, Send } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, RefreshCw, RotateCcw, Send, ShieldCheck } from "lucide-react";
 import { useAccount, useSwitchChain } from "wagmi";
-import { Divider, Label, Num } from "@/components/chaos/Terminal";
+import { Divider, Label, Num, PageHeading, Panel } from "@/components/chaos/Terminal";
+import { ProgressBar } from "@/components/chaos/ProgressBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
-import { ProgressBar } from "@/components/chaos/ProgressBar";
-import { TokenAvatar } from "@/components/ui/TokenAvatar";
+import { TokenAvatar, TokenPair } from "@/components/ui/TokenAvatar";
 import { ARC_TESTNET_ID, arcTransactionUrl } from "@/lib/arc";
 import { findTokenBySymbol } from "@/lib/tokenlist/tokens";
 import {
-  DEFAULT_SLIPPAGE_BPS,
+  SWAP_TOKENS,
   checkSwapStatus,
   executeSwap,
   friendlySwapError,
   quoteSwap,
   type SwapToken,
 } from "@/lib/swap";
+import { formatBpsAsPercent, useSwapSettings } from "@/store/settings";
 import type { SwapEstimate } from "@circle-fin/swap-kit";
 
 type Stage = "editing" | "quoting" | "review" | "signing" | "pending" | "success" | "failed";
@@ -26,14 +28,21 @@ type Stage = "editing" | "quoting" | "review" | "signing" | "pending" | "success
 /** How often an in-flight swap's status is re-checked without being asked. */
 const POLL_MS = 5_000;
 
+// cirBTC has no confirmed Arc Testnet contract address in Arc's own docs or
+// in the Swap Kit's bundled type data, so it stays out of the shared token
+// list (which other reads/transfers key off address) and gets its icon here
+// instead — sourced straight from Circle's own faucet, not redrawn.
+const CIRBTC_LOGO = "/tokens/cirbtc.svg";
+
 function tokenMeta(symbol: SwapToken) {
   // Display-only (icon) — the kit resolves decimals itself.
+  if (symbol === "cirBTC") return { logoURI: CIRBTC_LOGO };
   return { logoURI: findTokenBySymbol(ARC_TESTNET_ID, symbol)?.logoURI };
 }
 
 export function SwapStudio() {
-  const [tokenIn, setTokenIn] = useState<SwapToken>("USDC");
-  const [tokenOut, setTokenOut] = useState<SwapToken>("EURC");
+  const [tokenIn, setTokenInState] = useState<SwapToken>("USDC");
+  const [tokenOut, setTokenOutState] = useState<SwapToken>("EURC");
   const [amountIn, setAmountIn] = useState("");
   const [stage, setStage] = useState<Stage>("editing");
   const [quote, setQuote] = useState<SwapEstimate>();
@@ -43,6 +52,7 @@ export function SwapStudio() {
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
   const lock = useRef(false);
+  const slippageBps = useSwapSettings(s => s.slippageBps);
   const { isConnected, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const busy = stage === "quoting" || stage === "signing" || stage === "pending";
@@ -87,8 +97,22 @@ export function SwapStudio() {
   }
 
   function flipTokens() {
-    setTokenIn(tokenOut);
-    setTokenOut(tokenIn);
+    setTokenInState(tokenOut);
+    setTokenOutState(tokenIn);
+    setQuote(undefined);
+  }
+
+  // Picking the token already on the other side swaps sides instead of
+  // colliding — there is no such thing as swapping a token for itself.
+  function setTokenIn(next: SwapToken) {
+    if (next === tokenOut) setTokenOutState(tokenIn);
+    setTokenInState(next);
+    setQuote(undefined);
+  }
+
+  function setTokenOut(next: SwapToken) {
+    if (next === tokenIn) setTokenInState(tokenOut);
+    setTokenOutState(next);
     setQuote(undefined);
   }
 
@@ -100,7 +124,7 @@ export function SwapStudio() {
     setError("");
     setStage("quoting");
     try {
-      const estimate = await quoteSwap({ tokenIn, tokenOut, amountIn: amount });
+      const estimate = await quoteSwap({ tokenIn, tokenOut, amountIn: amount, slippageBps });
       setQuote(estimate);
       setStage("review");
     } catch (e) { setError(friendlySwapError(e)); setStage("editing"); }
@@ -114,7 +138,7 @@ export function SwapStudio() {
     setStage("signing");
     try {
       if (chainId !== ARC_TESTNET_ID) await switchChainAsync({ chainId: ARC_TESTNET_ID });
-      const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim() });
+      const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim(), slippageBps });
       setTxHash(result.txHash);
       setExplorerUrl(result.explorerUrl);
       if (result.progress.status === "DONE") {
@@ -137,91 +161,133 @@ export function SwapStudio() {
 
   const inMeta = tokenMeta(tokenIn);
   const outMeta = tokenMeta(tokenOut);
+  const outputAmount = amountOut ?? quote?.estimatedOutput.amount;
+
+  const form = (
+    <div className="swap-studio-form p-5 sm:p-7">
+      {stage === "editing" || stage === "quoting" ? (
+        <fieldset disabled={busy} className="swap-studio-fields space-y-3">
+          <TokenField label="You pay" symbol={tokenIn} onSymbolChange={setTokenIn} logoURI={inMeta.logoURI} amount={amountIn} onAmountChange={setAmountIn} editable />
+          <div className="swap-studio-flip-row relative flex justify-center py-1">
+            <Divider className="swap-studio-flip-divider absolute left-0 right-0 top-1/2" />
+            <button type="button" onClick={flipTokens} aria-label="Swap direction"
+              className="swap-studio-flip-button relative grid size-9 place-items-center border border-[var(--border)] bg-[var(--surface)] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]">
+              <ArrowLeftRight size={15} />
+            </button>
+          </div>
+          <TokenField label="You receive (estimated)" symbol={tokenOut} onSymbolChange={setTokenOut} logoURI={outMeta.logoURI} amount="" onAmountChange={() => {}} editable={false} />
+        </fieldset>
+      ) : (
+        <SwapReview
+          stage={stage}
+          tokenIn={tokenIn}
+          tokenOut={tokenOut}
+          amountIn={amountIn}
+          quote={quote}
+          amountOut={amountOut}
+          inLogo={inMeta.logoURI}
+          outLogo={outMeta.logoURI}
+        />
+      )}
+
+      {error && <p role="alert" className="swap-studio-error mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
+
+      <div className="swap-studio-actions mt-6 space-y-3">
+        {stage === "editing" || stage === "quoting" ? (
+          !isConnected ? <ConnectWalletButton className="swap-studio-connect-button h-12 w-full" label="Connect wallet to swap" />
+            : <Button type="button" onClick={getQuote} disabled={busy} className="swap-studio-quote-button h-12 w-full">
+                {stage === "quoting" ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Get quote
+              </Button>
+        ) : stage === "review" ? (
+          <><Button type="button" onClick={confirmSwap} className="swap-studio-confirm-button h-12 w-full">
+              {chainId === ARC_TESTNET_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="swap-studio-back-button w-full">Back</Button></>
+        ) : stage === "pending" ? (
+          <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="swap-studio-recheck-button w-full">
+            <RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now
+          </Button>
+        ) : stage === "success" || stage === "failed" ? (
+          <Button type="button" variant="secondary" onClick={startNewSwap} className="swap-studio-new-swap-button w-full">
+            <RotateCcw size={14} />New swap
+          </Button>
+        ) : null}
+        {txHash && explorerUrl && (
+          <a className="swap-studio-explorer-link flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"
+            href={arcTransactionUrl(txHash)} target="_blank" rel="noreferrer">
+            View on ArcScan <ExternalLink size={13} />
+          </a>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="swap-studio-root mx-auto max-w-[640px]">
+    <div className="swap-studio-root mx-auto max-w-[1120px]">
       <div className="swap-studio-header mb-8 border-b border-[var(--border)] pb-6">
-        <Label className="swap-studio-eyebrow text-[var(--action)]">Swap on Arc Testnet</Label>
-        <h1 className="swap-studio-title mt-3 text-3xl font-semibold tracking-[-0.02em]">USDC ⇄ EURC</h1>
-        <p className="swap-studio-description mt-2 text-sm text-[var(--text-muted)]">
-          Same-chain swap between Arc&apos;s two testnet stablecoins, via Circle&apos;s Swap Kit.
-        </p>
+        <PageHeading
+          eyebrow="Swap on Arc Testnet"
+          title={`${tokenIn} ⇄ ${tokenOut}`}
+          subtitle="Same-chain swap between Arc Testnet tokens, via Circle's Swap Kit."
+        />
       </div>
+      <div className="swap-studio-layout grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <Card className="swap-studio-form-card overflow-hidden">{form}</Card>
 
-      <Card className="swap-studio-form-card overflow-hidden">
-        <div className="swap-studio-form p-5 sm:p-7">
-          {stage === "editing" || stage === "quoting" ? (
-            <fieldset disabled={busy} className="swap-studio-fields space-y-4 disabled:opacity-70">
-              <TokenField label="You pay" symbol={tokenIn} logoURI={inMeta.logoURI} amount={amountIn} onAmountChange={setAmountIn} editable />
-              <div className="swap-studio-flip-row flex justify-center">
-                <button type="button" onClick={flipTokens} aria-label="Swap direction"
-                  className="swap-studio-flip-button grid size-9 place-items-center border border-[var(--border)] bg-[var(--surface)] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]">
-                  <ArrowLeftRight size={15} />
-                </button>
+        <div className="swap-studio-aside space-y-5 xl:sticky xl:top-20">
+          <Panel className="swap-studio-rate-panel" title="Rate" meta="ARC TESTNET" bodyClassName="p-0">
+            <div className="swap-studio-rate-pair flex items-center gap-3 px-4 py-5">
+              <TokenPair symbols={[tokenIn, tokenOut]} logoURIs={[inMeta.logoURI, outMeta.logoURI]} />
+              <div className="swap-studio-rate-pair-copy min-w-0">
+                <p className="swap-studio-rate-pair-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Pair</p>
+                <p className="swap-studio-rate-pair-value mt-1 truncate text-sm font-semibold">{tokenIn} → {tokenOut}</p>
               </div>
-              <TokenField label="You receive (estimated)" symbol={tokenOut} logoURI={outMeta.logoURI} amount="" onAmountChange={() => {}} editable={false} />
-            </fieldset>
-          ) : (
-            <SwapReview
-              stage={stage}
-              tokenIn={tokenIn}
-              tokenOut={tokenOut}
-              amountIn={amountIn}
-              quote={quote}
-              amountOut={amountOut}
-              inLogo={inMeta.logoURI}
-              outLogo={outMeta.logoURI}
-            />
-          )}
+            </div>
+            <div className="swap-studio-rate-edge receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
+            <div className="swap-studio-rate-details space-y-3 px-4 py-4">
+              <RateRow label="You pay" value={amountIn ? `${amountIn} ${tokenIn}` : "—"} />
+              <Divider className="swap-studio-rate-divider" />
+              <RateRow label="You receive" value={outputAmount ? `${outputAmount} ${tokenOut}` : "At quote"} strong />
+              <Divider className="swap-studio-rate-divider" />
+              <RateRow label="Minimum received" value={quote ? `${quote.stopLimit.amount} ${quote.stopLimit.token}` : "At quote"} muted />
+              <Divider className="swap-studio-rate-divider" />
+              <RateRow label="Slippage" value={formatBpsAsPercent(slippageBps)} muted />
+            </div>
+          </Panel>
 
-          {error && <p role="alert" className="swap-studio-error mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
-
-          <div className="swap-studio-actions mt-6 space-y-3">
-            {stage === "editing" || stage === "quoting" ? (
-              !isConnected ? <ConnectWalletButton className="swap-studio-connect-button h-12 w-full" label="Connect wallet to swap" />
-                : <Button type="button" onClick={getQuote} disabled={busy} className="swap-studio-quote-button h-12 w-full">
-                    {stage === "quoting" ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Get quote
-                  </Button>
-            ) : stage === "review" ? (
-              <><Button type="button" onClick={confirmSwap} className="swap-studio-confirm-button h-12 w-full">
-                  {chainId === ARC_TESTNET_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="swap-studio-back-button w-full">Back</Button></>
-            ) : stage === "pending" ? (
-              <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="swap-studio-recheck-button w-full">
-                <RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now
-              </Button>
-            ) : stage === "success" || stage === "failed" ? (
-              <Button type="button" variant="secondary" onClick={startNewSwap} className="swap-studio-new-swap-button w-full">
-                <RotateCcw size={14} />New swap
-              </Button>
-            ) : null}
-            {txHash && explorerUrl && (
-              <a className="swap-studio-explorer-link flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"
-                href={arcTransactionUrl(txHash)} target="_blank" rel="noreferrer">
-                View on ArcScan <ExternalLink size={13} />
-              </a>
-            )}
-          </div>
+          <p className="swap-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
+            <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
+            These Arc Testnet tokens have no real monetary value. Slippage is set in{" "}
+            <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>
+          </p>
         </div>
-      </Card>
-
-      <p className="swap-studio-testnet-notice mt-5 text-xs leading-5 text-[var(--text-muted)]">
-        Testnet USDC and EURC have no real monetary value. Default slippage is {DEFAULT_SLIPPAGE_BPS / 100}%.
-      </p>
+      </div>
     </div>
   );
 }
 
-function TokenField({ label, symbol, logoURI, amount, onAmountChange, editable }: {
-  label: string; symbol: SwapToken; logoURI?: string; amount: string; onAmountChange: (value: string) => void; editable: boolean;
+function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountChange, editable }: {
+  label: string; symbol: SwapToken; onSymbolChange: (value: SwapToken) => void; logoURI?: string;
+  amount: string; onAmountChange: (value: string) => void; editable: boolean;
 }) {
   return (
-    <label className="swap-studio-token-field block">
+    <div className="swap-studio-token-field block">
       <Label className="swap-studio-token-field-label mb-2">{label}</Label>
-      <div className="swap-studio-token-field-row flex items-center gap-3 border border-[var(--border)] bg-[var(--surface)] px-4 py-4">
-        <TokenAvatar symbol={symbol} logoURI={logoURI} size="sm" />
-        <span className="swap-studio-token-symbol font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">{symbol}</span>
+      <div className="swap-studio-token-field-row flex items-center gap-3 border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
+        <div className="swap-studio-token-select-wrap relative flex shrink-0 items-center gap-2 bg-[var(--surface-soft)] py-1.5 pl-2 pr-7">
+          <TokenAvatar symbol={symbol} logoURI={logoURI} size="sm" />
+          <select
+            aria-label={`${label} token`}
+            value={symbol}
+            onChange={(event) => onSymbolChange(event.target.value as SwapToken)}
+            className="swap-studio-token-select appearance-none bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-primary)] outline-none"
+          >
+            {SWAP_TOKENS.map((token) => (
+              <option key={token} className="swap-studio-token-option" value={token}>{token}</option>
+            ))}
+          </select>
+          <ChevronDown size={13} className="swap-studio-token-select-chevron pointer-events-none absolute right-2 text-[var(--text-muted)]" />
+        </div>
         {editable ? (
           <input
             aria-label={`${label} amount`}
@@ -229,13 +295,13 @@ function TokenField({ label, symbol, logoURI, amount, onAmountChange, editable }
             onChange={(event) => onAmountChange(event.target.value)}
             inputMode="decimal"
             placeholder="0.00"
-            className="swap-studio-token-field-input min-w-0 flex-1 bg-transparent text-right font-mono text-2xl tabular outline-none"
+            className="swap-studio-token-field-input min-w-0 flex-1 bg-transparent text-right font-mono text-3xl tabular outline-none"
           />
         ) : (
-          <span className="swap-studio-token-field-placeholder flex-1 text-right font-mono text-2xl tabular text-[var(--text-muted)]">—</span>
+          <span className="swap-studio-token-field-placeholder flex-1 text-right font-mono text-3xl tabular text-[var(--text-muted)]">—</span>
         )}
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -251,13 +317,13 @@ function SwapReview({ stage, tokenIn, tokenOut, amountIn, quote, amountOut, inLo
             : stage === "success" ? "Swap complete" : stage === "failed" ? "Swap not completed" : "Waiting for confirmation"}
         </h2>
       </div>
-      <div className="swap-studio-review-amounts mb-6 flex items-center justify-between gap-4">
-        <div className="swap-studio-review-in flex items-center gap-2">
+      <div className="swap-studio-review-amounts mb-6 flex items-center justify-between gap-4 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-6">
+        <div className="swap-studio-review-in flex flex-col items-start gap-2">
           <TokenAvatar symbol={tokenIn} logoURI={inLogo} size="sm" />
           <Num value={`${amountIn} ${tokenIn}`} className="swap-studio-review-in-value font-mono text-lg" />
         </div>
-        <ArrowRight size={16} className="swap-studio-review-arrow text-[var(--text-muted)]" />
-        <div className="swap-studio-review-out flex items-center gap-2">
+        <ArrowRight size={18} className="swap-studio-review-arrow shrink-0 text-[var(--action)]" />
+        <div className="swap-studio-review-out flex flex-col items-end gap-2 text-right">
           <TokenAvatar symbol={tokenOut} logoURI={outLogo} size="sm" />
           <Num value={`${amountOut ?? quote?.estimatedOutput.amount ?? "—"} ${tokenOut}`} className="swap-studio-review-out-value font-mono text-lg" />
         </div>
@@ -296,6 +362,15 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div className="swap-studio-detail-row flex items-baseline justify-between gap-4">
       <span className="swap-studio-detail-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</span>
       <Num value={value} className="swap-studio-detail-value font-mono text-[11px]" />
+    </div>
+  );
+}
+
+function RateRow({ label, value, strong = false, muted = false }: { label: string; value: string; strong?: boolean; muted?: boolean }) {
+  return (
+    <div className="swap-studio-rate-row flex items-baseline justify-between gap-4">
+      <span className="swap-studio-rate-row-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</span>
+      <Num value={value} tone={muted ? "muted" : "default"} className={`swap-studio-rate-row-value ${strong ? "text-[13px] font-semibold" : "text-[11px]"}`} />
     </div>
   );
 }

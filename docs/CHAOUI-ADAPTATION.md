@@ -131,9 +131,12 @@ breaking.
 - `/requests`: request builder and browser-local saved requests
 - `/checkout?to=…&amount=…&memo=…&ref=…`: compact shared payment flow
 - `/history`: wallet-scoped browser records, pending-status checks, downloadable records
+- `/swap`: USDC/EURC/cirBTC same-chain swap on Arc Testnet, via Circle's Swap Kit
 
-Legacy market/swap/pool/portfolio routes are retained; no legacy storage is deleted. Old swap demo
-entries are intentionally not represented as real Arc payment receipts.
+The pre-payment-pivot swap-aggregator settings (`/settings`, slippage only now) have been reduced
+to the one control that still maps onto something real: slippage for `/swap`. The rest — a
+BNB/ETH/Arbitrum/Base chain picker, RPC override, quote refresh, multi-hop, route alerts — described
+an OpenOcean-backed aggregator this app never runs, so they configured nothing and were removed.
 
 ## Payment safeguards and limitations
 
