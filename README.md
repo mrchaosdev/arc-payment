@@ -85,9 +85,6 @@ traps found while building it, and the open work in the order it is worth doing.
 read semantics and privacy boundary are in [docs/payment-assistant.md](docs/payment-assistant.md),
 and interface class names in [docs/css-classes.md](docs/css-classes.md).
 
-[The Keryx comparison](docs/COMPETITIVE-KERYX.md) reviews another Arc-testnet project against this
-one and lists the resulting gaps in the order they are worth closing.
-
 Resources: [Arc](https://www.arc.io), [Arc docs](https://docs.arc.io), and
 [Circle developer docs](https://developers.circle.com).
 

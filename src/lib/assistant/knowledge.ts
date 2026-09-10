@@ -25,7 +25,9 @@ const facts = `
 ## Network and token
 - Chain: Arc Testnet, chain id ${ARC_TESTNET_ID}. RPC: ${ARC_TESTNET_RPC}. Explorer: ${ARC_EXPLORER_URL}.
 - Token: USDC at ${ARC_USDC_ADDRESS}, ${ARC_USDC_DECIMALS} decimals.
+- Arc exposes that one USDC balance through two views: a native view with 18 decimals and the ERC-20 view with ${ARC_USDC_DECIMALS} decimals. They are the same money, not two balances, and are never added together. This app reads and transfers through the ERC-20 view, so a wallet showing the native view can print the same balance with a different number of decimal places.
 - Arc pays network fees in USDC. There is no separate gas token to acquire first.
+- Arc finality is deterministic and takes under a second: once a transfer is confirmed it cannot be undone by a chain reorganisation, so there is no need to wait out extra blocks.
 - Test USDC comes from the Circle faucet: ${ARC_FAUCET_URL}.
 - Arc Testnet USDC has no monetary value. Nothing on this app is real money.
 
