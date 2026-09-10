@@ -38,7 +38,7 @@ const dragFriction = 0.94;
  * would be dead weight.
  *
  * Every visual parameter is supplied by the caller — nothing here decides what
- * the sphere means. In SealPay it is driven by `derivePulse`, so what it shows
+ * the sphere means. In ChaosPay it is driven by `derivePulse`, so what it shows
  * is the state of a real transfer.
  */
 export function ChaosSphere({
@@ -57,7 +57,7 @@ export function ChaosSphere({
   const impulseRef = useRef({ seen: impulse, firedAt: -Infinity });
   const pointerRef = useRef({ spin: 0, velocity: 0, tilt: 0, targetTilt: 0, dragging: false, lastX: 0 });
   // The palette is resolved from CSS tokens once per run of the render effect.
-  // SealPay can switch theme at any moment, so watch the `dark` class and take
+  // ChaosPay can switch theme at any moment, so watch the `dark` class and take
   // the rebuild — it happens on a click, not per frame.
   const [themeTick, setThemeTick] = useState(0);
 
@@ -272,7 +272,7 @@ export function ChaosSphere({
   }, [points, interactive, led, themeTick]);
 
   return (
-    <div className={`chaos-sphere-container seal-sphere relative ${className ?? ""}`} style={{ height }}>
+    <div className={`chaos-sphere-container chaospay-sphere relative ${className ?? ""}`} style={{ height }}>
       <canvas
         aria-hidden
         className={`chaos-sphere-canvas block size-full ${interactive ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}

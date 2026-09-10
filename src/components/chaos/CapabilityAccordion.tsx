@@ -142,7 +142,7 @@ export function CapabilityAccordion({ items }: { items: CapabilityItem[] }) {
     <div
       ref={rootRef}
       role="list"
-      aria-label="What SealPay does today"
+      aria-label="What ChaosPay does today"
       className="capability-accordion flex max-md:flex-col border-l border-t border-[var(--border)] md:h-[420px] md:border-t-0"
     >
       {items.map((item, index) => {

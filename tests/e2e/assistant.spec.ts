@@ -19,13 +19,13 @@ async function stubAssistant(
 
 async function openPanel(page: Page) {
   await page.goto("/pay");
-  await page.getByRole("button", { name: "Open the SealPay assistant" }).click();
-  return page.getByRole("region", { name: "SealPay assistant" });
+  await page.getByRole("button", { name: "Open the ChaosPay assistant" }).click();
+  return page.getByRole("region", { name: "ChaosPay assistant" });
 }
 
 test("the launcher is the sphere, and a click on it reaches the button", async ({ page }) => {
   await page.goto("/pay");
-  const launcher = page.getByRole("button", { name: "Open the SealPay assistant" });
+  const launcher = page.getByRole("button", { name: "Open the ChaosPay assistant" });
   await expect(launcher).toBeVisible();
   // Space reserved is not the same as drawn.
   await expect(launcher.locator("canvas")).toBeVisible();
@@ -34,7 +34,7 @@ test("the launcher is the sphere, and a click on it reaches the button", async (
   // through because the sphere is mounted non-interactive — with drag-to-spin on,
   // its own pointer handlers swallow this and the panel never opens.
   await launcher.click({ position: { x: 32, y: 32 } });
-  await expect(page.getByRole("region", { name: "SealPay assistant" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "ChaosPay assistant" })).toBeVisible();
 });
 
 test("a suggestion streams an answer into the panel", async ({ page }) => {
@@ -140,8 +140,8 @@ test("connected wallet is shared only while the user enables it", async ({ page 
   await page.getByRole("button", { name: "Connect wallet to continue" }).click();
   await page.getByRole("button", { name: "Browser Wallet" }).click();
   await expect(page.getByRole("button", { name: "Review payment", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Open the SealPay assistant" }).click();
-  const panel = page.getByRole("region", { name: "SealPay assistant" });
+  await page.getByRole("button", { name: "Open the ChaosPay assistant" }).click();
+  const panel = page.getByRole("region", { name: "ChaosPay assistant" });
   const sharing = panel.getByRole("checkbox", { name: /Use connected wallet/ });
   await expect(sharing).toBeEnabled();
   await expect(sharing).not.toBeChecked();

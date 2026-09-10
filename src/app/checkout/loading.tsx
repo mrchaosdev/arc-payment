@@ -51,5 +51,5 @@ export default function Loading() {
 }
 
 function Bar({ className }: { className: string }) {
-  return <div aria-hidden className={`checkout-loading-bar seal-skeleton-shimmer max-w-full ${className}`} />;
+  return <div aria-hidden className={`checkout-loading-bar chaospay-skeleton-shimmer max-w-full ${className}`} />;
 }

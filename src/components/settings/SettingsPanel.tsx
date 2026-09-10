@@ -98,7 +98,7 @@ export function SettingsPanel() {
               <StatusDot tone="positive" /> Saved locally
             </Chip>
             <h2 className="settings-intro-title mt-4 text-2xl font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
-              Swap defaults now apply across Seal.
+              Swap defaults now apply across ChaosPay.
             </h2>
             <p className="settings-intro-description mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
               Slippage, quote refresh cadence, and disconnected default chain are stored in

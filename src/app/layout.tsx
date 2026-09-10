@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SealPay — USDC settlement terminal on Arc",
+  title: "ChaosPay — USDC settlement terminal on Arc",
   description:
     "Create payment requests and settle USDC payments on Arc Testnet with predictable fees and fast finality.",
 };
@@ -26,7 +26,7 @@ const themeScript = `
 // Dark is this interface's default rather than the OS preference: the terminal
 // look is the designed one, and light is the deliberate opt-out.
 try {
-  const storedTheme = localStorage.getItem("seal-theme");
+  const storedTheme = localStorage.getItem("chaospay-theme");
   document.documentElement.classList.toggle("dark", storedTheme !== "light");
 } catch (_) {
   document.documentElement.classList.add("dark");

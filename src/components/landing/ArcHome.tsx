@@ -55,7 +55,7 @@ const capabilities: {
   {
     id: "02",
     title: "The wallet signs, the app never holds",
-    body: "SealPay builds the transfer and hands it to your wallet. No private key, no custody, no account to create.",
+    body: "ChaosPay builds the transfer and hands it to your wallet. No private key, no custody, no account to create.",
     meta: "NON-CUSTODIAL",
   },
   {
@@ -173,7 +173,7 @@ export function ArcHome() {
             </h1>
 
             <p className="landing-hero-description mt-7 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">
-              SealPay sends USDC on Arc and turns every payment into a record both sides can check on
+              ChaosPay sends USDC on Arc and turns every payment into a record both sides can check on
               the public explorer. Testnet only — the tokens have no monetary value.
             </p>
 
@@ -295,7 +295,7 @@ export function ArcHome() {
           </Panel>
 
           {/* The limits, on the landing page rather than buried in a doc. This is
-              the one thing SealPay already did better than the projects it is
+              the one thing ChaosPay already did better than the projects it is
               measured against, so it belongs where a reader arrives. */}
           <Panel className="landing-limits-panel" title="What this is not" meta="READ THIS FIRST" bodyClassName="p-0">
             <LimitRow text="A public-testnet MVP, not a production payment processor." />

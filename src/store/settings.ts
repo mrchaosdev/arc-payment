@@ -83,7 +83,7 @@ export const useDexSettings = create<SettingsState>()(
       reset: () => set(DEFAULT_SETTINGS),
     }),
     {
-      name: "seal-settings",
+      name: "chaospay-settings",
       version: 1,
       partialize: ({
         defaultChainId,

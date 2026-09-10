@@ -75,7 +75,7 @@ export function PaymentQr({
       <div
         aria-hidden
         style={{ width: size, height: size }}
-        className={cn("payment-qr-placeholder", "seal-skeleton-shimmer border border-[var(--border)]", className)}
+        className={cn("payment-qr-placeholder", "chaospay-skeleton-shimmer border border-[var(--border)]", className)}
       />
     );
 

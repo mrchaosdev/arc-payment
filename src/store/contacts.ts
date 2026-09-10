@@ -18,4 +18,4 @@ export const useContacts = create<{
     set({ contacts: id ? contacts.map(item => item.id === id ? contact : item) : [...contacts, contact] });
   },
   remove: id => set(state => ({ contacts: state.contacts.filter(contact => contact.id !== id) })),
-}), { name: "sealpay-contacts-v1" }));
+}), { name: "chaospay-contacts-v1" }));

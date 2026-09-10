@@ -430,7 +430,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
   return <div className="payment-studio-root mx-auto max-w-[1240px]">
     <div className="payment-studio-header mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
-      <div className="payment-studio-heading"><Label className="payment-studio-eyebrow text-[var(--action)]">{checkout ? "SealPay checkout" : "Your payment workspace"}</Label>
+      <div className="payment-studio-heading"><Label className="payment-studio-eyebrow text-[var(--action)]">{checkout ? "ChaosPay checkout" : "Your payment workspace"}</Label>
         <h1 className="payment-studio-title mt-3 text-3xl font-semibold tracking-[-0.02em]">{checkout ? "A payment for you." : initialMode === "request" ? "Payment requests" : "Move money, simply."}</h1>
         <p className="payment-studio-description mt-2 text-sm text-[var(--text-muted)]">{checkout ? "Review this shared request before you pay." : "Send USDC. Share a link. Keep the receipt."}</p></div>
       {!checkout && <Link href="/history" className="payment-studio-activity-link flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]">View activity <ArrowRight size={13} /></Link>}

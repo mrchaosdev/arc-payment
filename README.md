@@ -1,6 +1,6 @@
-# SealPay
+# ChaosPay
 
-SealPay is a non-custodial USDC payment MVP built for the Arc public testnet. It lets users:
+ChaosPay is a non-custodial USDC payment MVP built for the Arc public testnet. It lets users:
 
 - connect an EVM wallet with RainbowKit;
 - switch safely to Arc Testnet;
@@ -9,7 +9,7 @@ SealPay is a non-custodial USDC payment MVP built for the Arc public testnet. It
 - save pending and confirmed payment records with ArcScan links in local browser storage;
 - print or save a receipt as PDF for any recorded payment;
 - keep named recipient contacts in the browser; and
-- ask a grounded assistant about SealPay, Arc and its own reads.
+- ask a grounded assistant about ChaosPay, Arc and its own reads.
 
 The navigation bar carries the live USDC balance, the current network with a switch button when the
 wallet is elsewhere, and a badge for payments still awaiting a receipt.
@@ -58,7 +58,7 @@ Arc Testnet configuration:
 | USDC ERC-20 | `0x3600000000000000000000000000000000000000` |
 | USDC decimals | `6` |
 
-Arc exposes one USDC balance through native and ERC-20 views. SealPay uses the 6-decimal ERC-20
+Arc exposes one USDC balance through native and ERC-20 views. ChaosPay uses the 6-decimal ERC-20
 interface for display and transfers and does not add the native view to it.
 
 ## Checks

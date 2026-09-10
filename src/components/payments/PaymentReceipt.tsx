@@ -90,7 +90,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
           <header className="payment-receipt-header receipt-head">
             <div className="payment-receipt-brand receipt-brand">
               <span className="payment-receipt-brand-mark receipt-mark">$</span>
-              <span className="payment-receipt-brand-name">SealPay</span>
+              <span className="payment-receipt-brand-name">ChaosPay</span>
             </div>
             <div className="payment-receipt-heading receipt-headline">
               <h2 className="payment-receipt-title">Payment receipt</h2>
@@ -150,7 +150,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
 
           <footer className="payment-receipt-footer receipt-foot">
             <p className="payment-receipt-verification-note">
-              The description and reference above are held by SealPay and are not written onchain. The transaction
+              The description and reference above are held by ChaosPay and are not written onchain. The transaction
               hash is the authoritative record; anyone can verify it at the address above.
             </p>
             <p className="payment-receipt-testnet-note">

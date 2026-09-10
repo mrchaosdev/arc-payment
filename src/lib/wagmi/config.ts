@@ -21,7 +21,7 @@ export const supportedChains = [arcTestnet, bsc, mainnet, arbitrum, base] as con
 // metaMaskWallet bọc @metamask/sdk, luôn cố bắt tay qua kênh riêng của SDK (kể cả khi đã
 // có extension) — chậm hơn và không tương thích với ví injected giả lập trong Playwright.
 export const wagmiConfig = getDefaultConfig({
-  appName: "SealPay",
+  appName: "ChaosPay",
   projectId,
   chains: supportedChains,
   // Không có projectId thật thì mọi ví chạy nền WalletConnect (kể cả Rainbow)

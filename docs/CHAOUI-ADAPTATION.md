@@ -1,4 +1,4 @@
-# Sources for the SealPay interface
+# Sources for the ChaosPay interface
 
 The workspace draws on two of the author's own projects. Neither source directory is modified, and
 there is no runtime import from a machine-specific path — every component below is adapted into
@@ -11,7 +11,7 @@ this repository.
 
 ## From ChaoUi
 
-| ChaoUi reference | SealPay adaptation |
+| ChaoUi reference | ChaosPay adaptation |
 | --- | --- |
 | `navigation/dashboard-sidebar/DashboardSidebar.tsx` | `src/components/layout/DashboardSidebar.tsx`: collapsible, route-aware sidebar using Next links |
 | `navigation/animated-tabs/AnimatedTabs.tsx` | `src/components/chaos/AnimatedTabs.tsx`: keyboard arrows/Home/End and ARIA relationships kept; the sliding pill is replaced by a rule under the active tab |
@@ -70,13 +70,13 @@ its runtime cost.
 
 ## From Chaos Market AI
 
-That project is a market-analysis terminal; SealPay is a settlement terminal. The design language
-carries over so the two read as one family, but every value SealPay displays is re-derived from
+That project is a market-analysis terminal; ChaosPay is a settlement terminal. The design language
+carries over so the two read as one family, but every value ChaosPay displays is re-derived from
 its own data.
 
-| Chaos Market AI reference | SealPay adaptation |
+| Chaos Market AI reference | ChaosPay adaptation |
 | --- | --- |
-| `components/chaos/chaos-sphere.tsx` | `src/components/chaos/ChaosSphere.tsx`: the dot-matrix sphere — canvas 2D, Fibonacci lattice, depth fade, LED ramp. Adds a `MutationObserver` on the `dark` class, because SealPay has a theme toggle and the palette is resolved from CSS tokens once per run of the render effect |
+| `components/chaos/chaos-sphere.tsx` | `src/components/chaos/ChaosSphere.tsx`: the dot-matrix sphere — canvas 2D, Fibonacci lattice, depth fade, LED ramp. Adds a `MutationObserver` on the `dark` class, because ChaosPay has a theme toggle and the palette is resolved from CSS tokens once per run of the render effect |
 | `lib/analysis/pulse.ts` | `src/lib/visual/pulse.ts`: `heartbeat()` unchanged; `derivePulse` rewritten to map a settlement stage to a rate instead of market structure |
 | `lib/utils/css-color.ts` | `src/lib/visual/css-color.ts`: unchanged — both projects build tokens on `color-mix()`, which canvas cannot parse |
 | `lib/visual/led-ring.ts` | folded into `src/lib/visual/pulse.ts` as `rampStops` |
@@ -86,7 +86,7 @@ its own data.
 
 ### What the sphere means here
 
-Chaos Market AI prints `DERIVED, NOT PREDICTED` under its pulse. SealPay keeps that label and
+Chaos Market AI prints `DERIVED, NOT PREDICTED` under its pulse. ChaosPay keeps that label and
 earns it the same way. `derivePulse` maps one observable stage of a transfer — offline, idle,
 drafting, review, signing, settling, settled, failed — to one fixed rate, so the same stage always
 beats the same way. Amplitude comes from the browser-local confirmed-payment count, and the single

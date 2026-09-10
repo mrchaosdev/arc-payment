@@ -88,14 +88,14 @@ test("wallet rejection returns to review without recording a payment", async ({ 
   await page.getByRole("button", { name: "Confirm & pay" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "declined in your wallet" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Review your payment" })).toBeVisible();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("sealpay-workspace-v1") || '{"state":{"payments":[]}}').state.payments)).toHaveLength(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("chaospay-workspace-v1") || '{"state":{"payments":[]}}').state.payments)).toHaveLength(0);
 });
 
 test("submitted payment is stored before confirmation and survives reload", async ({ page }) => {
   await wallet(page, { pending: true });
   await page.getByRole("button", { name: "Confirm & pay" }).click();
   await expect(page.getByRole("heading", { name: "Waiting for confirmation" })).toBeVisible();
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("sealpay-workspace-v1") || '{"state":{"payments":[]}}').state.payments[0]?.status)).toBe("Pending");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("chaospay-workspace-v1") || '{"state":{"payments":[]}}').state.payments[0]?.status)).toBe("Pending");
   await page.goto("/history");
   // Everything in this list has already been signed and broadcast, so the open
   // question is the receipt rather than the signature.

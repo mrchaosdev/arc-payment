@@ -4,7 +4,7 @@ import { useId, useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 
 // Adapted from ChaoUi/navigation/animated-tabs: CSS motion, keyboard navigation,
-// controlled state, and SealPay color tokens.
+// controlled state, and ChaosPay color tokens.
 export function AnimatedTabs<T extends string>({ tabs, value, onChange, disabled = false, children }: {
   tabs: { id: T; label: string }[];
   value: T;

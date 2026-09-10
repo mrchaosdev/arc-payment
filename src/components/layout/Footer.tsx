@@ -32,7 +32,7 @@ export function Footer() {
         <div className="site-footer-brand-column py-10 lg:pr-10">
           <Link href="/" className="site-footer-brand inline-flex items-center gap-2.5">
             <BrandMark className="site-footer-brand-mark" />
-            <span className="site-footer-brand-name text-base font-semibold tracking-tight">SealPay</span>
+            <span className="site-footer-brand-name text-base font-semibold tracking-tight">ChaosPay</span>
           </Link>
 
           <p className="site-footer-description mt-5 max-w-sm text-[13px] leading-6 text-[var(--text-muted)]">
@@ -76,7 +76,7 @@ export function Footer() {
       </div>
 
       <div className="site-footer-bottom mx-auto flex max-w-[1400px] flex-col gap-2 border-t border-[var(--border)] px-4 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] md:flex-row md:items-center md:justify-between md:px-8">
-        <p className="site-footer-copyright">© 2026 SealPay · Arc Testnet MVP · No private keys stored · Built by Chaos_Davidson</p>
+        <p className="site-footer-copyright">© 2026 ChaosPay · Arc Testnet MVP · No private keys stored · Built by Chaos_Davidson</p>
         <p className="site-footer-reminder">Verify recipient, amount, network and wallet prompt before signing</p>
       </div>
     </footer>

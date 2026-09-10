@@ -31,5 +31,5 @@ export const usePayments = create<{
     payments: state.payments.map(p => p.hash === hash ? { ...p, status, feeNative: feeNative ?? p.feeNative } : p),
   })),
   saveRequest: request => set(state => ({ requests: [request, ...state.requests].slice(0, 200) })),
-}), { name: "sealpay-workspace-v1" }));
+}), { name: "chaospay-workspace-v1" }));
 

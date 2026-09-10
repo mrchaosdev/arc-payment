@@ -58,7 +58,7 @@ async function wallet(page: Page, { wrongNetwork = false, pending = false } = {}
   await page.addInitScript(({ sender, recipient, hash, wrongNetwork, pending }) => {
     let chain = wrongNetwork ? "0x1" : "0x4cef52";
     const listeners: Record<string, ((data: unknown) => void)[]> = {};
-    if (pending) localStorage.setItem("sealpay-workspace-v1", JSON.stringify({ version: 0, state: { requests: [], payments: [
+    if (pending) localStorage.setItem("chaospay-workspace-v1", JSON.stringify({ version: 0, state: { requests: [], payments: [
       { hash, from: sender, to: recipient, amount: "1.25", memo: "", reference: "", createdAt: Date.now(), status: "Pending" },
       { hash: `0x${"cd".repeat(32)}`, from: recipient, to: sender, amount: "9", memo: "", reference: "", createdAt: Date.now(), status: "Pending" },
     ] } }));
@@ -169,7 +169,7 @@ test("sidebar opens assistant and retains shortcuts when collapsed", async ({ pa
   await page.goto("/dashboard");
   const sidebar = page.locator(".dashboard-sidebar-root");
   await sidebar.getByRole("button", { name: "Ask assistant" }).click();
-  await expect(page.getByRole("region", { name: "SealPay assistant" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "ChaosPay assistant" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Your question" })).toBeFocused();
   await page.getByRole("button", { name: "Close the assistant" }).click();
   await sidebar.getByRole("button", { name: "Collapse sidebar" }).click();

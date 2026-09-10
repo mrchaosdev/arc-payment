@@ -91,44 +91,44 @@ a {
 /* ── Motion ────────────────────────────────────────────────────────────────
    Everything below animates transform or opacity only. */
 
-@keyframes seal-progress-sweep {
+@keyframes chaospay-progress-sweep {
   from { transform: translateX(-100%); }
   to { transform: translateX(300%); }
 }
 
-.seal-progress {
-  animation: seal-progress-sweep 1.4s ease-in-out infinite;
+.chaospay-progress {
+  animation: chaospay-progress-sweep 1.4s ease-in-out infinite;
 }
 
-@keyframes seal-skeleton-shimmer {
+@keyframes chaospay-skeleton-shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-.seal-skeleton-shimmer {
+.chaospay-skeleton-shimmer {
   background-image: linear-gradient(90deg, var(--surface) 0%, var(--surface-soft) 50%, var(--surface) 100%);
   background-size: 200% 100%;
-  animation: seal-skeleton-shimmer 1.6s linear infinite;
+  animation: chaospay-skeleton-shimmer 1.6s linear infinite;
 }
 
-@keyframes seal-ticker-run {
+@keyframes chaospay-ticker-run {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 
-.seal-ticker__track {
+.chaospay-ticker__track {
   display: inline-flex;
   min-width: 200%;
-  animation: seal-ticker-run 42s linear infinite;
+  animation: chaospay-ticker-run 42s linear infinite;
 }
 
-@keyframes seal-blink {
+@keyframes chaospay-blink {
   0%, 45% { opacity: 1; }
   55%, 100% { opacity: 0.15; }
 }
 
-.seal-blink {
-  animation: seal-blink 1.6s steps(1, end) infinite;
+.chaospay-blink {
+  animation: chaospay-blink 1.6s steps(1, end) infinite;
 }
 
 /* ── Form controls ─────────────────────────────────────────────────────────
@@ -208,7 +208,7 @@ a {
     transition-duration: 0.001ms !important;
   }
 
-  .seal-ticker__track {
+  .chaospay-ticker__track {
     animation: none;
   }
 }

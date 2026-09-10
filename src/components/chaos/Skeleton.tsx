@@ -8,5 +8,5 @@ export function Skeleton({ className, variant = "shimmer", rounded = "none" }: {
   rounded?: "none" | "md" | "lg" | "xl" | "2xl" | "full";
 }) {
   const radius = { none: "", md: "rounded-md", lg: "rounded-lg", xl: "rounded-xl", "2xl": "rounded-2xl", full: "rounded-full" }[rounded];
-  return <div aria-hidden className={cn("ui-skeleton-block", "bg-[var(--surface-soft)]", radius, variant === "pulse" ? "animate-pulse" : "seal-skeleton-shimmer", className)} />;
+  return <div aria-hidden className={cn("ui-skeleton-block", "bg-[var(--surface-soft)]", radius, variant === "pulse" ? "animate-pulse" : "chaospay-skeleton-shimmer", className)} />;
 }

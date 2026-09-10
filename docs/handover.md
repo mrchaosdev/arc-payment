@@ -42,9 +42,9 @@ Route tĩnh được prerender lúc build — xem bẫy số 2.
 
 | Store | Khoá localStorage | Giới hạn |
 | --- | --- | --- |
-| `store/payments` | `sealpay-workspace-v1` | 200 payment, 200 request |
-| `store/contacts` | `sealpay-contacts-v1` | 100 liên hệ |
-| `store/settings` | `seal-settings` | — |
+| `store/payments` | `chaospay-workspace-v1` | 200 payment, 200 request |
+| `store/contacts` | `chaospay-contacts-v1` | 100 liên hệ |
+| `store/settings` | `chaospay-settings` | — |
 | `store/assistant` | *không lưu* | chỉ chia sẻ trạng thái mở/đóng giữa sidebar và quả cầu |
 
 Toàn bộ dữ liệu nằm trong trình duyệt. Đổi máy hoặc đổi trình duyệt là mất — đây là giới hạn

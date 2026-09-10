@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
  * only the content whose shape genuinely isn't known yet shimmers.
  *
  * Mirrors `checkout/loading.tsx`'s bespoke skeleton (`Bar` + `Card` +
- * `seal-skeleton-shimmer`) rather than inventing a second visual language for
+ * `chaospay-skeleton-shimmer`) rather than inventing a second visual language for
  * "loading": a route transition should look like the terminal pausing, not
  * like a different, older app flashing in between two terminal screens.
  */
@@ -79,5 +79,5 @@ export function PageLoading({
 }
 
 function Bar({ className }: { className: string }) {
-  return <div aria-hidden className={`page-loading-bar seal-skeleton-shimmer max-w-full ${className}`} />;
+  return <div aria-hidden className={`page-loading-bar chaospay-skeleton-shimmer max-w-full ${className}`} />;
 }

@@ -74,7 +74,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `sealpay-${p.hash.slice(0, 10)}.json`;
+    anchor.download = `chaospay-${p.hash.slice(0, 10)}.json`;
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

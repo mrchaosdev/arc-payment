@@ -97,7 +97,7 @@ export function useThemeMorphTransition() {
 
     const applyTheme = () => {
       root.classList.toggle("dark", nextDark);
-      window.localStorage.setItem("seal-theme", nextTheme);
+      window.localStorage.setItem("chaospay-theme", nextTheme);
     };
     const viewTransitionDocument = document as ViewTransitionDocument;
 

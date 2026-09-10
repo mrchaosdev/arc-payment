@@ -24,7 +24,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
       <div className={cn("top-bar-branding flex shrink-0 items-center gap-6", workspace && "lg:hidden")}>
         <Link href="/" className="top-bar-brand flex shrink-0 items-center gap-2.5">
           <BrandMark className="top-bar-brand-mark" />
-          <span className="top-bar-brand-name text-base font-semibold tracking-tight">SealPay</span>
+          <span className="top-bar-brand-name text-base font-semibold tracking-tight">ChaosPay</span>
         </Link>
         {!workspace && <nav aria-label="Main navigation" className="top-bar-nav hidden items-center gap-1 xl:flex">
           {navItems.map(item => <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? "page" : undefined}

@@ -44,13 +44,13 @@ export function DashboardSidebar() {
     >
       <Link
         href="/"
-        aria-label="SealPay home"
+        aria-label="ChaosPay home"
         className="dashboard-sidebar-brand flex h-14 shrink-0 items-center gap-2.5 border-b border-[var(--border)] px-5"
       >
         <BrandMark className="dashboard-sidebar-brand-mark" />
         {!collapsed && (
           <span className="dashboard-sidebar-brand-text min-w-0">
-            <span className="dashboard-sidebar-brand-name block truncate text-base font-semibold tracking-tight">SealPay</span>
+            <span className="dashboard-sidebar-brand-name block truncate text-base font-semibold tracking-tight">ChaosPay</span>
           </span>
         )}
       </Link>

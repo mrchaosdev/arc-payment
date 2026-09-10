@@ -191,8 +191,8 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open the SealPay assistant"
-        title="Ask about SealPay"
+        aria-label="Open the ChaosPay assistant"
+        title="Ask about ChaosPay"
         /* Bare on purpose: no plate, no frame. The motion is what marks it as a
            control, so the only affordance is a lift on hover. Keyboard focus
            still draws the global focus-visible outline. */
@@ -218,13 +218,13 @@ export function AssistantWidget() {
 
   return (
     <section
-      aria-label="SealPay assistant"
+      aria-label="ChaosPay assistant"
       className="assistant-panel fixed inset-x-4 bottom-24 z-[80] flex max-h-[min(70vh,560px)] flex-col border border-[var(--border-strong)] bg-[var(--surface)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:inset-x-auto sm:right-4 sm:w-[400px] lg:bottom-6 lg:right-6"
     >
       <header className="assistant-header flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
         <p className="assistant-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
           <Bot size={14} className="text-[var(--action)]" />
-          SealPay assistant
+          ChaosPay assistant
         </p>
         <button
           type="button"
@@ -284,7 +284,7 @@ export function AssistantWidget() {
                 >
                   {turn.content}
                   {turn.role === "assistant" && index === turns.length - 1 && !turn.content && pending ? (
-                    <span className="assistant-typing-indicator seal-blink text-[var(--action)]">▍</span>
+                    <span className="assistant-typing-indicator chaospay-blink text-[var(--action)]">▍</span>
                   ) : null}
                 </p>
                 {turn.evidence?.map((evidence, resultIndex) => (
@@ -323,7 +323,7 @@ export function AssistantWidget() {
                 void ask(draft);
               }
             }}
-            placeholder="Ask about SealPay…"
+            placeholder="Ask about ChaosPay…"
             aria-label="Your question"
             maxLength={2000}
             className="assistant-input max-h-28 min-h-[40px] flex-1 resize-y border border-[var(--border)] bg-[var(--app-bg)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--action)]"

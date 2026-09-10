@@ -21,7 +21,7 @@ export function BrandMark({ className, size = 28 }: { className?: string; size?:
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logolighttheme.png"
-        alt="SealPay"
+        alt="ChaosPay"
         width={size}
         height={size}
         className={cn(shared, "brand-mark-light size-full dark:hidden")}

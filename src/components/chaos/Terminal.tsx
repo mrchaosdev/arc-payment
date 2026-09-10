@@ -128,7 +128,7 @@ export function TraceRow({
 }) {
   const marker = {
     pending: "text-[var(--text-muted)]",
-    active: "text-[var(--action)] seal-blink",
+    active: "text-[var(--action)] chaospay-blink",
     done: "text-[var(--positive)]",
     failed: "text-[var(--negative)]",
   }[state];
@@ -181,7 +181,7 @@ export function StatusDot({ tone = "primary" }: { tone?: NumberTone }) {
   return (
     <span
       aria-hidden
-      className={cn("terminal-status-dot", "inline-block size-1.5 shrink-0 rounded-full bg-current seal-blink", toneClass(tone))}
+      className={cn("terminal-status-dot", "inline-block size-1.5 shrink-0 rounded-full bg-current chaospay-blink", toneClass(tone))}
     />
   );
 }

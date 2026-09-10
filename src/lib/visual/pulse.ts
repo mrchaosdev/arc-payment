@@ -1,7 +1,7 @@
 /**
  * The settlement pulse.
  *
- * Chaos Market AI derives its pulse from market structure. SealPay has no market
+ * Chaos Market AI derives its pulse from market structure. ChaosPay has no market
  * to read, so the rate is derived from what the app is actually doing to a
  * payment right now. Nothing here predicts or embellishes: every rate below maps
  * to one observable state of the transfer, so the same state always beats the
