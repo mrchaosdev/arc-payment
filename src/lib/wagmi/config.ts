@@ -2,6 +2,7 @@ import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { injectedWallet, rainbowWallet, safeWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 import { arcTestnet, arbitrum, base, bsc, mainnet } from "viem/chains";
 import { http } from "wagmi";
+import { ARC_TESTNET_RPC } from "@/lib/arc";
 
 // WalletConnect projectId — lấy free tại https://cloud.reown.com rồi đặt vào
 // NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID (xem .env.example).
@@ -9,7 +10,7 @@ const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?
 
 // RainbowKit BẮT BUỘC projectId non-empty (rỗng sẽ throw lúc build/prerender),
 // nên vẫn phải truyền placeholder khi chưa có key thật.
-const projectId = walletConnectProjectId || "seal_dev_placeholder";
+const projectId = walletConnectProjectId || "chaospay_dev_placeholder";
 
 // Arc Testnet is the primary network; legacy EVM routes remain available after it.
 export const supportedChains = [arcTestnet, bsc, mainnet, arbitrum, base] as const;
@@ -37,7 +38,7 @@ export const wagmiConfig = getDefaultConfig({
     },
   ],
   transports: {
-    [arcTestnet.id]: http("https://rpc.testnet.arc.network"),
+    [arcTestnet.id]: http(ARC_TESTNET_RPC),
     [mainnet.id]: http("https://cloudflare-eth.com"),
     [bsc.id]: http("https://bsc-dataseed.binance.org"),
     [arbitrum.id]: http("https://arb1.arbitrum.io/rpc"),

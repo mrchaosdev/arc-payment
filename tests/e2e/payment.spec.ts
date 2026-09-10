@@ -38,7 +38,7 @@ async function wallet(page: Page, { pending = false, reject = false } = {}) {
       },
     } });
   }, { sender, hash, reject });
-  await page.route("https://rpc.testnet.arc.network/**", async route => {
+  await page.route("https://rpc.testnet.arc.io/**", async route => {
     const payload = route.request().postDataJSON();
     const answer = (rpc: { id: number; method: string }) => {
       const values: Record<string, unknown> = {

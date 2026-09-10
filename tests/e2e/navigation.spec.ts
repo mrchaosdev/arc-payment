@@ -78,7 +78,7 @@ async function wallet(page: Page, { wrongNetwork = false, pending = false } = {}
     } });
   }, { sender, recipient, hash, wrongNetwork, pending });
   let settled = false;
-  await page.route(/https:\/\/(rpc\.testnet\.arc\.network|cloudflare-eth\.com)/, async route => {
+  await page.route(/https:\/\/(rpc\.testnet\.arc\.io|cloudflare-eth\.com)/, async route => {
     const payload = route.request().postDataJSON();
     const reply = (rpc: { id: number; method: string; params?: unknown }) => ({ jsonrpc: "2.0", id: rpc.id, result: ({
       eth_chainId: "0x4cef52", eth_getBalance: "0x0", eth_blockNumber: "0x10",

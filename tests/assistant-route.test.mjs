@@ -20,7 +20,7 @@ test("route executes the planned read, returns evidence and passes matching resu
   globalThis.fetch = async (input, options) => {
     const url = String(input instanceof Request ? input.url : input);
     const body = JSON.parse(options?.body ?? (input instanceof Request ? await input.text() : "{}"));
-    if (url.startsWith("https://rpc.testnet.arc.network")) {
+    if (url.startsWith("https://rpc.testnet.arc.io")) {
       rpcMethods.push(body.method);
       const result = body.method === "eth_blockNumber" ? "0x10" : `0x${(123456789n).toString(16).padStart(64, "0")}`;
       return Response.json({ jsonrpc: "2.0", id: body.id, result });

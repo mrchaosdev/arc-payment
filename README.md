@@ -53,7 +53,7 @@ Arc Testnet configuration:
 | Field | Value |
 | --- | --- |
 | Chain ID | `5042002` (`0x4CEF52`) |
-| RPC | `https://rpc.testnet.arc.network` |
+| RPC | `https://rpc.testnet.arc.io` |
 | Explorer | `https://testnet.arcscan.app` |
 | USDC ERC-20 | `0x3600000000000000000000000000000000000000` |
 | USDC decimals | `6` |

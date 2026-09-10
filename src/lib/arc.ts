@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 
 export const ARC_TESTNET_ID = 5_042_002;
-export const ARC_TESTNET_RPC = "https://rpc.testnet.arc.network";
+export const ARC_TESTNET_RPC = "https://rpc.testnet.arc.io";
 export const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
 export const ARC_FAUCET_URL = "https://faucet.circle.com";
 export const ARC_USDC_ADDRESS =

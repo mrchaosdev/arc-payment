@@ -125,7 +125,7 @@ test("connected wallet is shared only while the user enables it", async ({ page 
       },
     } });
   }, address);
-  await page.route("https://rpc.testnet.arc.network/**", async route => {
+  await page.route("https://rpc.testnet.arc.io/**", async route => {
     const payload = route.request().postDataJSON();
     const reply = (rpc: { id: number; method: string }) => ({ jsonrpc: "2.0", id: rpc.id, result: rpc.method === "eth_call" ? `0x${"0".repeat(64)}` : "0x0" });
     await route.fulfill({ json: Array.isArray(payload) ? payload.map(reply) : reply(payload) });
