@@ -7,6 +7,7 @@ ChaosPay is a non-custodial USDC payment MVP built for the Arc public testnet. I
 - send USDC through its 6-decimal ERC-20 interface;
 - create shareable payment-request links, with a QR code for paying from a phone;
 - save pending and confirmed payment records with ArcScan links in local browser storage;
+- see a saved request marked paid when a matching USDC transfer reaches it on Arc;
 - print or save a receipt as PDF for any recorded payment;
 - keep named recipient contacts in the browser; and
 - ask a grounded assistant about ChaosPay, Arc and its own reads.
@@ -75,12 +76,16 @@ npm run build
 
 This is a public-testnet MVP, not a production payment processor. Payment memos and references are
 encoded only in the editable shared URL/local receipt; they are not written onchain. History and
-requests are local to this browser, capped at 200 each, with no automatic paid/unpaid reconciliation.
+requests are local to this browser, capped at 200 each. A saved request is marked paid by an
+exact-amount match found while the app is open, within a bounded window of recent blocks; the
+requests page prints how far it has looked rather than implying "unpaid" means unpaid.
 Browser tests use a mock wallet/RPC and do not prove live-network settlement. Future milestones can
 add CCTP funding, Circle Gateway unified balances, embedded wallets, merchant webhooks, and an
 optional invoice/escrow contract after security review.
 
-[The handover notes](docs/handover.md) carry the current state, the project map, the non-obvious
+[The roadmap](docs/roadmap.md) carries where the project is going and why — the product it is
+becoming, the four architectural decisions that follow from it, and what is deliberately not being
+built. [The handover notes](docs/handover.md) carry the current state, the project map, the non-obvious
 traps found while building it, and the open work in the order it is worth doing. The assistant's
 read semantics and privacy boundary are in [docs/payment-assistant.md](docs/payment-assistant.md),
 and interface class names in [docs/css-classes.md](docs/css-classes.md).

@@ -6,6 +6,7 @@ import { Clock3, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { erc20Abi, formatUnits, type Address } from "viem";
 import { useReadContract, useSwitchChain } from "wagmi";
 import { usePendingPayments } from "@/hooks/usePendingPayments";
+import { useRequestReconciliation } from "@/hooks/useRequestReconciliation";
 import { useToast } from "@/components/ui/Toast";
 import { ARC_EXPLORER_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { compactAddress } from "@/lib/utils";
@@ -20,6 +21,9 @@ export function WalletControls({ address, chainId, openAccountModal }: {
   const { toast } = useToast();
   const { switchChainAsync, isPending } = useSwitchChain();
   const pending = usePendingPayments(address);
+  // Mounted here for the same reason the receipt watcher is: one sweep for the
+  // whole app, alive on every route rather than only while /requests is open.
+  useRequestReconciliation(address);
   const balance = useReadContract({
     address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address], chainId: ARC_TESTNET_ID,
     query: { refetchInterval: 15_000, refetchOnWindowFocus: true },

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { Num, Panel } from "@/components/chaos/Terminal";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { Chip, Num, Panel } from "@/components/chaos/Terminal";
 import { ShareActions } from "@/components/payments/ShareActions";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { paymentLink } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
+import { compactAddress } from "@/lib/utils";
 import { usePayments, type SavedRequest } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
@@ -29,14 +30,27 @@ function linkFor(origin: string, request: SavedRequest) {
 
 export function SavedRequests() {
   const requests = usePayments((s) => s.requests);
+  const cursor = usePayments((s) => s.reconcileCursor);
   const hydrated = useHydrated();
   const origin = hydrated ? window.location.origin : "";
+  const settled = requests.filter((r) => r.settlement).length;
 
   return (
     <div className="saved-requests-root mx-auto mt-8 max-w-[1240px]">
-      <Panel className="saved-requests-panel" title="Saved requests" meta={hydrated ? `${requests.length} LINKS` : "—"} bodyClassName="p-0">
+      <Panel
+        className="saved-requests-panel"
+        title="Saved requests"
+        meta={hydrated ? `${settled}/${requests.length} PAID` : "—"}
+        bodyClassName="p-0"
+      >
         <p className="saved-requests-storage-notice border-b border-[var(--border)] px-4 py-2.5 text-[11px] leading-5 text-[var(--text-muted)]">
-          Links created in this browser. Creating a request does not prove payment; verify receipts separately.
+          Links created in this browser. A request is marked paid when a USDC transfer of the exact
+          amount reaches it on Arc.{" "}
+          {hydrated && cursor ? (
+            <>Checked to block <span className="saved-requests-cursor font-mono">{cursor.toLocaleString()}</span>. Anything paid while this browser was closed for long is not seen.</>
+          ) : (
+            <>Matching runs only while this app is open.</>
+          )}
         </p>
 
         {!hydrated || !requests.length ? (
@@ -74,7 +88,28 @@ export function SavedRequests() {
                     </div>
                   </div>
 
-                  {url ? (
+                  {/*
+                    A settled request stops offering its link. The share controls
+                    are how a request gets paid, and leaving them on an invoice
+                    that is already cleared is an invitation to pay it twice.
+                  */}
+                  {r.settlement ? (
+                    <div className="saved-requests-settlement mt-3 flex flex-wrap items-center gap-2">
+                      <Chip className="saved-requests-settled-chip" tone="positive">Paid</Chip>
+                      <span className="saved-requests-settled-payer font-mono text-[10px] text-[var(--text-muted)]">
+                        from {compactAddress(r.settlement.from)} · {new Date(r.settlement.at).toLocaleString()}
+                      </span>
+                      <a
+                        className="saved-requests-settled-explorer flex items-center gap-1 font-mono text-[10px] text-[var(--action)]"
+                        href={arcTransactionUrl(r.settlement.hash)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {compactAddress(r.settlement.hash)}
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  ) : url ? (
                     <div className="saved-requests-share-actions mt-3">
                       <ShareActions
                         url={url}

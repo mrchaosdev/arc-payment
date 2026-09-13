@@ -14,11 +14,14 @@ Toàn bộ kiểm tra đang xanh:
 | --- | --- |
 | `npm run build` | thành công |
 | `npm run lint` | sạch |
-| `npm test` | 20/20 |
-| `npm run test:e2e` | 24/24 |
+| `npm test` | 30/30 |
+| `npm run test:e2e` | 26/26 |
 
-Chưa commit tại thời điểm ghi: navbar ví (`WalletControls`), danh bạ, store trợ lý dùng chung,
-`usePendingPayments`, và `src/app/contacts/`.
+Chưa commit tại thời điểm ghi: đối soát yêu cầu thanh toán (`lib/reconcile.ts`,
+`hooks/useRequestReconciliation.ts`, trạng thái `settlement` trong `store/payments`, giao diện
+`SavedRequests`, `tests/reconcile.test.mjs`, `tests/e2e/reconcile.spec.ts`, `tests/e2e/arc-mock.ts`).
+Từ đợt trước: navbar ví (`WalletControls`), danh bạ, store trợ lý dùng chung, `usePendingPayments`,
+và `src/app/contacts/`.
 
 ## Bản đồ
 
@@ -42,7 +45,7 @@ Route tĩnh được prerender lúc build — xem bẫy số 2.
 
 | Store | Khoá localStorage | Giới hạn |
 | --- | --- | --- |
-| `store/payments` | `chaospay-workspace-v1` | 200 payment, 200 request |
+| `store/payments` | `chaospay-workspace-v1` | 200 payment, 200 request, một `reconcileCursor` |
 | `store/contacts` | `chaospay-contacts-v1` | 100 liên hệ |
 | `store/settings` | `chaospay-settings` | — |
 | `store/assistant` | *không lưu* | chỉ chia sẻ trạng thái mở/đóng giữa sidebar và quả cầu |
@@ -55,6 +58,11 @@ thiết kế, không phải lỗi, và giao diện có nói rõ điều đó.
 - `lib/payments.ts` — validate theo từng trường (`recipientError`, `amountError`), làm tròn phí
   lên đơn vị USDC, và `paymentTotals`. `lib/contacts.ts` dùng lại `recipientError` từ đây.
 - `hooks/usePendingPayments.ts` — **một** watcher receipt cho toàn app, mount trong navbar.
+- `lib/reconcile.ts` — **logic đối soát thuần**, không đụng mạng, nên test bằng
+  `tests/reconcile.test.mjs`. Bốn luật khớp lệnh (đúng số tiền, không lùi ngày, cũ trước, một đổi
+  một) nằm trong doc comment của `matchTransfers` — đọc đó trước khi đổi hành vi.
+- `hooks/useRequestReconciliation.ts` — sweep đọc `Transfer` log, mount cạnh watcher receipt trong
+  navbar. Chỉ đọc, không ký bất cứ thứ gì.
 - `lib/assistant/` — `knowledge.ts` (system prompt, chỉ chạy phía server), `tools.ts`,
   `protocol.ts`. Chi tiết ở [docs/payment-assistant.md](payment-assistant.md).
 - Tên class giao diện: [docs/css-classes.md](css-classes.md).
@@ -73,7 +81,7 @@ Trên Vercel: Project Settings → Environment Variables → chọn scope Produc
 Vercel không áp biến mới cho deployment cũ. File `.env.vercel` ở gốc repo (đã bị gitignore) có
 sẵn nội dung để dán vào.
 
-## Sáu cái bẫy đã tốn thời gian
+## Tám cái bẫy đã tốn thời gian
 
 Ghi lại để không phải tìm lại lần hai.
 
@@ -103,6 +111,14 @@ trang qua dev server; ở 45s có hai test nằm sát trần và đỏ ngẫu nh
 **6. `@google/genai` export `Stream` trong `.d.ts` nhưng không có lúc chạy.** `instanceof Stream`
 qua được `tsc` rồi chết ở bước build. Route đang thu hẹp kiểu bằng `Symbol.asyncIterator in result`.
 
+**7. `tsconfig` target là ES2017, nên bigint literal (`1_000n`) là lỗi build.** `tsc` của Next bắt
+được, `npm run lint` thì không. Viết `BigInt(1_000)` như `lib/payments.ts` vẫn làm.
+
+**8. `node_modules/viem` có thể mất sạch file `.d.ts` mà vẫn còn `.d.ts.map`.** Gặp ngày 2026-09-13:
+1348 file map còn nguyên, 0 file khai báo. Biểu hiện là `npm run build` chết ở bước type check với
+"Could not find a declaration file for module 'viem'" tại một file mình **không hề sửa**. `npm install`
+không sửa được vì cây phụ thuộc vẫn hợp lệ. Cách chữa: `rm -rf node_modules/viem` rồi cài lại.
+
 Ngoài ra: repo dùng **CRLF**. Ghi file bằng LF sẽ tạo diff toàn file.
 
 ## Việc còn lại
@@ -117,18 +133,25 @@ Xếp theo thứ tự đáng làm trước.
 extension vào được. Lấy free ở [cloud.reown.com](https://cloud.reown.com), bỏ dấu `#` trong
 `.env.vercel`, build lại. Code đã rẽ nhánh sẵn, không phải sửa gì.
 
-**3. Ba poller chồng nhau ở `/pay`.** `PaymentStudio` giữ poller riêng 5s cho giao dịch đang bay,
-`usePendingPayments` quét 8s, số dư refetch 15s. Cùng một hash bị hai watcher hỏi. Hướng gọn:
-để `PaymentStudio` đọc trạng thái từ store thay vì tự poll.
+**3. Bốn vòng quét chồng nhau.** `PaymentStudio` giữ poller riêng 5s cho giao dịch đang bay,
+`usePendingPayments` quét 8s, `useRequestReconciliation` quét 12s, số dư refetch 15s. Cùng một hash
+bị hai watcher hỏi. Hướng gọn: để `PaymentStudio` đọc trạng thái từ store thay vì tự poll, rồi gộp
+hai watcher còn lại thành một vòng. Đây là triệu chứng của việc logic đối soát đang nằm sai chỗ —
+lời giải thật là đưa nó lên server, xem [docs/roadmap.md](roadmap.md) giai đoạn 1.
 
-**4. Popover trong navbar đóng cứng vị trí** (`top-28 sm:top-16 right-4`). Đổi chiều cao header
+**4. Đối soát chỉ nhìn được 50.000 block gần nhất, và chỉ khi app đang mở.** `MAX_CATCHUP` trong
+`useRequestReconciliation`. Đóng trình duyệt đủ lâu là có khoảng trống không ai quét — giao diện nói
+thẳng điều đó bằng số block ở `saved-requests-cursor` thay vì vờ như "chưa trả". Sửa đúng nghĩa là
+một watcher phía server, không phải tăng hằng số.
+
+**5. Popover trong navbar đóng cứng vị trí** (`top-28 sm:top-16 right-4`). Đổi chiều cao header
 là lệch. CSS anchor positioning là lời giải đúng nhưng hỗ trợ trình duyệt còn hẹp.
 
-**5. Select danh bạ ở `/pay` luôn trở về "Choose a contact"** sau khi chọn, không cho biết đang
+**6. Select danh bạ ở `/pay` luôn trở về "Choose a contact"** sau khi chọn, không cho biết đang
 dùng liên hệ nào. Trong `onChange` cũng có một dòng `setFieldErrors` thừa vì `edit()` đã tự xoá
 lỗi trường.
 
-**6. `SplashCursor` chỉ được phép chạy ở route landing.** Bản từng nối vào `AppShell` đã gây rò rỉ
+**7. `SplashCursor` chỉ được phép chạy ở route landing.** Bản từng nối vào `AppShell` đã gây rò rỉ
 bộ nhớ GPU khi resize và có thể để canvas chết phủ toàn trang khi mất WebGL context. Bản hiện tại
 giữ các bản vá đó, tải động từ `ArcHome`, dùng canvas fixed theo viewport và không nhận pointer event,
 bỏ qua thiết bị coarse-pointer và reduced-motion, rồi tự ngừng render sau 2,4 giây không tương tác.

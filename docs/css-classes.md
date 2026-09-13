@@ -546,6 +546,7 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `saved-requests-root`
 - `saved-requests-panel`
 - `saved-requests-storage-notice`
+- `saved-requests-cursor`
 - `saved-requests-empty-state`
 - `saved-requests-list`
 - `saved-requests-item`
@@ -558,6 +559,10 @@ Các class mới cho việc chia sẻ địa chỉ ví và hiển thị dữ li�
 - `saved-requests-checkout-link`
 - `saved-requests-amount`
 - `saved-requests-share-actions`
+- `saved-requests-settlement`
+- `saved-requests-settled-chip`
+- `saved-requests-settled-payer`
+- `saved-requests-settled-explorer`
 
 ### [components/payments/SettlementPulse.tsx](../src/components/payments/SettlementPulse.tsx)
 

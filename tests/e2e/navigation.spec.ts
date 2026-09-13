@@ -1,54 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { decodeFunctionData, encodeFunctionResult, type Hex } from "viem";
-
-// wagmi batches contract reads through Multicall3, so a mock that answers
-// `eth_call` with a bare uint256 makes viem fail to decode and the balance query
-// retry forever. Arc Testnet really does have Multicall3 at this address, so the
-// mock has to speak aggregate3 rather than the app avoid it.
-const MULTICALL3 = "0xca11bde05977b3631167028862be2a173976ca11";
-const BALANCE = `0x${BigInt(100000000).toString(16).padStart(64, "0")}` as Hex;
-
-const aggregate3Abi = [
-  {
-    type: "function",
-    name: "aggregate3",
-    stateMutability: "payable",
-    inputs: [
-      {
-        name: "calls",
-        type: "tuple[]",
-        components: [
-          { name: "target", type: "address" },
-          { name: "allowFailure", type: "bool" },
-          { name: "callData", type: "bytes" },
-        ],
-      },
-    ],
-    outputs: [
-      {
-        name: "returnData",
-        type: "tuple[]",
-        components: [
-          { name: "success", type: "bool" },
-          { name: "returnData", type: "bytes" },
-        ],
-      },
-    ],
-  },
-] as const;
-
-/** Every read in these tests is a balance, so each batched call gets the same answer. */
-function answerCall(params: unknown): Hex {
-  const [call] = params as [{ to?: string; data: Hex }];
-  if (call?.to?.toLowerCase() !== MULTICALL3) return BALANCE;
-  const { args } = decodeFunctionData({ abi: aggregate3Abi, data: call.data });
-  const calls = args[0] as readonly unknown[];
-  return encodeFunctionResult({
-    abi: aggregate3Abi,
-    functionName: "aggregate3",
-    result: calls.map(() => ({ success: true, returnData: BALANCE })),
-  });
-}
+import { answerCall } from "./arc-mock";
 
 const sender = "0x3333333333333333333333333333333333333333";
 const recipient = "0x1111111111111111111111111111111111111111";
