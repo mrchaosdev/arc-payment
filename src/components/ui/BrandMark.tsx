@@ -6,9 +6,14 @@ import { cn } from "@/lib/utils";
  * script in `layout.tsx` puts it there), so this renders correctly on the
  * server and never flashes the wrong one on hydration.
  *
- * - `logodarktheme.png` — the pale seal, for the dark interface.
- * - `logolighttheme.png` — the dark seal, for the light interface and for the
- *   browser tab icon (`src/app/icon.png`).
+ * - `ChaosPay-logo-black.svg` — the dark seal, for the light interface.
+ * - `ChaosPay-logo-white.svg` — the pale seal, for the dark interface and for
+ *   the browser tab icon (`src/app/icon.svg`).
+ *
+ * The capital C matters. Windows serves these paths case-insensitively and
+ * Vercel does not, so a lowercased `src` works locally and 404s in production.
+ * `ChaosPay-logo-currentColor.svg` is the same artwork with an inheritable
+ * fill, kept for anywhere a single element has to take the surrounding colour.
  */
 export function BrandMark({ className, size = 28 }: { className?: string; size?: number }) {
   const shared = "brand-mark-image object-contain";
@@ -20,7 +25,7 @@ export function BrandMark({ className, size = 28 }: { className?: string; size?:
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/logolighttheme.png"
+        src="/ChaosPay-logo-black.svg"
         alt="ChaosPay"
         width={size}
         height={size}
@@ -28,7 +33,7 @@ export function BrandMark({ className, size = 28 }: { className?: string; size?:
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/logodarktheme.png"
+        src="/ChaosPay-logo-white.svg"
         alt=""
         aria-hidden
         width={size}
