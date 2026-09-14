@@ -128,3 +128,15 @@ test("sidebar opens assistant and retains shortcuts when collapsed", async ({ pa
   await expect(sidebar.getByRole("link", { name: "Contacts", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Get test USDC" })).toHaveAttribute("href", "https://faucet.circle.com");
 });
+
+test("documentation is discoverable, anchored and fits a narrow screen", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/docs");
+
+  await expect(page).toHaveTitle("Documentation — ChaosPay");
+  await expect(page.getByRole("heading", { level: 1, name: "A payment ends in proof." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Documentation" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("navigation", { name: "Documentation sections" }).getByRole("link")).toHaveCount(10);
+  await expect(page.locator("#network")).toContainText("5042002");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

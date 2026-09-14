@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Settings } from "lucide-react";
+import { BookOpen, Settings } from "lucide-react";
 import type { Address } from "viem";
 import { Skeleton } from "@/components/chaos/Skeleton";
 import { WalletControls } from "@/components/layout/WalletControls";
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/dashboard", label: "Workspace" },
   { href: "/pay", label: "Pay & Request" },
   { href: "/history", label: "Activity" },
+  { href: "/docs", label: "Docs" },
 ];
 
 export function TopBar({ workspace = false }: { workspace?: boolean }) {
@@ -34,6 +35,18 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
         </nav>}
       </div>
       <div className="top-bar-actions ml-auto flex items-center gap-2">
+        <Link
+          href="/docs"
+          aria-label="Documentation"
+          title="Documentation"
+          aria-current={pathname === "/docs" ? "page" : undefined}
+          className={cn(
+            "top-bar-docs-link grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]",
+            pathname === "/docs" && "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--action)]",
+          )}
+        >
+          <BookOpen className="size-4" />
+        </Link>
         <ThemeMorphToggle />
         {/* DashboardSidebar carries its own Settings link once it's visible
             (lg+), so this would otherwise duplicate it there — it stays the
