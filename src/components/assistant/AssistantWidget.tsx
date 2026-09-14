@@ -196,7 +196,7 @@ export function AssistantWidget() {
         /* Bare on purpose: no plate, no frame. The motion is what marks it as a
            control, so the only affordance is a lift on hover. Keyboard focus
            still draws the global focus-visible outline. */
-        className="assistant-launcher fixed bottom-24 right-4 z-[80] grid size-16 place-items-center bg-transparent transition-transform duration-200 hover:scale-110 active:scale-95 lg:bottom-6 lg:right-6"
+        className="assistant-launcher fixed bottom-24 right-4 z-[80] grid size-16 place-items-center bg-transparent transition-[bottom,transform] duration-200 hover:scale-110 active:scale-95 lg:bottom-6 lg:right-6"
       >
         {/* `interactive` is off on purpose: the sphere's own drag-to-spin
             handlers would swallow the click that opens the panel. */}

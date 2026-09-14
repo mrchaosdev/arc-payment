@@ -1,8 +1,8 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { WalletCards } from "lucide-react";
 import { Skeleton } from "@/components/chaos/Skeleton";
+import { WalletGem } from "@/components/ui/WalletGem";
 import { cn, compactAddress } from "@/lib/utils";
 
 const base =
@@ -25,7 +25,7 @@ export function ConnectWalletButton({
         if (account && chain) {
           return (
             <button type="button" onClick={openAccountModal} className={cn("wallet-button-account", base, "tabular", className)}>
-              <WalletCards className="size-4" />
+              <WalletGem className="size-4" />
               {compactAddress(account.address)}
             </button>
           );
@@ -33,7 +33,7 @@ export function ConnectWalletButton({
 
         return (
           <button type="button" onClick={openConnectModal} className={cn("wallet-button-connect", base, className)}>
-            <WalletCards className="size-4" />
+            <WalletGem className="size-4" />
             {label}
           </button>
         );

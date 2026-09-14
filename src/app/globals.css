@@ -86,6 +86,98 @@ a {
   line-height: 1.75rem;
 }
 
+/* RainbowKit owns the wallet dialog markup, but its stable roles and test ids
+   give us a small styling seam. The clipped frame and faceted seal make it
+   read as part of ChaosPay instead of a rounded third-party card. */
+[data-rk][role="dialog"] > [role="document"] {
+  --wallet-dialog-cut: polygon(
+    26px 0,
+    calc(100% - 26px) 0,
+    100% 26px,
+    100% calc(100% - 26px),
+    calc(100% - 26px) 100%,
+    26px 100%,
+    0 calc(100% - 26px),
+    0 26px
+  );
+  position: relative;
+  padding: 1px;
+  border-radius: 0 !important;
+  background: var(--border-strong);
+  clip-path: var(--wallet-dialog-cut);
+  filter: drop-shadow(0 24px 36px rgb(0 0 0 / 0.34));
+}
+
+[data-rk][role="dialog"] > [role="document"] > div {
+  clip-path: var(--wallet-dialog-cut);
+}
+
+[data-rk][role="dialog"] > [role="document"]::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 4;
+  width: 24px;
+  height: 24px;
+  background:
+    linear-gradient(135deg, transparent 46%, color-mix(in srgb, var(--on-action) 70%, transparent) 47% 52%, transparent 53%),
+    linear-gradient(45deg, transparent 46%, color-mix(in srgb, var(--on-action) 48%, transparent) 47% 52%, transparent 53%),
+    var(--action);
+  clip-path: polygon(50% 0, 82% 14%, 100% 36%, 50% 100%, 0 36%, 18% 14%);
+  pointer-events: none;
+}
+
+[data-rk] [data-testid="rk-connect-header-label"] {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px !important;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+[data-rk] [data-testid^="rk-wallet-option-"] {
+  border-left: 2px solid transparent;
+  border-radius: 0 !important;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+[data-rk] [data-testid^="rk-wallet-option-"]:hover {
+  border-left-color: var(--action);
+}
+
+[data-rk] button[aria-label="Close"] {
+  border-radius: 0 !important;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.docs-back-to-top,
+.docs-back-to-top > span {
+  clip-path: polygon(50% 0, 86% 16%, 100% 62%, 50% 100%, 0 62%, 14% 16%);
+}
+
+.docs-back-to-top {
+  animation: docs-back-to-top-enter 180ms ease-out both;
+}
+
+/* The docs control occupies the assistant's resting slot. :has() lets the
+   independently mounted launcher rise only while that control exists. */
+.app-shell-root:has(.docs-back-to-top) .assistant-launcher {
+  bottom: 152px;
+}
+
+@keyframes docs-back-to-top-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell-root:has(.docs-back-to-top) .assistant-launcher {
+    bottom: 80px;
+  }
+}
+
 /* ── Terminal surfaces ─────────────────────────────────────────────────────
    Ported from Chaos Market AI's chaos-* utilities so both projects draw their
    background structure from the same rules. */

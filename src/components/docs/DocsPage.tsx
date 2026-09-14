@@ -14,6 +14,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { Chip, Label, Num, StatusDot, TraceRow } from "@/components/chaos/Terminal";
+import { BackToTop } from "@/components/docs/BackToTop";
 import { GithubMark } from "@/components/ui/GithubMark";
 import {
   ARC_EURC_ADDRESS,
@@ -86,8 +87,8 @@ export function DocsPage() {
         </div>
       </header>
 
-      <div className="docs-layout mx-auto grid min-w-0 max-w-[1400px] overflow-hidden lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="docs-sidebar min-w-0 overflow-hidden border-b border-[var(--border)] bg-[var(--app-bg)] lg:border-b-0 lg:border-r">
+      <div className="docs-layout mx-auto grid min-w-0 max-w-[1400px] overflow-x-clip lg:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="docs-sidebar min-w-0 overflow-hidden border-b border-[var(--border)] bg-[var(--app-bg)] lg:overflow-visible lg:border-b-0 lg:border-r">
           <div className="docs-sidebar-inner min-w-0 lg:sticky lg:top-14 lg:max-h-[calc(100svh-56px)] lg:overflow-y-auto lg:px-6 lg:py-10">
             <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)] lg:block">On this page</p>
             <nav aria-label="Documentation sections" className="docs-nav flex w-full min-w-0 gap-1 overflow-x-auto px-4 py-3 lg:mt-5 lg:block lg:space-y-6 lg:overflow-visible lg:px-0 lg:py-0">
@@ -271,6 +272,8 @@ export function DocsPage() {
           </div>
         </main>
       </div>
+
+      <BackToTop />
     </div>
   );
 }

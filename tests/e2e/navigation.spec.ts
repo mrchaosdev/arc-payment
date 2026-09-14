@@ -129,6 +129,22 @@ test("sidebar opens assistant and retains shortcuts when collapsed", async ({ pa
   await expect(sidebar.getByRole("link", { name: "Get test USDC" })).toHaveAttribute("href", "https://faucet.circle.com");
 });
 
+test("wallet connection dialog uses the ChaosPay theme", async ({ page }) => {
+  await page.goto("/docs");
+  await page.getByRole("button", { name: "Connect wallet", exact: true }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Connect a Wallet", { exact: true })).toBeVisible();
+  expect(await dialog.evaluate(element => getComputedStyle(element).getPropertyValue("--rk-radii-modal").trim())).toBe("0px");
+  expect(await dialog.evaluate(element => {
+    const styles = getComputedStyle(element);
+    return styles.getPropertyValue("--rk-colors-modalBackground").trim() === styles.getPropertyValue("--surface").trim();
+  })).toBe(true);
+  expect(await dialog.locator(":scope > [role=document]").evaluate(element => getComputedStyle(element).clipPath)).toContain("polygon");
+  await expect(dialog.getByTestId("rk-connect-header-label")).toHaveCSS("text-transform", "uppercase");
+});
+
 test("documentation is discoverable, anchored and fits a narrow screen", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("/docs");
@@ -139,4 +155,28 @@ test("documentation is discoverable, anchored and fits a narrow screen", async (
   await expect(page.getByRole("navigation", { name: "Documentation sections" }).getByRole("link")).toHaveCount(10);
   await expect(page.locator("#network")).toContainText("5042002");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("documentation sidebar stays pinned while the article scrolls", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/docs");
+
+  const sidebar = page.locator(".docs-sidebar-inner");
+  const backToTop = page.getByRole("button", { name: "Back to top" });
+  const assistant = page.getByRole("button", { name: "Open the ChaosPay assistant" });
+  await expect(backToTop).toHaveCount(0);
+  await expect(assistant).toBeVisible();
+  const assistantRestingY = (await assistant.boundingBox())?.y;
+  await page.locator("#network").scrollIntoViewIfNeeded();
+
+  await expect.poll(async () => (await sidebar.boundingBox())?.y).toBe(56);
+  await expect(page.locator("#network")).toBeInViewport();
+  await expect(backToTop).toBeVisible();
+  await expect.poll(async () => (await assistant.boundingBox())?.y).toBe((assistantRestingY ?? 0) - 56);
+
+  await backToTop.click();
+  await page.mouse.move(0, 0);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(backToTop).toHaveCount(0);
+  await expect.poll(async () => (await assistant.boundingBox())?.y).toBe(assistantRestingY);
 });
