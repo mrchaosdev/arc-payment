@@ -4,7 +4,7 @@ import {
   type Address, type Hash, type PublicClient,
 } from "viem";
 import type { Interactions } from "@google/genai";
-import { ARC_EXPLORER_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "../arc";
+import { ARC_EXPLORER_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "../arc";
 import { paymentTotals, validatePayment } from "../payments";
 import type { ReadEvidence } from "./protocol";
 
@@ -150,7 +150,7 @@ export async function runPaymentTool(
     row("Error", error instanceof InputError ? error.message : "Arc RPC could not complete this read. Status and fee are unknown; try again or check ArcScan.");
     if (error instanceof InputError) evidence.source = "Input validation — no RPC result";
   }
-  row("Network", `Arc Testnet (${ARC_TESTNET_ID}) · test USDC has no monetary value`);
+  row("Network", `Arc Testnet (${ARC_CHAIN_ID}) · test USDC has no monetary value`);
   evidence.checkedAt = new Date().toISOString();
   return evidence;
 }

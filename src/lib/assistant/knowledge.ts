@@ -1,8 +1,8 @@
 import {
   ARC_EXPLORER_URL,
   ARC_FAUCET_URL,
-  ARC_TESTNET_ID,
-  ARC_TESTNET_RPC,
+  ARC_CHAIN_ID,
+  ARC_RPC_URL,
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
@@ -23,7 +23,7 @@ const facts = `
 - Payments go directly from the payer's wallet to the recipient.
 
 ## Network and token
-- Chain: Arc Testnet, chain id ${ARC_TESTNET_ID}. RPC: ${ARC_TESTNET_RPC}. Explorer: ${ARC_EXPLORER_URL}.
+- Chain: Arc Testnet, chain id ${ARC_CHAIN_ID}. RPC: ${ARC_RPC_URL}. Explorer: ${ARC_EXPLORER_URL}.
 - Token: USDC at ${ARC_USDC_ADDRESS}, ${ARC_USDC_DECIMALS} decimals.
 - Arc exposes that one USDC balance through two views: a native view with 18 decimals and the ERC-20 view with ${ARC_USDC_DECIMALS} decimals. They are the same money, not two balances, and are never added together. This app reads and transfers through the ERC-20 view, so a wallet showing the native view can print the same balance with a different number of decimal places.
 - Arc pays network fees in USDC. There is no separate gas token to acquire first.

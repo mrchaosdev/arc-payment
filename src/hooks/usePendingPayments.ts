@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Hash } from "viem";
 import { useHydrated } from "./useHydrated";
 import { usePayments } from "@/store/payments";
-import { ARC_TESTNET_ID } from "@/lib/arc";
+import { ARC_CHAIN_ID } from "@/lib/arc";
 import { publicClients } from "@/lib/wagmi/clients";
 
 /** One workspace-wide receipt watcher, mounted by the wallet controls on every route. */
@@ -28,7 +28,7 @@ export function usePendingPayments(address: string) {
         for (let start = 0; active && start < hashes.length; start += 4) {
           await Promise.all(hashes.slice(start, start + 4).map(async hash => {
             try {
-              const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash });
+              const receipt = await publicClients[ARC_CHAIN_ID].getTransactionReceipt({ hash });
               if (!active) return;
               updateStatus(hash, receipt.status === "success" ? "Success" : "Failed", (receipt.gasUsed * receipt.effectiveGasPrice).toString());
               void queryClient.invalidateQueries({ queryKey: ["readContract"] });

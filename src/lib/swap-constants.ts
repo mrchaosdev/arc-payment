@@ -1,10 +1,14 @@
 /**
  * Pure constants split out of `swap.ts` so a server component (the docs
  * page) can read them without pulling in `wagmiConfig` — a client-only
- * module transitively imported by everything else in `swap.ts`.
+ * module transitively imported by everything else in `swap.ts`. `lib/arc` is
+ * pure too, so reading the network here keeps that property.
  */
-export const SWAP_CHAIN = "Arc_Testnet" as const;
-/** The three tokens Circle's Swap Kit lists as available on Arc Testnet today. */
+import { ARC } from "@/lib/arc";
+
+/** Circle Swap Kit's key for the network this build points at. */
+export const SWAP_CHAIN = ARC.swapChain;
+/** The tokens Circle's Swap Kit lists as swappable on this network today. */
 export const SWAP_TOKENS = ["USDC", "EURC", "cirBTC"] as const;
 export type SwapToken = (typeof SWAP_TOKENS)[number];
 

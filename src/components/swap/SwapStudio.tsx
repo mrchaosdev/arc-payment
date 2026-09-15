@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar, TokenPair } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
 import { findTokenBySymbol } from "@/lib/tokenlist/tokens";
 import {
   SWAP_TOKENS,
@@ -37,7 +37,7 @@ const CIRBTC_LOGO = "/tokens/cirbtc.svg";
 function tokenMeta(symbol: SwapToken) {
   // Display-only (icon) — the kit resolves decimals itself.
   if (symbol === "cirBTC") return { logoURI: CIRBTC_LOGO };
-  return { logoURI: findTokenBySymbol(ARC_TESTNET_ID, symbol)?.logoURI };
+  return { logoURI: findTokenBySymbol(ARC_CHAIN_ID, symbol)?.logoURI };
 }
 
 export function SwapStudio() {
@@ -137,7 +137,7 @@ export function SwapStudio() {
     setError("");
     setStage("signing");
     try {
-      if (chainId !== ARC_TESTNET_ID) await switchChainAsync({ chainId: ARC_TESTNET_ID });
+      if (chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
       const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim(), slippageBps });
       setTxHash(result.txHash);
       setExplorerUrl(result.explorerUrl);
@@ -200,7 +200,7 @@ export function SwapStudio() {
               </Button>
         ) : stage === "review" ? (
           <><Button type="button" onClick={confirmSwap} className="swap-studio-confirm-button h-12 w-full">
-              {chainId === ARC_TESTNET_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
+              {chainId === ARC_CHAIN_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
             </Button>
             <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="swap-studio-back-button w-full">Back</Button></>
         ) : stage === "pending" ? (

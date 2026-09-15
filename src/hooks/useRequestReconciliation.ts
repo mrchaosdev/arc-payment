@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { parseAbiItem, type Address, type Hash } from "viem";
 import { useHydrated } from "./useHydrated";
 import { usePayments } from "@/store/payments";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { publicClients } from "@/lib/wagmi/clients";
 import { matchTransfers, openRequestsFor, type IncomingTransfer } from "@/lib/reconcile";
 
@@ -64,7 +64,7 @@ export function useRequestReconciliation(address: string) {
     }
 
     async function scan() {
-      const client = publicClients[ARC_TESTNET_ID];
+      const client = publicClients[ARC_CHAIN_ID];
       const head = await client.getBlockNumber();
       if (!active) return;
 

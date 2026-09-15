@@ -5,7 +5,7 @@ import { arcTestnet } from "viem/chains";
 import { ASSISTANT_SYSTEM_PROMPT } from "@/lib/assistant/knowledge";
 import { PAYMENT_TOOLS, runPaymentTool } from "@/lib/assistant/tools";
 import type { AssistantEvent } from "@/lib/assistant/protocol";
-import { ARC_TESTNET_RPC } from "@/lib/arc";
+import { ARC_RPC_URL } from "@/lib/arc";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   const systemInstruction = `${ASSISTANT_SYSTEM_PROMPT}\n\nCurrent shared wallet on this request: ${walletAddress ?? "none"}. Never assume a previous wallet is still shared.`;
   const client = createPublicClient({
     chain: arcTestnet,
-    transport: http(ARC_TESTNET_RPC, { timeout: 5_000, retryCount: 0, fetchOptions: { signal: request.signal } }),
+    transport: http(ARC_RPC_URL, { timeout: 5_000, retryCount: 0, fetchOptions: { signal: request.signal } }),
   });
 
   // The request is made here, so auth, quota and validation failures land as real

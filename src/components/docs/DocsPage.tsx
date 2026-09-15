@@ -20,8 +20,8 @@ import {
   ARC_EURC_ADDRESS,
   ARC_EXPLORER_URL,
   ARC_FAUCET_URL,
-  ARC_TESTNET_ID,
-  ARC_TESTNET_RPC,
+  ARC_CHAIN_ID,
+  ARC_RPC_URL,
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
@@ -215,8 +215,8 @@ export function DocsPage() {
           <DocSection id="network" index="07" eyebrow="Trust" title="Network reference">
             <div className="border border-[var(--border)] bg-[var(--surface)]">
               <ConstantRow label="Network" value="Arc Public Testnet" />
-              <ConstantRow label="Chain ID" value={String(ARC_TESTNET_ID)} />
-              <ConstantRow label="RPC" value={ARC_TESTNET_RPC} href={ARC_TESTNET_RPC} />
+              <ConstantRow label="Chain ID" value={String(ARC_CHAIN_ID)} />
+              <ConstantRow label="RPC" value={ARC_RPC_URL} href={ARC_RPC_URL} />
               <ConstantRow label="Explorer" value={ARC_EXPLORER_URL} href={ARC_EXPLORER_URL} />
               <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
               <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/chaos/Skeleton";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { SettlementPulse } from "./SettlementPulse";
 import { PaymentActivity } from "./PaymentActivity";
-import { ARC_FAUCET_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { ARC_FAUCET_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { usePayments } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
@@ -30,7 +30,7 @@ export function WorkspaceOverview() {
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    chainId: ARC_TESTNET_ID,
+    chainId: ARC_CHAIN_ID,
     query: { enabled: !!address },
   });
 

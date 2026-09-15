@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -35,7 +35,7 @@ type FieldErrors = Partial<Record<PaymentField, string>>;
 /** How often an unconfirmed transaction is re-checked without being asked. */
 const POLL_MS = 5_000;
 
-const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
+const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 
 /** The studio's own stage vocabulary, mapped onto what the pulse understands. */
 function settlementStage(stage: Stage, connected: boolean, hasDraft: boolean): SettlementStage {
@@ -78,10 +78,10 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const savePayment = usePayments(s => s.savePayment);
   const updateStatus = usePayments(s => s.updateStatus);
   const saveRequest = usePayments(s => s.saveRequest);
-  const client = publicClients[ARC_TESTNET_ID];
+  const client = publicClients[ARC_CHAIN_ID];
   const balanceQuery = useReadContract({
     address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf",
-    args: address ? [address] : undefined, chainId: ARC_TESTNET_ID, query: { enabled: !!address },
+    args: address ? [address] : undefined, chainId: ARC_CHAIN_ID, query: { enabled: !!address },
   });
   const busy = checking || stage === "signing" || stage === "pending";
   const current = mode === "request" ? { ...request, to: request.to || address || "" } : review && stage !== "editing" ? review : draft;
@@ -200,13 +200,13 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     setStage("signing");
     let submitted: Hash | undefined;
     try {
-      if (getAccount(wagmiConfig).chainId !== ARC_TESTNET_ID) await switchChainAsync({ chainId: ARC_TESTNET_ID });
+      if (getAccount(wagmiConfig).chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
       const account = getAccount(wagmiConfig);
-      if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_TESTNET_ID)
+      if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_CHAIN_ID)
         throw new Error("Your wallet or network changed. Go back and review again.");
       submitted = await writeContractAsync({
         account: review.from, address: ARC_USDC_ADDRESS, abi: erc20Abi,
-        functionName: "transfer", args: [review.to, review.units], chainId: ARC_TESTNET_ID,
+        functionName: "transfer", args: [review.to, review.units], chainId: ARC_CHAIN_ID,
       });
       setHash(submitted);
       setStage("pending");
@@ -402,7 +402,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
           <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="payment-studio-edit-details-button w-full"><Pencil size={14} />Edit details</Button></>
         : stage === "editing" ? !isConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label="Connect wallet to continue" />
           : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
-        : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />Edit payment</Button></>
+        : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_CHAIN_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />Edit payment</Button></>
         : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="payment-studio-recheck-button w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now</Button>
         : stage === "success" || stage === "failed" ? <>
             <Button type="button" variant="secondary" onClick={startNewPayment} className="payment-studio-new-payment-button w-full">New payment</Button>

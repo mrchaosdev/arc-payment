@@ -1,10 +1,10 @@
 import { createPublicClient, http, type PublicClient } from "viem";
-import { arcTestnet, mainnet, bsc, arbitrum, base } from "viem/chains";
-import { ARC_TESTNET_RPC } from "@/lib/arc";
-import { supportedChains } from "./config";
+import { mainnet, bsc, arbitrum, base } from "viem/chains";
+import { ARC_RPC_URL } from "@/lib/arc";
+import { arcChain, supportedChains } from "./config";
 
 const RPC_URLS: Record<number, string> = {
-  [arcTestnet.id]: ARC_TESTNET_RPC,
+  [arcChain.id]: ARC_RPC_URL,
   [mainnet.id]: "https://cloudflare-eth.com",
   [bsc.id]: "https://bsc-dataseed.binance.org",
   [arbitrum.id]: "https://arb1.arbitrum.io/rpc",

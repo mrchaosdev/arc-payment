@@ -10,6 +10,13 @@ export type ChainMeta = {
 };
 
 export const CHAIN_META: Record<number, ChainMeta> = {
+  5042: {
+    name: "Arc",
+    shortName: "ARC",
+    color: "#6C5CE7",
+    nativeCoingeckoId: "usd-coin",
+    coingeckoPlatform: "",
+  },
   5042002: {
     name: "Arc Testnet",
     shortName: "ARC",

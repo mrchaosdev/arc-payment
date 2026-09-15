@@ -13,7 +13,7 @@ import { derivePulse } from "@/lib/visual/pulse";
 import {
   ARC_EXPLORER_URL,
   ARC_FAUCET_URL,
-  ARC_TESTNET_ID,
+  ARC_CHAIN_ID,
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
@@ -165,7 +165,7 @@ export function ArcHome() {
           </div>
           <div className="landing-network-stats grid grid-cols-3 border-t border-[var(--border)] md:border-t-0">
             <MetaCell label="Network" value="ARC" />
-            <MetaCell label="Chain" value={String(ARC_TESTNET_ID)} bordered />
+            <MetaCell label="Chain" value={String(ARC_CHAIN_ID)} bordered />
             <MetaCell label="Gas" value="USDC" />
           </div>
         </div>
@@ -288,7 +288,7 @@ export function ArcHome() {
       <section className="landing-details relative z-10 py-14">
         <div className="landing-details-grid mx-auto grid max-w-[1400px] gap-8 px-4 md:px-8 lg:grid-cols-[1fr_1fr]">
           <Panel className="landing-network-panel" title="Network constants" meta="ARC TESTNET" bodyClassName="p-0">
-            <ConstantRow label="Chain id" value={String(ARC_TESTNET_ID)} />
+            <ConstantRow label="Chain id" value={String(ARC_CHAIN_ID)} />
             <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
             <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
             <ConstantRow label="Explorer" value="testnet.arcscan.app" />

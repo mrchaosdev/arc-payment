@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Printer, X } from "lucide-react";
 import { parseUnits } from "viem";
 import { Button } from "@/components/ui/Button";
-import { ARC_TESTNET_ID, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
 import { paymentTotals, USDC_DECIMALS } from "@/lib/payments";
 import { publicClients } from "@/lib/wagmi/clients";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -31,7 +31,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
   useEffect(() => {
     if (payment.feeNative || payment.status === "Pending") return;
     let active = true;
-    publicClients[ARC_TESTNET_ID]
+    publicClients[ARC_CHAIN_ID]
       .getTransactionReceipt({ hash: payment.hash })
       .then((receipt) => {
         if (!active) return;
