@@ -32,9 +32,6 @@ type Review = ReturnType<typeof validatePayment> & { from: Address; feeNative: b
 type Stage = "summary" | "editing" | "review" | "signing" | "pending" | "success" | "failed";
 type FieldErrors = Partial<Record<PaymentField, string>>;
 
-/** How often an unconfirmed transaction is re-checked without being asked. */
-const POLL_MS = 5_000;
-
 const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
 
 /** The studio's own stage vocabulary, mapped onto what the pulse understands. */
@@ -137,30 +134,22 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     void balanceQuery.refetch();
   }
 
-  // Kept in a ref so the poller below can call the latest version without
-  // restarting its timer on every render.
-  const applyReceiptRef = useRef(applyReceipt);
-  useEffect(() => { applyReceiptRef.current = applyReceipt; });
-
-  // A submitted payment confirms itself. Asking the payer to press a button to
-  // find out whether their money moved is the app refusing to do its own job;
-  // the button stays as a manual override, not as the only way through.
+  // Watch for status updates from the workspace sync hook.
+  // The sync hook checks receipts every SWEEP_MS (12s) for all pending
+  // payments at once; PaymentStudio no longer needs its own timer.
+  const ownPayment = usePayments(state =>
+    hash ? state.payments.find(p => p.hash === hash) : undefined,
+  );
   useEffect(() => {
-    if (stage !== "pending" || !hash) return;
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const poll = async () => {
-      try {
-        const receipt = await client.getTransactionReceipt({ hash });
-        if (active) applyReceiptRef.current(hash, receipt);
-      } catch {
-        // No receipt yet is the expected answer while a transaction is in flight.
-        if (active) timer = setTimeout(poll, POLL_MS);
-      }
-    };
-    timer = setTimeout(poll, POLL_MS);
-    return () => { active = false; if (timer) clearTimeout(timer); };
-  }, [stage, hash, client]);
+    if (stage !== "pending" || !hash || !ownPayment) return;
+    if (ownPayment.status === "Success" || ownPayment.status === "Failed") {
+      const feeNative = ownPayment.feeNative ? BigInt(ownPayment.feeNative) : BigInt(0);
+      setActualFeeNative(feeNative);
+      setStage(ownPayment.status === "Success" ? "success" : "failed");
+      setError(ownPayment.status === "Success" ? "" : "The transaction reverted. The payment was not completed; a network fee may have been charged.");
+      void balanceQuery.refetch();
+    }
+  }, [stage, hash, ownPayment, balanceQuery]);
 
   async function prepare() {
     if (lock.current) return;

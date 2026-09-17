@@ -1,9 +1,9 @@
 # ChaosPay
 
-ChaosPay is a non-custodial USDC payment MVP built for the Arc public testnet. It lets users:
+ChaosPay is a non-custodial USDC payment MVP built for the Arc network. It lets users:
 
 - connect an EVM wallet with RainbowKit;
-- switch safely to Arc Testnet;
+- switch safely to Arc Testnet (or Arc mainnet — see below);
 - send USDC through its 6-decimal ERC-20 interface;
 - create shareable payment-request links, with a QR code for paying from a phone;
 - save pending and confirmed payment records with ArcScan links in local browser storage;
@@ -11,6 +11,13 @@ ChaosPay is a non-custodial USDC payment MVP built for the Arc public testnet. I
 - print or save a receipt as PDF for any recorded payment;
 - keep named recipient contacts in the browser; and
 - ask a grounded assistant about ChaosPay, Arc and its own reads.
+
+## Deployment target
+
+ChaosPay is deployed on **Arc mainnet** at [chaospayment.xyz](https://chaospayment.xyz).
+The local dev server (`npm run dev`) runs on **Arc Testnet**. Arc mainnet is live as of 2026-09-16.
+
+## Local development
 
 The navigation bar carries the live USDC balance, the current network with a switch button when the
 wallet is elsewhere, and a badge for payments still awaiting a receipt.

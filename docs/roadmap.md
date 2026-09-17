@@ -1,6 +1,6 @@
 # Định hướng dài hạn
 
-Ghi ngày 2026-09-13. Mục đích: giữ lại **lý do** của những quyết định lớn, để lần sau mở repo
+Ghi ngày 2026-09-13. Cập nhật 2026-09-16: Arc mainnet live (2026-09-16), ChaosPay theo Arc.
 không phải tranh luận lại từ đầu.
 
 README mô tả sản phẩm. [handover.md](handover.md) mô tả trạng thái và cái bẫy. File này mô tả
@@ -14,6 +14,16 @@ nào cũng làm xong trong một tuần.
 Hướng đi dài hạn là xoay quanh **một mối quan hệ** — người mà bạn đòi tiền lặp đi lặp lại:
 
 > **Công nợ phải thu (AR) bằng stablecoin, cho doanh nghiệp dịch vụ VN bill khách nước ngoài.**
+
+Lý do chọn Arc, từ arc.io chính thức:
+
+| Đặc điểm (Arc) | Tại sao ChaosPay cần |
+|---|---|
+| "Stablecoins as native gas with USDC" | Trả phí bằng chính USDC đang chuyển, không đổi token lấy gas |
+| "Deterministic sub-second finality" | Hóa đơn: chuyển → xác nhận → hoàn tất, không chờ 12-30s |
+| "Predictable dollar-based fees" | Doanh nghiệp nhỏ tính chi phí chính xác |
+| "Cross-border payments and payouts" | VN bill khách nước ngoài → nhận USDC → settles trên Arc |
+| BlackRock, Circle, Visa, Mastercard, NYSE backing | Sẵn sàng cho sản phẩm doanh nghiệp |
 
 Lý do chọn hướng này, không phải "một app thanh toán đẹp hơn":
 

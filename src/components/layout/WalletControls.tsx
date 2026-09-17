@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useRef } from "react";
+import { useId, useMemo, useRef } from "react";
 import { Clock3, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { erc20Abi, formatUnits, type Address } from "viem";
 import { useReadContract, useSwitchChain } from "wagmi";
-import { usePendingPayments } from "@/hooks/usePendingPayments";
-import { useRequestReconciliation } from "@/hooks/useRequestReconciliation";
+import { useWorkspaceSync } from "@/hooks/useWorkspaceSync";
 import { useToast } from "@/components/ui/Toast";
 import { ARC_EXPLORER_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { compactAddress } from "@/lib/utils";
+import { usePayments, type PaymentRecord } from "@/store/payments";
 
 export function WalletControls({ address, chainId, openAccountModal }: {
   address: Address; chainId: number; openAccountModal: () => void;
@@ -20,10 +20,11 @@ export function WalletControls({ address, chainId, openAccountModal }: {
   const pendingPanel = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { switchChainAsync, isPending } = useSwitchChain();
-  const pending = usePendingPayments(address);
-  // Mounted here for the same reason the receipt watcher is: one sweep for the
-  // whole app, alive on every route rather than only while /requests is open.
-  useRequestReconciliation(address);
+  useWorkspaceSync(address);
+  const allPayments = usePayments(state => state.payments);
+  const pending = useMemo(() =>
+    allPayments.filter(p => p.from.toLowerCase() === address.toLowerCase() && p.status === "Pending"),
+  [allPayments, address]);
   const balance = useReadContract({
     address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address], chainId: ARC_TESTNET_ID,
     query: { refetchInterval: 15_000, refetchOnWindowFocus: true },

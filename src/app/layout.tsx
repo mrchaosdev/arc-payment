@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/providers/Web3Provider";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 // Two families, and the mono is not decoration: every address, hash, amount and
 // chain id in this app is scanned character by character, which a proportional
@@ -44,7 +45,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`app-body ${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Web3Provider>{children}</Web3Provider>
+        <Web3Provider>
+          {children}
+          <AssistantWidget />
+        </Web3Provider>
       </body>
     </html>
   );

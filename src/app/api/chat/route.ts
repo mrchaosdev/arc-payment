@@ -1,6 +1,6 @@
 import { ApiError, GoogleGenAI, type Interactions } from "@google/genai";
 import type { NextRequest } from "next/server";
-import { createPublicClient, http, isAddress } from "viem";
+import { createPublicClient, http, isAddress, type Address } from "viem";
 import { arcTestnet } from "viem/chains";
 import { ASSISTANT_SYSTEM_PROMPT } from "@/lib/assistant/knowledge";
 import { PAYMENT_TOOLS, runPaymentTool } from "@/lib/assistant/tools";
@@ -98,7 +98,7 @@ function translate(error: unknown) {
 /** Whether the assistant can answer at all, asked at runtime rather than at build. */
 export async function GET() {
   return Response.json(
-    { configured: Boolean(process.env.GEMINI_API_KEY) },
+    { configured: Boolean(process.env.GEMINI_API_KEY) || Boolean(process.env.CAGENT_SERVER_URL) },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -121,6 +121,14 @@ export async function POST(request: NextRequest) {
   const walletAddress = envelope?.walletAddress;
   if (walletAddress !== undefined && (typeof walletAddress !== "string" || !isAddress(walletAddress)))
     return fail(400, "Invalid shared wallet address.");
+
+  // When Cagent server is configured, proxy to it instead of using Gemini directly.
+  // The Cagent server handles agents, tools, RAG and memory. This route translates
+  // Cagent SSE events into the app's ndjson format so the widget stays unchanged.
+  const cagentUrl = process.env.CAGENT_SERVER_URL;
+  if (cagentUrl) {
+    return proxyToCagent(request, payload, walletAddress as Address | undefined);
+  }
 
   const ai = new GoogleGenAI({ apiKey });
   const input = toSteps(messages);
@@ -219,4 +227,97 @@ export async function POST(request: NextRequest) {
       "X-Accel-Buffering": "no",
     },
   });
+}
+
+async function proxyToCagent(
+  request: NextRequest,
+  payload: unknown,
+  walletAddress: Address | undefined,
+) {
+  const cagentServer = (process.env.CAGENT_SERVER_URL ?? "http://localhost:3001").replace(/\/$/, "");
+  const agentId = process.env.CAGENT_AGENT_ID ?? "chaospay";
+  const envelope = payload as { agentId?: unknown; message?: unknown; threadId?: unknown };
+  const message = (envelope.message ?? "") as string;
+  const threadId = envelope.threadId as string | undefined;
+
+  if (typeof message !== "string" || !message.trim()) {
+    return fail(400, "Send a non-empty conversation ending in a user message.");
+  }
+
+  const body = JSON.stringify({
+    agentId,
+    message: message.trim(),
+    walletAddress,
+    ...(threadId ? { threadId } : {}),
+  });
+
+  try {
+    const upstream = await fetch(`${cagentServer}/api/agent/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Request-Id": crypto.randomUUID() },
+      body,
+      signal: request.signal,
+    });
+
+    if (!upstream.ok) {
+      return fail(502, "Cagent server returned an error.");
+    }
+
+    const encoder = new TextEncoder();
+    let cancelled = false;
+
+    const readableBody = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const emit = (event: AssistantEvent) => {
+          if (!cancelled && !request.signal.aborted) controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+        };
+        try {
+          const reader = upstream.body!.getReader();
+          const decoder = new TextDecoder();
+          let pending = "";
+
+          for (;;) {
+            const { done, value } = await reader.read();
+            pending += done ? decoder.decode() : decoder.decode(value, { stream: true });
+            let end: number;
+            while ((end = pending.indexOf("\n")) >= 0) {
+              const line = pending.slice(0, end).trim();
+              pending = pending.slice(end + 1);
+              if (!line) continue;
+              // Cagent SSE: "data: {...}"
+              const json = line.startsWith("data: ") ? line.slice(6).trim() : line;
+              let event: { type: string; content?: string };
+              try { event = JSON.parse(json); }
+              catch { continue; }
+              if (event.type === "MESSAGE" && event.content) {
+                emit({ type: "text", text: event.content });
+              } else if (event.type === "ERROR" && event.content) {
+                emit({ type: "error", text: event.content });
+              } else if (event.type === "DONE") {
+                emit({ type: "done" });
+                break;
+              }
+            }
+            if (done) break;
+          }
+          if (!cancelled) emit({ type: "done" });
+        } catch {
+          emit({ type: "error", text: "The Cagent answer could not finish." });
+        } finally {
+          controller.close();
+        }
+      },
+      cancel() { cancelled = true; },
+    });
+
+    return new Response(readableBody, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  } catch {
+    return fail(502, "Cagent server unavailable. Check CAGENT_SERVER_URL.");
+  }
 }
