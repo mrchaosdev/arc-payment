@@ -15,7 +15,7 @@ export const ARC_CHAINS: Record<ArcChainId, {
     name: "Arc Testnet",
     rpc: "https://rpc.testnet.arc.io",
     explorer: "https://testnet.arcscan.app",
-    usdc: { address: "0x3600000000000000000000000000000000000" as Address, decimals: 6 },
+    usdc: { address: "0x3600000000000000000000000000000000000000" as Address, decimals: 6 },
     faucets: ["https://faucet.circle.com"],
   },
   5_042_003: {
@@ -23,7 +23,7 @@ export const ARC_CHAINS: Record<ArcChainId, {
     name: "Arc",
     rpc: "https://rpc.arc.io",
     explorer: "https://arcscan.app",
-    usdc: { address: "0x3600000000000000000000000000000000000" as Address, decimals: 6 },
+    usdc: { address: "0x3600000000000000000000000000000000000000" as Address, decimals: 6 },
     faucets: [],
   },
 };
