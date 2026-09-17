@@ -43,6 +43,8 @@ export function TokenAvatar({
         alt={symbol}
         width={imgSizes[size]}
         height={imgSizes[size]}
+        decoding="async"
+        crossOrigin="anonymous"
         onError={() => setImgError(true)}
         className={cn("token-avatar-image", "shrink-0 rounded-full", sizes[size], className)}
       />
