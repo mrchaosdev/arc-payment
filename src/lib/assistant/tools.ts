@@ -4,26 +4,26 @@ import {
   type Address, type Hash, type PublicClient,
 } from "viem";
 import type { Interactions } from "@google/genai";
-import { ARC_EXPLORER_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "../arc";
+import { ARC_EXPLORER_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "../arc";
 import { paymentTotals, validatePayment } from "../payments";
 import type { ReadEvidence } from "./protocol";
 
 export const PAYMENT_TOOLS: Interactions.Function[] = [
   {
     type: "function", name: "getBalance",
-    description: "Read current USDC balance on Arc Testnet. Use an address supplied by the user, or omit address to use the shared connected wallet. Never guess an address.",
+    description: "Read current USDC balance on Arc. Use an address supplied by the user, or omit address to use the shared connected wallet. Never guess an address.",
     parameters: { type: "object", properties: { address: { type: "string" } } },
   },
   {
     type: "function", name: "estimatePayment",
-    description: "Estimate an ERC-20 USDC transfer on Arc Testnet, including a 20% gas buffer and balance check. Read-only: does not send or sign. Requires recipient and amount from the user; from may be omitted for the shared wallet. Ask for missing details.",
+    description: "Estimate an ERC-20 USDC transfer on Arc, including a 20% gas buffer and balance check. Read-only: does not send or sign. Requires recipient and amount from the user; from may be omitted for the shared wallet. Ask for missing details.",
     parameters: { type: "object", properties: {
       from: { type: "string" }, to: { type: "string" }, amount: { type: "string", description: "Positive USDC amount, at most 6 decimals. Never infer a missing amount." },
     }, required: ["to", "amount"] },
   },
   {
     type: "function", name: "getTransactionStatus",
-    description: "Look up a user-provided transaction hash on Arc Testnet. Report confirmed, reverted, pending, or not found. Only decoded USDC Transfer logs prove a USDC transfer.",
+    description: "Look up a user-provided transaction hash on Arc. Report confirmed, reverted, pending, or not found. Only decoded USDC Transfer logs prove a USDC transfer.",
     parameters: { type: "object", properties: { hash: { type: "string" } }, required: ["hash"] },
   },
 ];
@@ -59,7 +59,7 @@ export async function runPaymentTool(
 ): Promise<ReadEvidence> {
   const evidence: ReadEvidence = {
     tool: name, title: "Arc read", checkedAt: new Date().toISOString(),
-    source: "Arc Testnet RPC", ok: true, rows: [],
+    source: "Arc RPC", ok: true, rows: [],
   };
   const row = (label: string, value: string) => evidence.rows.push({ label, value });
   try {
@@ -122,7 +122,7 @@ export async function runPaymentTool(
           row("Status", transaction.blockNumber === null ? "Pending — no receipt yet" : "Included in a block — receipt not available yet");
         } catch (lookupError) {
           if (!(lookupError instanceof TransactionNotFoundError)) throw lookupError;
-          row("Status", "Not found on Arc Testnet. This does not prove failure; check the hash and network before sending again.");
+          row("Status", "Not found on Arc. This does not prove failure; check the hash and network before sending again.");
         }
       }
       if (receipt) {
@@ -150,7 +150,7 @@ export async function runPaymentTool(
     row("Error", error instanceof InputError ? error.message : "Arc RPC could not complete this read. Status and fee are unknown; try again or check ArcScan.");
     if (error instanceof InputError) evidence.source = "Input validation — no RPC result";
   }
-  row("Network", `Arc Testnet (${ARC_TESTNET_ID}) · test USDC has no monetary value`);
+  row("Network", `Arc (${ARC_CHAIN_ID}) · mainnet USDC has value`);
   evidence.checkedAt = new Date().toISOString();
   return evidence;
 }

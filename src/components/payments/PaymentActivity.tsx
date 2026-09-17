@@ -10,11 +10,11 @@ import { PaymentReceipt } from "@/components/payments/PaymentReceipt";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { useHydrated } from "@/hooks/useHydrated";
 import { usePayments, type PaymentRecord } from "@/store/payments";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { publicClients } from "@/lib/wagmi/clients";
 
-const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
+const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 
 export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   const { address } = useAccount();
@@ -39,13 +39,13 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
     setChecking(p.hash);
     setNotice("");
     try {
-      const receipt = await publicClients[ARC_TESTNET_ID].getTransactionReceipt({ hash: p.hash });
+      const receipt = await publicClients[ARC_CHAIN_ID].getTransactionReceipt({ hash: p.hash });
       updateStatus(
         p.hash,
         receipt.status === "success" ? "Success" : "Failed",
         (receipt.gasUsed * receipt.effectiveGasPrice).toString()
       );
-      setNotice("Receipt verified on Arc Testnet.");
+      setNotice("Receipt verified on Arc.");
     } catch {
       setNotice("Receipt not available yet. Check ArcScan before sending another payment.");
     } finally {
@@ -60,7 +60,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
           JSON.stringify(
             {
               ...p,
-              chainId: ARC_TESTNET_ID,
+              chainId: ARC_CHAIN_ID,
               token: "USDC",
               explorer: arcTransactionUrl(p.hash),
               note: "Browser record. Verify settlement on ArcScan; memo and reference are not onchain.",

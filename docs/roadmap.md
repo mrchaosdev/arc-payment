@@ -55,8 +55,7 @@ trường hợp nào trong đó. `lib/reconcile.ts` đã phải chọn luật "m
 **2. localStorage → server, vẫn non-custodial.** Đăng nhập bằng chữ ký ví (SIWE). Server giữ **bản
 ghi**, không bao giờ giữ khoá. Đây là thứ duy nhất tạo ra tích luỹ.
 
-**3. Gỡ Arc ra khỏi ~38 điểm hardcode `ARC_TESTNET_ID`.** Gom vào một chain config, để ngày Arc lên
-mainnet là **đổi một dòng**, và để nhận tiền đa chain qua CCTP là chuyện làm được.
+**3. Config chain unified.** Đã gom `ARC_TESTNET_ID` + `ARC_USDC_ADDRESS` vào `lib/arc.ts` với `NEXT_PUBLIC_ARC_NETWORK` selection. Mainnet là default, testnet vẫn hỗ trợ. Đổi network là đổi env, không cần sửa code.
 
 **4. Đối soát lên server.** Bốn vòng quét chồng nhau trong trình duyệt (xem handover, việc còn lại
 số 3) không phải lỗi hiệu năng — là triệu chứng của logic nằm sai chỗ. Một watcher `Transfer` log
@@ -66,7 +65,7 @@ phía server làm cho hoá đơn tự biết đã được trả kể cả khi k
 
 | GĐ | Mục tiêu | Trạng thái |
 | --- | --- | --- |
-| **0** | Sửa WalletConnect (ví điện thoại), xoay khoá Gemini, **đối soát tự động trên storage hiện tại** | Đối soát **xong**; hai việc kia cần credential, xem handover việc 1–2 |
+| **0** | Sửa WalletConnect, xoay khoá Gemini, **đối soát tự động**, **chuyển sang mainnet** | Đối soát **xong**, mainnet **đã chuyển** (2026-09-16), xem PR
 | **1** | Schema `Counterparty/Invoice/Settlement` + server + SIWE + reference onchain | chưa |
 | **2** | Vòng đời hoá đơn: phát hành → gửi → nhắc → tự đánh dấu đã thu → xuất file | chưa |
 | **3** | Nhận đa chain qua CCTP; API + webhook cho merchant | chưa |

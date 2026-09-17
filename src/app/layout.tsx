@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ChaosPay — USDC settlement terminal on Arc",
   description:
-    "Create payment requests and settle USDC payments on Arc Testnet with predictable fees and fast finality.",
+    "Create payment requests and settle USDC payments on Arc with predictable fees and fast finality.",
 };
 
 const themeScript = `

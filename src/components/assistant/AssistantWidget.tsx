@@ -36,11 +36,11 @@ const ANSWER_TIMEOUT_MS = 65_000;
 
 /** Opening prompts, kept here so the server-side reference never enters this bundle. */
 const SUGGESTIONS = [
-  "How do I get test USDC?",
+  "How do I get USDC?",
   "Why is the fee paid in USDC?",
   "What is my USDC balance on Arc?",
   "Help me estimate a USDC payment.",
-  "Check a transaction on Arc Testnet.",
+  "Check a transaction on Arc.",
 ];
 
 /**
@@ -251,7 +251,7 @@ export function AssistantWidget() {
         {!turns.length ? (
           <div className="assistant-welcome">
             <p className="assistant-introduction text-[13px] leading-6 text-[var(--text-muted)]">
-              Check a USDC balance, estimate a payment, or look up a transaction on Arc Testnet.
+              Check a USDC balance, estimate a payment, or look up a transaction on Arc.
               Share a wallet address or transaction hash to start. Reads never send a payment.
             </p>
             <Label className="assistant-suggestions-label mt-5 mb-2">Try one</Label>

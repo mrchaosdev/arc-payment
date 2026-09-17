@@ -20,8 +20,8 @@ import {
   ARC_EURC_ADDRESS,
   ARC_EXPLORER_URL,
   ARC_FAUCET_URL,
-  ARC_TESTNET_ID,
-  ARC_TESTNET_RPC,
+  ARC_CHAIN_ID,
+  ARC_RPC_URL,
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
@@ -53,7 +53,7 @@ export function DocsPage() {
           <div className="docs-hero-meta flex flex-wrap items-center justify-between gap-3">
             <Label className="text-[var(--action)]">[DOC.001] · Protocol reference</Label>
             <div className="flex flex-wrap gap-2">
-              <Chip tone="positive"><StatusDot tone="positive" /> Public testnet</Chip>
+              <Chip tone="positive"><StatusDot tone="positive" /> Public mainnet</Chip>
               <Chip tone="muted">One-page reference</Chip>
             </div>
           </div>
@@ -64,7 +64,7 @@ export function DocsPage() {
             </h1>
             <div className="max-w-xl lg:pb-1">
               <p className="text-sm leading-7 text-[var(--text-secondary)]">
-                ChaosPay is a non-custodial workspace for sending and requesting USDC on Arc Testnet.
+                ChaosPay is a non-custodial workspace for sending and requesting USDC on Arc.
                 This reference explains what the app does, what your wallet signs, and which facts can
                 be verified independently.
               </p>
@@ -80,7 +80,7 @@ export function DocsPage() {
           </div>
 
           <div className="docs-hero-stats mt-10 grid border border-[var(--border)] bg-[var(--surface)] sm:grid-cols-3">
-            <HeroStat index="01" label="Network" value="Arc Testnet" />
+            <HeroStat index="01" label="Network" value="Arc" />
             <HeroStat index="02" label="Settlement" value="Direct USDC" bordered />
             <HeroStat index="03" label="Custody" value="Your wallet" />
           </div>
@@ -127,14 +127,14 @@ export function DocsPage() {
 
           <DocSection id="quickstart" index="02" eyebrow="Start here" title="Your first test payment">
             <ol className="mt-2 border border-[var(--border)] bg-[var(--surface)]">
-              <QuickStep index="01" title="Connect a wallet">Use an injected wallet or WalletConnect, then switch to Arc Testnet.</QuickStep>
-              <QuickStep index="02" title="Fund it with test USDC">Use the Circle faucet. Testnet tokens have no monetary value.</QuickStep>
+                <QuickStep index="01" title="Connect a wallet">Use an injected wallet or WalletConnect, then switch to Arc.</QuickStep>
+                <QuickStep index="02" title="Fund it with USDC">Use a mainnet USDC source. Mainnet USDC has monetary value.</QuickStep>
               <QuickStep index="03" title="Enter and review">Add the full recipient address and amount. Check both again on the review screen.</QuickStep>
               <QuickStep index="04" title="Sign in your wallet">The wallet presents the final transaction and network fee before approval.</QuickStep>
               <QuickStep index="05" title="Keep the receipt">Wait for confirmation, then open the transaction hash on ArcScan.</QuickStep>
             </ol>
             <div className="mt-5 flex flex-wrap gap-3">
-              <a href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" className="docs-action-link">Get test USDC <ArrowUpRight size={13} /></a>
+              <a href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" className="docs-action-link">Get mainnet USDC <ArrowUpRight size={13} /></a>
               <Link href="/pay" className="docs-action-link">Open payment terminal <ArrowRight size={13} /></Link>
             </div>
           </DocSection>
@@ -207,16 +207,16 @@ export function DocsPage() {
               <TrustList title="ChaosPay cannot" items={["Read a seed phrase or private key", "Sign a transaction for you", "Reverse a confirmed transfer", "Prove that a connected address is your identity"]} negative />
             </div>
             <Callout tone="warning" title="Before every signature">
-              Verify the full recipient address, USDC amount, Arc Testnet network, and wallet prompt. Blockchain
+              Verify the full recipient address, USDC amount, Arc network, and wallet prompt. Blockchain
               transfers are not reversed by ChaosPay.
             </Callout>
           </DocSection>
 
           <DocSection id="network" index="07" eyebrow="Trust" title="Network reference">
             <div className="border border-[var(--border)] bg-[var(--surface)]">
-              <ConstantRow label="Network" value="Arc Public Testnet" />
-              <ConstantRow label="Chain ID" value={String(ARC_TESTNET_ID)} />
-              <ConstantRow label="RPC" value={ARC_TESTNET_RPC} href={ARC_TESTNET_RPC} />
+              <ConstantRow label="Network" value="Arc" />
+              <ConstantRow label="Chain ID" value={String(ARC_CHAIN_ID)} />
+              <ConstantRow label="RPC" value={ARC_RPC_URL} href={ARC_RPC_URL} />
               <ConstantRow label="Explorer" value={ARC_EXPLORER_URL} href={ARC_EXPLORER_URL} />
               <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
               <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
@@ -242,7 +242,7 @@ export function DocsPage() {
           <DocSection id="features" index="09" eyebrow="Reference" title="Other features">
             <div className="grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
               <FeatureNote title="Swap" meta={`${DEFAULT_SLIPPAGE_BPS / 100}% DEFAULT SLIPPAGE`}>
-                Exchange {SWAP_TOKENS.join(", ")} on Arc Testnet through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
+                Exchange {SWAP_TOKENS.join(", ")} on Arc through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
               </FeatureNote>
               <FeatureNote title="Contacts" meta="BROWSER LOCAL">
                 Save frequently used recipients under a name. Contacts stay in this browser and are never an address-ownership claim.
@@ -259,12 +259,12 @@ export function DocsPage() {
               <Faq question="Does ChaosPay charge a service fee?">ChaosPay does not add a service fee. Arc charges the network fee in USDC, and your wallet shows the final amount before signing.</Faq>
               <Faq question="Why can a saved request still show unpaid?">Request reconciliation scans a bounded range while the app is open. “Unpaid” only means no exact-amount match was found through the block printed on the Requests page.</Faq>
               <Faq question="Are memo and reference stored onchain?">No. They travel in the shared URL and local receipt. Only the token transfer and its transaction data are public onchain.</Faq>
-              <Faq question="Can I use real money here?">No. ChaosPay currently targets Arc Public Testnet. Testnet USDC and other test tokens have no monetary value.</Faq>
+              <Faq question="Can I use real money here?">Yes. ChaosPay targets Arc mainnet. USDC on Arc has monetary value.</Faq>
             </div>
           </DocSection>
 
           <div className="docs-end my-12 flex flex-col justify-between gap-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:flex-row sm:items-center">
-            <div><Label className="text-[var(--action)]">End of reference</Label><p className="mt-2 text-sm text-[var(--text-secondary)]">Ready to create a testnet payment?</p></div>
+            <div><Label className="text-[var(--action)]">End of reference</Label><p className="mt-2 text-sm text-[var(--text-secondary)]">Ready to create a payment?</p></div>
             <div className="flex flex-wrap gap-3">
               <Link href="/" className="docs-action-link">Back home</Link>
               <Link href="/pay" className="inline-flex h-10 items-center gap-2 bg-[var(--action)] px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--on-action)]">Open terminal <ArrowRight size={13} /></Link>

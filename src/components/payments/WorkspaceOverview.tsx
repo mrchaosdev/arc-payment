@@ -9,13 +9,13 @@ import { Skeleton } from "@/components/chaos/Skeleton";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { SettlementPulse } from "./SettlementPulse";
 import { PaymentActivity } from "./PaymentActivity";
-import { ARC_FAUCET_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { ARC_FAUCET_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { usePayments } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
 const firstPayment = [
   "Connect a wallet you use for testing",
-  "Get test USDC from the Circle faucet",
+  "Get mainnet USDC from the Circle faucet",
   "Send a small amount",
   "Verify the receipt on ArcScan",
 ];
@@ -30,7 +30,7 @@ export function WorkspaceOverview() {
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    chainId: ARC_TESTNET_ID,
+    chainId: ARC_CHAIN_ID,
     query: { enabled: !!address },
   });
 
@@ -48,7 +48,7 @@ export function WorkspaceOverview() {
           <p className="workspace-description mt-2 text-sm text-[var(--text-muted)]">A calmer home for your digital dollars.</p>
         </div>
         <Chip className="workspace-network-chip" tone="muted">
-          <StatusDot /> Arc Testnet · USDC
+          <StatusDot /> Arc · USDC
         </Chip>
       </div>
 
@@ -136,7 +136,7 @@ export function WorkspaceOverview() {
             rel="noreferrer"
             className="workspace-faucet-link flex h-11 items-center justify-between border-t border-[var(--border)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
           >
-            Get test USDC <ExternalLink size={13} />
+            Get mainnet USDC <ExternalLink size={13} />
           </a>
           <p className="workspace-testnet-notice border-t border-[var(--border)] px-4 py-3 text-[11px] leading-5 text-[var(--text-muted)]">
             Testnet only. Tokens have no real monetary value. Your wallet always reviews and signs.

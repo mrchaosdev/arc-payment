@@ -4,7 +4,7 @@ import { DocsPage } from "@/components/docs/DocsPage";
 
 export const metadata: Metadata = {
   title: "Documentation — ChaosPay",
-  description: "How ChaosPay prepares, settles, and verifies non-custodial USDC payments on Arc Testnet.",
+  description: "How ChaosPay prepares, settles, and verifies non-custodial USDC payments on Arc.",
 };
 
 export default function Docs() {

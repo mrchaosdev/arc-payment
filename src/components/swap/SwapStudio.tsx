@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar, TokenPair } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
 import { findTokenBySymbol } from "@/lib/tokenlist/tokens";
 import {
   SWAP_TOKENS,
@@ -28,7 +28,7 @@ type Stage = "editing" | "quoting" | "review" | "signing" | "pending" | "success
 /** How often an in-flight swap's status is re-checked without being asked. */
 const POLL_MS = 5_000;
 
-// cirBTC has no confirmed Arc Testnet contract address in Arc's own docs or
+// cirBTC has no confirmed Arc contract address in Arc's own docs or
 // in the Swap Kit's bundled type data, so it stays out of the shared token
 // list (which other reads/transfers key off address) and gets its icon here
 // instead — sourced straight from Circle's own faucet, not redrawn.
@@ -37,7 +37,7 @@ const CIRBTC_LOGO = "/tokens/cirbtc.svg";
 function tokenMeta(symbol: SwapToken) {
   // Display-only (icon) — the kit resolves decimals itself.
   if (symbol === "cirBTC") return { logoURI: CIRBTC_LOGO };
-  return { logoURI: findTokenBySymbol(ARC_TESTNET_ID, symbol)?.logoURI };
+  return { logoURI: findTokenBySymbol(ARC_CHAIN_ID, symbol)?.logoURI };
 }
 
 export function SwapStudio() {
@@ -137,7 +137,7 @@ export function SwapStudio() {
     setError("");
     setStage("signing");
     try {
-      if (chainId !== ARC_TESTNET_ID) await switchChainAsync({ chainId: ARC_TESTNET_ID });
+      if (chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
       const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim(), slippageBps });
       setTxHash(result.txHash);
       setExplorerUrl(result.explorerUrl);
@@ -200,7 +200,7 @@ export function SwapStudio() {
               </Button>
         ) : stage === "review" ? (
           <><Button type="button" onClick={confirmSwap} className="swap-studio-confirm-button h-12 w-full">
-              {chainId === ARC_TESTNET_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
+              {chainId === ARC_CHAIN_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
             </Button>
             <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="swap-studio-back-button w-full">Back</Button></>
         ) : stage === "pending" ? (
@@ -226,9 +226,9 @@ export function SwapStudio() {
     <div className="swap-studio-root mx-auto max-w-[1120px]">
       <div className="swap-studio-header mb-8 border-b border-[var(--border)] pb-6">
         <PageHeading
-          eyebrow="Swap on Arc Testnet"
+          eyebrow="Swap on Arc"
           title={`${tokenIn} ⇄ ${tokenOut}`}
-          subtitle="Same-chain swap between Arc Testnet tokens, via Circle's Swap Kit."
+          subtitle="Same-chain swap between Arc tokens, via Circle's Swap Kit."
         />
       </div>
       <div className="swap-studio-layout grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -257,7 +257,7 @@ export function SwapStudio() {
 
           <p className="swap-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
             <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
-            These Arc Testnet tokens have no real monetary value. Slippage is set in{" "}
+            These Arc tokens have no real monetary value. Slippage is set in{" "}
             <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>
           </p>
         </div>

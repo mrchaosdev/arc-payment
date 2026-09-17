@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { erc20Abi, type Hash } from "viem";
-import { ARC_TOKENS, ARC_TESTNET_ID } from "@/lib/arc";
+import { ARC_TOKENS, ARC_CHAIN_ID } from "@/lib/arc";
 import { publicClients } from "@/lib/wagmi/clients";
 import { usePayments } from "@/store/payments";
 import { parseAbiItem, type Address } from "viem";
@@ -53,7 +53,7 @@ export function useWorkspaceSync(address: string) {
     }
 
     async function checkReceipts() {
-      const client = publicClients[ARC_TESTNET_ID];
+      const client = publicClients[ARC_CHAIN_ID];
       const pending = payments.filter(p =>
         p.from.toLowerCase() === address.toLowerCase() && p.status === "Pending",
       );
@@ -73,7 +73,7 @@ export function useWorkspaceSync(address: string) {
     }
 
     async function reconcile() {
-      const client = publicClients[ARC_TESTNET_ID];
+      const client = publicClients[ARC_CHAIN_ID];
       const head = await client.getBlockNumber();
       if (!active) return;
 

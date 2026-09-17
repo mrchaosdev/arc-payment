@@ -7,7 +7,7 @@ import { erc20Abi, formatUnits, type Address } from "viem";
 import { useReadContract, useSwitchChain } from "wagmi";
 import { useWorkspaceSync } from "@/hooks/useWorkspaceSync";
 import { useToast } from "@/components/ui/Toast";
-import { ARC_EXPLORER_URL, ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC_EXPLORER_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { compactAddress } from "@/lib/utils";
 import { usePayments, type PaymentRecord } from "@/store/payments";
 
@@ -26,15 +26,15 @@ export function WalletControls({ address, chainId, openAccountModal }: {
     allPayments.filter(p => p.from.toLowerCase() === address.toLowerCase() && p.status === "Pending"),
   [allPayments, address]);
   const balance = useReadContract({
-    address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address], chainId: ARC_TESTNET_ID,
+    address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address], chainId: ARC_CHAIN_ID,
     query: { refetchInterval: 15_000, refetchOnWindowFocus: true },
   });
   const exactBalance = balance.data === undefined ? undefined : formatUnits(balance.data, 6);
   const balanceLabel = balance.isError ? "Balance unavailable" : exactBalance === undefined ? "Loading USDC…" : `${exactBalance} USDC`;
-  const isArc = chainId === ARC_TESTNET_ID;
+  const isArc = chainId === ARC_CHAIN_ID;
 
   async function switchToArc() {
-    try { await switchChainAsync({ chainId: ARC_TESTNET_ID }); }
+    try { await switchChainAsync({ chainId: ARC_CHAIN_ID }); }
     catch { toast({ title: "Network was not switched", description: "Try again and approve Arc Testnet in your wallet.", tone: "error" }); }
   }
   async function copyAddress() {

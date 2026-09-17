@@ -5,14 +5,14 @@ import { ArrowUpRight, ExternalLink } from "lucide-react";
 import { Chip, Num, Panel } from "@/components/chaos/Terminal";
 import { ShareActions } from "@/components/payments/ShareActions";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { paymentLink } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { compactAddress } from "@/lib/utils";
 import { usePayments, type SavedRequest } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
-const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
+const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 
 /**
  * The link is rebuilt from the stored request instead of being persisted with

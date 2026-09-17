@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <PageLoading
       title="Workspace"
-      subtitle="Loading your Arc Testnet payment overview."
+      subtitle="Loading your Arc payment overview."
       rows={4}
     />
   );

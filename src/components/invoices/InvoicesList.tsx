@@ -75,7 +75,7 @@ export function InvoicesList() {
       reference,
       description: memo,
       amount,
-      token: { chainId: 5_042_002, address: "0x3600000000000000000000000000000000000000" as `0x${string}`, name: "USDC", symbol: "USDC", decimals: 6 },
+      token: { chainId: 5_042, address: "0x3600000000000000000000000000000000000000" as `0x${string}`, name: "USDC", symbol: "USDC", decimals: 6 },
       status: "open",
       issuedAt: Date.now(),
       settlementIds: [],

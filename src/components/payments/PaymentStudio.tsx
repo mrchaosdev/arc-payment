@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC_TESTNET_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -32,7 +32,7 @@ type Review = ReturnType<typeof validatePayment> & { from: Address; feeNative: b
 type Stage = "summary" | "editing" | "review" | "signing" | "pending" | "success" | "failed";
 type FieldErrors = Partial<Record<PaymentField, string>>;
 
-const usdc = findToken(ARC_TESTNET_ID, ARC_USDC_ADDRESS);
+const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 
 /** The studio's own stage vocabulary, mapped onto what the pulse understands. */
 function settlementStage(stage: Stage, connected: boolean, hasDraft: boolean): SettlementStage {
@@ -75,10 +75,10 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const savePayment = usePayments(s => s.savePayment);
   const updateStatus = usePayments(s => s.updateStatus);
   const saveRequest = usePayments(s => s.saveRequest);
-  const client = publicClients[ARC_TESTNET_ID];
+  const client = publicClients[ARC_CHAIN_ID];
   const balanceQuery = useReadContract({
     address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf",
-    args: address ? [address] : undefined, chainId: ARC_TESTNET_ID, query: { enabled: !!address },
+    args: address ? [address] : undefined, chainId: ARC_CHAIN_ID, query: { enabled: !!address },
   });
   const busy = checking || stage === "signing" || stage === "pending";
   const current = mode === "request" ? { ...request, to: request.to || address || "" } : review && stage !== "editing" ? review : draft;
@@ -189,13 +189,13 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     setStage("signing");
     let submitted: Hash | undefined;
     try {
-      if (getAccount(wagmiConfig).chainId !== ARC_TESTNET_ID) await switchChainAsync({ chainId: ARC_TESTNET_ID });
+      if (getAccount(wagmiConfig).chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
       const account = getAccount(wagmiConfig);
-      if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_TESTNET_ID)
+      if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_CHAIN_ID)
         throw new Error("Your wallet or network changed. Go back and review again.");
       submitted = await writeContractAsync({
         account: review.from, address: ARC_USDC_ADDRESS, abi: erc20Abi,
-        functionName: "transfer", args: [review.to, review.units], chainId: ARC_TESTNET_ID,
+        functionName: "transfer", args: [review.to, review.units], chainId: ARC_CHAIN_ID,
       });
       setHash(submitted);
       setStage("pending");
@@ -307,7 +307,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
           placeholder={mode === "request" ? address || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
       </Field>
       <Field label="Amount" error={fieldErrors.amount} errorId="amount-error"
-        hint={isConnected ? `Arc balance: ${balanceQuery.isError ? "unavailable" : balanceQuery.data === undefined ? "loading…" : formatUnits(balanceQuery.data, 6) + " USDC"}` : "USDC on Arc Testnet"}>
+        hint={isConnected ? `Arc balance: ${balanceQuery.isError ? "unavailable" : balanceQuery.data === undefined ? "loading…" : formatUnits(balanceQuery.data, 6) + " USDC"}` : "USDC on Arc"}>
         <div className={`payment-studio-amount-field flex items-center gap-3 border bg-[var(--surface)] px-4 transition-colors focus-within:border-[var(--action)] ${fieldErrors.amount ? "border-[var(--negative)]" : "border-[var(--border)]"}`}>
           <input ref={amountInput} aria-label="Amount" aria-invalid={fieldErrors.amount ? true : undefined}
             aria-describedby={fieldErrors.amount ? "amount-error" : undefined} value={current.amount}
@@ -346,7 +346,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     <div className="payment-studio-receipt-header mb-6 flex items-start justify-between gap-3">
       <div className="payment-studio-receipt-heading">
         <h2 className="payment-studio-receipt-title text-xl font-semibold tracking-tight">{stage === "review" ? "Review your payment" : stage === "signing" ? "Confirm in your wallet" : stage === "success" ? "Payment complete" : stage === "failed" ? "Payment not completed" : "Waiting for confirmation"}</h2>
-        <p className="payment-studio-receipt-network mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc Testnet · USDC</p>
+        <p className="payment-studio-receipt-network mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Arc · USDC</p>
       </div>
       <Chip className="payment-studio-receipt-status" tone={stage === "success" ? "positive" : stage === "failed" ? "negative" : "primary"}>
         {stage === "success" ? <><CheckCircle2 size={11} /> Settled</> : stage === "failed" ? "Reverted"
@@ -391,7 +391,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
           <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="payment-studio-edit-details-button w-full"><Pencil size={14} />Edit details</Button></>
         : stage === "editing" ? !isConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label="Connect wallet to continue" />
           : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
-        : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_TESTNET_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />Edit payment</Button></>
+        : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_CHAIN_ID ? "Confirm & pay" : "Switch to Arc & pay"}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />Edit payment</Button></>
         : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="payment-studio-recheck-button w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />Check confirmation now</Button>
         : stage === "success" || stage === "failed" ? <>
             <Button type="button" variant="secondary" onClick={startNewPayment} className="payment-studio-new-payment-button w-full">New payment</Button>

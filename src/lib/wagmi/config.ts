@@ -1,8 +1,8 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { injectedWallet, rainbowWallet, safeWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
-import { arcTestnet, arbitrum, base, bsc, mainnet } from "viem/chains";
+import { arc, arcTestnet, arbitrum, base, bsc, mainnet } from "viem/chains";
 import { http } from "wagmi";
-import { ARC_TESTNET_RPC } from "@/lib/arc";
+import { ARC, ARC_RPC_URL } from "@/lib/arc";
 
 // WalletConnect projectId — lấy free tại https://cloud.reown.com rồi đặt vào
 // NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID (xem .env.example).
@@ -12,8 +12,8 @@ const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?
 // nên vẫn phải truyền placeholder khi chưa có key thật.
 const projectId = walletConnectProjectId || "chaospay_dev_placeholder";
 
-// Arc Testnet is the primary network; legacy EVM routes remain available after it.
-export const supportedChains = [arcTestnet, bsc, mainnet, arbitrum, base] as const;
+// Arc mainnet is the primary network (live 2026-09-16); legacy EVM routes remain available after it.
+export const supportedChains = [arc, bsc, mainnet, arbitrum, base] as const;
 
 // RPC mặc định của wagmi (eth.merkle.io cho mainnet) bị chặn CORS khi gọi từ browser.
 // Dùng endpoint public CORS-friendly. Fallback theo thứ tự nếu cần thêm.
@@ -38,7 +38,7 @@ export const wagmiConfig = getDefaultConfig({
     },
   ],
   transports: {
-    [arcTestnet.id]: http(ARC_TESTNET_RPC),
+    [arc.id]: http(ARC_RPC_URL),
     [mainnet.id]: http("https://cloudflare-eth.com"),
     [bsc.id]: http("https://bsc-dataseed.binance.org"),
     [arbitrum.id]: http("https://arb1.arbitrum.io/rpc"),
