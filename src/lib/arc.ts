@@ -39,7 +39,7 @@ export const ARC_NETWORKS: Record<ArcNetworkKey, ArcNetworkDraft> = {
     chainId: 5_042,
     name: "Arc",
     isTestnet: false,
-    rpcUrl: "https://rpc.arc.io",
+    rpcUrl: "https://rpc.mainnet.arc.io",
     explorerUrl: "https://arcscan.app",
     usdc: "0x360000000000000000000000000000000000" as Address,
     eurc: null,
