@@ -59,7 +59,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
         {({ account, chain, mounted, openAccountModal, openConnectModal }) => {
           if (!mounted) return <Skeleton rounded="none" className="top-bar-wallet-loading h-9 w-24" />;
           if (!account || !chain) return <div className="top-bar-disconnected flex items-center gap-2">
-            <span className="top-bar-network-label hidden text-xs text-[var(--text-muted)] sm:inline">Arc Testnet</span>
+            <span className="top-bar-network-label hidden text-xs text-[var(--text-muted)] sm:inline">Arc</span>
             <button type="button" onClick={openConnectModal} className="top-bar-connect-button inline-flex h-9 items-center gap-2 bg-[var(--action)] px-3 font-mono text-[11px] uppercase text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]">
               <WalletGem className="size-4" />
               <span className="top-bar-connect-label-desktop hidden sm:inline">Connect wallet</span><span className="top-bar-connect-label-mobile sm:hidden">Connect</span>

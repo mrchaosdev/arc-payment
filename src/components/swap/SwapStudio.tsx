@@ -257,7 +257,7 @@ export function SwapStudio() {
 
           <p className="swap-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
             <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
-            These Arc tokens have no real monetary value. Slippage is set in{" "}
+            These Arc tokens may have real monetary value. Slippage is set in{" "}
             <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>
           </p>
         </div>

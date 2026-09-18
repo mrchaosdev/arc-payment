@@ -94,7 +94,7 @@ const capabilities: {
   {
     id: "07",
     title: "Or trade what you're holding",
-    body: "Swap USDC, EURC and cirBTC on Arc Testnet through Circle's Swap Kit — same chain, one signature, no bridge leg.",
+    body: "Swap USDC, EURC and cirBTC on Arc through Circle's Swap Kit — same chain, one signature, no bridge leg.",
     meta: "SAME-CHAIN SWAP",
     href: "/swap",
     hrefLabel: "Open swap",
@@ -159,7 +159,7 @@ export function ArcHome() {
       <div className="landing-meta-bar relative z-10 border-b border-[var(--border)]">
         <div className="landing-meta-container mx-auto grid max-w-[1400px] gap-0 px-4 md:grid-cols-[1fr_auto] md:px-8">
           <div className="landing-meta-labels flex flex-wrap items-center gap-x-3 gap-y-1 py-5">
-            <Label className="landing-network-label">Arc public testnet</Label>
+            <Label className="landing-network-label">Arc Mainnet</Label>
             <span className="landing-meta-separator text-[var(--border-strong)]">/</span>
             <Label className="landing-custody-label">Non-custodial settlement</Label>
           </div>
@@ -184,7 +184,7 @@ export function ArcHome() {
 
             <p className="landing-hero-description mt-7 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">
               ChaosPay sends USDC on Arc and turns every payment into a record both sides can check on
-              the public explorer. Testnet only — the tokens have no monetary value.
+              the public explorer. Mainnet USDC has real monetary value.
             </p>
 
             <div className="landing-settlement-card mt-9 max-w-md border border-[var(--border)] bg-[var(--surface)]">
@@ -218,7 +218,7 @@ export function ArcHome() {
                 <StatusDot /> No signup
               </Chip>
               <Chip className="landing-wallet-chip" tone="muted">Wallet-native signing</Chip>
-              <Chip className="landing-testnet-chip" tone="muted">Testnet USDC</Chip>
+              <Chip className="landing-testnet-chip" tone="muted">Arc USDC</Chip>
               <a
                 href="https://github.com/mrchaosdev/arc-payment"
                 target="_blank"
@@ -287,11 +287,11 @@ export function ArcHome() {
 
       <section className="landing-details relative z-10 py-14">
         <div className="landing-details-grid mx-auto grid max-w-[1400px] gap-8 px-4 md:px-8 lg:grid-cols-[1fr_1fr]">
-          <Panel className="landing-network-panel" title="Network constants" meta="ARC TESTNET" bodyClassName="p-0">
+          <Panel className="landing-network-panel" title="Network constants" meta="ARC MAINNET" bodyClassName="p-0">
             <ConstantRow label="Chain id" value={String(ARC_CHAIN_ID)} />
             <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
             <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
-            <ConstantRow label="Explorer" value="testnet.arcscan.app" />
+            <ConstantRow label="Explorer" value="explorer.arc.io" />
             <div className="landing-network-links flex flex-wrap gap-0 border-t border-[var(--border)]">
               <a
                 href={ARC_FAUCET_URL}
@@ -299,7 +299,7 @@ export function ArcHome() {
                 rel="noreferrer"
                 className="landing-faucet-link flex h-11 flex-1 items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
               >
-                Get testnet USDC <ArrowUpRight className="size-3.5" />
+                Get Arc USDC <ArrowUpRight className="size-3.5" />
               </a>
               <a
                 href={ARC_EXPLORER_URL}

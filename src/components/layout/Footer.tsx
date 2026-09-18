@@ -15,14 +15,14 @@ const productLinks = [
 const resourceLinks = [
   { href: "https://github.com/mrchaosdev/arc-payment", label: "GitHub", icon: GithubMark },
   { href: "https://faucet.circle.com", label: "Circle Faucet" },
-  { href: "https://testnet.arcscan.app", label: "ArcScan Explorer" },
+  { href: "https://explorer.arc.io", label: "ArcScan Explorer" },
   { href: "https://www.arc.io", label: "Arc" },
   { href: "https://docs.arc.io", label: "Arc Docs" },
   { href: "https://developers.circle.com", label: "Circle Developers" },
 ];
 
 const stack = [
-  ["Network", "Arc Testnet"],
+  ["Network", "Arc"],
   ["Wallet", "RainbowKit"],
   ["Settlement", "USDC ERC-20"],
   ["Custody", "User wallet"],
@@ -39,7 +39,7 @@ export function Footer() {
           </Link>
 
           <p className="site-footer-description mt-5 max-w-sm text-[13px] leading-6 text-[var(--text-muted)]">
-            A non-custodial payment workspace for creating requests and settling USDC on Arc Testnet
+            A non-custodial payment workspace for creating requests and settling USDC on Arc
             with fast, predictable finality.
           </p>
         </div>
@@ -82,7 +82,7 @@ export function Footer() {
       </div>
 
       <div className="site-footer-bottom mx-auto flex max-w-[1400px] flex-col gap-2 border-t border-[var(--border)] px-4 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] md:flex-row md:items-center md:justify-between md:px-8">
-        <p className="site-footer-copyright">© 2026 ChaosPay · Arc Testnet MVP · No private keys stored · Built by Chaos_Davidson</p>
+        <p className="site-footer-copyright">© 2026 ChaosPay · Arc Mainnet MVP · No private keys stored · Built by Chaos_Davidson</p>
         <p className="site-footer-reminder">Verify recipient, amount, network and wallet prompt before signing</p>
       </div>
     </footer>

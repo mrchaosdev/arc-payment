@@ -102,7 +102,7 @@ export function DashboardSidebar() {
             Start with test USDC
           </p>
           <p className="dashboard-sidebar-faucet-description mt-2 text-xs leading-5 text-[var(--text-muted)]">
-            Try your first payment on Arc Testnet.
+            Try your first payment on Arc.
           </p>
           <a
             href={ARC_FAUCET_URL}

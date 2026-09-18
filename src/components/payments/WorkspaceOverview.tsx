@@ -136,10 +136,10 @@ export function WorkspaceOverview() {
             rel="noreferrer"
             className="workspace-faucet-link flex h-11 items-center justify-between border-t border-[var(--border)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
           >
-            Get mainnet USDC <ExternalLink size={13} />
+            Get Arc USDC (mainnet has monetary value) <ExternalLink size={13} />
           </a>
-          <p className="workspace-testnet-notice border-t border-[var(--border)] px-4 py-3 text-[11px] leading-5 text-[var(--text-muted)]">
-            Testnet only. Tokens have no real monetary value. Your wallet always reviews and signs.
+          <p className="workspace-wallet-notice border-t border-[var(--border)] px-4 py-3 text-[11px] leading-5 text-[var(--text-muted)]">
+            Mainnet USDC has real value. Get it from a bridge or a DEX, not the testnet faucet. Your wallet always reviews and signs.
           </p>
         </Panel>
       </div>

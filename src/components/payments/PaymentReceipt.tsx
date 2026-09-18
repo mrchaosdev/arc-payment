@@ -154,7 +154,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
               hash is the authoritative record; anyone can verify it at the address above.
             </p>
             <p className="payment-receipt-testnet-note">
-              Arc USDC has no monetary value. This document is a record of a mainnet transfer, not a demand for
+              Arc USDC may have monetary value. This document is a record of a transfer, not a demand for
               payment or a tax invoice.
             </p>
           </footer>

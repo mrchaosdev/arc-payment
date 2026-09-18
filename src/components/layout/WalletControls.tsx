@@ -32,10 +32,12 @@ export function WalletControls({ address, chainId, openAccountModal }: {
   const exactBalance = balance.data === undefined ? undefined : formatUnits(balance.data, 6);
   const balanceLabel = balance.isError ? "Balance unavailable" : exactBalance === undefined ? "Loading USDC…" : `${exactBalance} USDC`;
   const isArc = chainId === ARC_CHAIN_ID;
+  const networkLabel = chainId === 5_042 ? "Arc" : chainId === 5_042_002 ? "Arc Testnet" : "Unknown";
+  const balanceNote = chainId === 5_042 ? "Arc Mainnet balance · real USDC" : "Arc Testnet balance · test tokens only";
 
   async function switchToArc() {
     try { await switchChainAsync({ chainId: ARC_CHAIN_ID }); }
-    catch { toast({ title: "Network was not switched", description: "Try again and approve Arc Testnet in your wallet.", tone: "error" }); }
+    catch { toast({ title: "Network was not switched", description: "Try again and approve Arc in your wallet.", tone: "error" }); }
   }
   async function copyAddress() {
     try { await navigator.clipboard.writeText(address); toast({ title: "Wallet address copied", tone: "success" }); }
@@ -43,7 +45,7 @@ export function WalletControls({ address, chainId, openAccountModal }: {
   }
 
   return <div className="top-bar-wallet-controls flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:justify-start">
-    {isArc ? <span className="top-bar-network-status shrink-0 border border-[var(--border)] px-2 py-2 text-[11px] text-[var(--text-muted)]">Arc Testnet</span>
+    {isArc ? <span className="top-bar-network-status shrink-0 border border-[var(--border)] px-2 py-2 text-[11px] text-[var(--text-muted)]">{networkLabel}</span>
       : <button type="button" className="top-bar-switch-button shrink-0 border border-[var(--negative)] px-2 py-2 text-[11px] text-[var(--negative)] disabled:opacity-50" disabled={isPending} onClick={switchToArc}>
         {isPending ? "Switching…" : "Switch to Arc"}
       </button>}
@@ -60,7 +62,7 @@ export function WalletControls({ address, chainId, openAccountModal }: {
     <div popover="auto" id={walletId} ref={walletPanel} aria-label="Wallet details" className="top-bar-wallet-popover fixed left-auto right-4 top-28 m-0 w-80 max-w-[calc(100vw-2rem)] border border-[var(--border-strong)] bg-[var(--surface)] p-4 text-[var(--text-primary)] shadow-xl sm:top-16">
       <h2 className="top-bar-wallet-title text-sm font-semibold">Your Arc wallet</h2>
       <p className="top-bar-wallet-balance mt-3 break-all font-mono text-lg">{balanceLabel}</p>
-      <p className="top-bar-wallet-network mt-1 text-xs text-[var(--text-muted)]">Arc Testnet balance · test tokens only</p>
+      <p className="top-bar-wallet-network mt-1 text-xs text-[var(--text-muted)]">{balanceNote}</p>
       <p className="top-bar-wallet-full-address mt-4 select-all break-all font-mono text-xs">{address}</p>
       <div className="top-bar-wallet-actions mt-4 flex flex-wrap gap-3 text-xs">
         <button className="top-bar-copy-address flex items-center gap-1 text-[var(--action)]" type="button" onClick={copyAddress}><Copy className="top-bar-copy-icon size-3" />Copy address</button>

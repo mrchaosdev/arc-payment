@@ -232,6 +232,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       saveRequest({ id: crypto.randomUUID(), to: valid.to, amount: valid.amount, memo: valid.memo, reference, createdAt: Date.now() });
       setRequest({ to: valid.to, amount: valid.amount, memo: valid.memo, reference });
       setShareUrl(url);
+      void navigator.clipboard.writeText(url).catch(() => {});
     } catch (e) { setError(friendlyError(e)); }
   }
 
@@ -412,6 +413,10 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     {shareUrl && <div className="payment-studio-share-result mt-6 border border-[var(--border)] bg-[var(--surface)] p-4">
       <p className="payment-studio-share-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--positive)]"><CheckCircle2 size={13} />Your checkout is ready</p>
       <label className="payment-studio-share-link-field mt-3 block"><Label className="payment-studio-share-link-label">Payment link</Label><input aria-label="Payment link" readOnly value={shareUrl} onFocus={e => e.target.select()} className="payment-studio-share-link-input payment-input mt-2" /></label>
+      <div className="payment-studio-qr-direct flex flex-col items-center gap-3 border border-[var(--border)] bg-[var(--surface-soft)] p-4 mt-3">
+        <p className="payment-studio-qr-hint font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Scan with phone to pay</p>
+        <PaymentQr value={shareUrl} size={180} logo />
+      </div>
       <div className="payment-studio-share-actions mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} /></div>
       <p className="payment-studio-share-notice mt-3 text-xs leading-5 text-[var(--text-muted)]">Anyone with this link can see its details. Link contents are editable; the payer should verify the recipient.</p>
     </div>}
@@ -456,7 +461,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
         <p className="payment-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
           <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
-          Payments go directly from your wallet to the recipient. Testnet USDC has no real monetary value.
+          Payments go directly from your wallet to the recipient. USDC on Arc has real monetary value.
         </p>
       </div>
     </div>
