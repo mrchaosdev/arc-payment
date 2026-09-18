@@ -39,7 +39,7 @@ export const ARC_NETWORKS: Record<ArcNetworkKey, ArcNetworkDraft> = {
     chainId: 5_042,
     name: "Arc",
     isTestnet: false,
-    rpcUrl: "https://tiniest-newest-arrow.arc-mainnet.quiknode.pro",
+    rpcUrl: "https://rpc.blockdaemon.mainnet.arc.io",
     explorerUrl: "https://explorer.arc.io",
     usdc: "0x3600000000000000000000000000000000000000" as Address,
     eurc: null,
