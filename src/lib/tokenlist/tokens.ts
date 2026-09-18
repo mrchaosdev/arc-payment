@@ -24,7 +24,7 @@ export const TOKENS: TokenInfo[] = [
   { chainId: 5042002, address: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", symbol: "EURC", name: "Euro Coin", decimals: 6, coingeckoId: "euro-coin", logoURI: "/tokens/eurc.svg" },
 
   // --- Arc Mainnet (5042) ---
-  { chainId: 5_042, address: "0x360000000000000000000000000000000000" as `0x${string}`, symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin", logoURI: "/tokens/usdc.svg" },
+  { chainId: 5_042, address: "0x3600000000000000000000000000000000000000" as `0x${string}`, symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin", logoURI: "/tokens/usdc.svg" },
 
   // --- Ethereum (1) ---
   { chainId: 1, address: "native", symbol: "ETH", name: "Ether", decimals: 18, coingeckoId: "ethereum", logoURI: `${TW}/ethereum/info/logo.png` },
