@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, RefreshCw, RotateCcw, Send, ShieldCheck } from "lucide-react";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useTranslations } from "next-intl";
 import { Divider, Label, Num, PageHeading, Panel } from "@/components/chaos/Terminal";
 import { ProgressBar } from "@/components/chaos/ProgressBar";
 import { Button } from "@/components/ui/Button";
@@ -12,16 +13,20 @@ import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar, TokenPair } from "@/components/ui/TokenAvatar";
 import { ARC, ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
 import { findTokenBySymbol } from "@/lib/tokenlist/tokens";
-import {
-  SWAP_TOKENS,
-  checkSwapStatus,
-  executeSwap,
-  friendlySwapError,
-  quoteSwap,
-  type SwapToken,
-} from "@/lib/swap";
+// The token list is a plain constant, so it comes from `swap-constants` and
+// costs nothing. Everything that talks to the chain lives behind `loadSwapKit`.
+import { SWAP_TOKENS, type SwapToken } from "@/lib/swap-constants";
 import { formatBpsAsPercent, useSwapSettings } from "@/store/settings";
-import type { SwapEstimate } from "@circle-fin/swap-kit";
+// Type-only, so it is erased at build time and pulls in no runtime code.
+import type { SwapEstimate, SwapStatusResult } from "@circle-fin/swap-kit";
+
+/**
+ * Circle's Swap Kit bundles @solana/web3.js and @coral-xyz/anchor — roughly a
+ * megabyte that this EVM-only app can never execute. Importing it on demand
+ * keeps it out of the page load: nothing fetches it until someone asks for a
+ * quote, and the browser caches it from then on.
+ */
+const loadSwapKit = () => import("@/lib/swap");
 
 type Stage = "editing" | "quoting" | "review" | "signing" | "pending" | "success" | "failed";
 
@@ -42,6 +47,7 @@ function tokenMeta(symbol: SwapToken) {
 }
 
 export function SwapStudio() {
+  const t = useTranslations("swap");
   const [tokenIn, setTokenInState] = useState<SwapToken>("USDC");
   const [tokenOut, setTokenOutState] = useState<SwapToken>("EURC");
   const [amountIn, setAmountIn] = useState("");
@@ -58,13 +64,13 @@ export function SwapStudio() {
   const { switchChainAsync } = useSwitchChain();
   const busy = stage === "quoting" || stage === "signing" || stage === "pending";
 
-  function applyStatus(status: Awaited<ReturnType<typeof checkSwapStatus>>) {
+  function applyStatus(status: SwapStatusResult) {
     if (status.progress.status === "DONE") {
       setAmountOut(status.destination?.amount);
       setStage("success");
     } else if (status.progress.status === "FAILED" || status.progress.status === "NOT_FOUND") {
       setStage("failed");
-      setError("The swap did not complete. A network fee may still have been charged.");
+      setError(t("notCompleted"));
     }
   }
 
@@ -76,6 +82,7 @@ export function SwapStudio() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const poll = async () => {
       try {
+        const { checkSwapStatus } = await loadSwapKit();
         const status = await checkSwapStatus(txHash);
         if (active) applyStatus(status);
         if (active && status.progress.status === "PENDING") timer = setTimeout(poll, POLL_MS);
@@ -92,8 +99,11 @@ export function SwapStudio() {
     lock.current = true;
     setChecking(true);
     setError("");
-    try { applyStatus(await checkSwapStatus(txHash)); }
-    catch { setError("Still waiting for confirmation. You can also check the transaction on ArcScan."); }
+    try {
+      const { checkSwapStatus } = await loadSwapKit();
+      applyStatus(await checkSwapStatus(txHash));
+    }
+    catch { setError(t("stillWaiting")); }
     finally { lock.current = false; setChecking(false); }
   }
 
@@ -120,15 +130,23 @@ export function SwapStudio() {
   async function getQuote() {
     if (lock.current) return;
     const amount = amountIn.trim();
-    if (!amount || Number(amount) <= 0) return setError("Enter an amount to swap.");
+    if (!amount || Number(amount) <= 0) return setError(t("enterAmount"));
     lock.current = true;
     setError("");
     setStage("quoting");
     try {
-      const estimate = await quoteSwap({ tokenIn, tokenOut, amountIn: amount, slippageBps });
-      setQuote(estimate);
-      setStage("review");
-    } catch (e) { setError(friendlySwapError(e)); setStage("editing"); }
+      // Nested, because `friendlySwapError` travels with the kit: a failure to
+      // load it cannot be explained by it.
+      const { quoteSwap, friendlySwapError } = await loadSwapKit();
+      try {
+        const estimate = await quoteSwap({ tokenIn, tokenOut, amountIn: amount, slippageBps });
+        setQuote(estimate);
+        setStage("review");
+      } catch (e) { setError(friendlySwapError(e)); setStage("editing"); }
+    } catch {
+      setError(t("loadFailed"));
+      setStage("editing");
+    }
     finally { lock.current = false; }
   }
 
@@ -138,15 +156,23 @@ export function SwapStudio() {
     setError("");
     setStage("signing");
     try {
-      if (chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
-      const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim(), slippageBps });
-      setTxHash(result.txHash);
-      setExplorerUrl(result.explorerUrl);
-      if (result.progress.status === "DONE") {
-        setAmountOut(result.amountOut);
-        setStage("success");
-      } else setStage("pending");
-    } catch (e) { setError(friendlySwapError(e)); setStage("review"); }
+      // Already cached from the quote that produced this review, so in practice
+      // this resolves without a second fetch.
+      const { executeSwap, friendlySwapError } = await loadSwapKit();
+      try {
+        if (chainId !== ARC_CHAIN_ID) await switchChainAsync({ chainId: ARC_CHAIN_ID });
+        const result = await executeSwap({ tokenIn, tokenOut, amountIn: amountIn.trim(), slippageBps });
+        setTxHash(result.txHash);
+        setExplorerUrl(result.explorerUrl);
+        if (result.progress.status === "DONE") {
+          setAmountOut(result.amountOut);
+          setStage("success");
+        } else setStage("pending");
+      } catch (e) { setError(friendlySwapError(e)); setStage("review"); }
+    } catch {
+      setError(t("loadFailed"));
+      setStage("review");
+    }
     finally { lock.current = false; }
   }
 
@@ -173,15 +199,15 @@ export function SwapStudio() {
         // 30px mono then made that minimum 558px and pushed both token rows out
         // through the card's right edge, so the minimum has to be cleared.
         <fieldset disabled={busy} className="swap-studio-fields min-w-0 space-y-3">
-          <TokenField label="You pay" symbol={tokenIn} onSymbolChange={setTokenIn} logoURI={inMeta.logoURI} amount={amountIn} onAmountChange={setAmountIn} editable />
+          <TokenField label={t("youPay")} symbol={tokenIn} onSymbolChange={setTokenIn} logoURI={inMeta.logoURI} amount={amountIn} onAmountChange={setAmountIn} editable />
           <div className="swap-studio-flip-row relative flex justify-center py-1">
             <Divider className="swap-studio-flip-divider absolute left-0 right-0 top-1/2" />
-            <button type="button" onClick={flipTokens} aria-label="Swap direction"
+            <button type="button" onClick={flipTokens} aria-label={t("swapDirection")}
               className="swap-studio-flip-button relative grid size-9 place-items-center border border-[var(--border)] bg-[var(--surface)] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]">
               <ArrowLeftRight size={15} />
             </button>
           </div>
-          <TokenField label="You receive (estimated)" symbol={tokenOut} onSymbolChange={setTokenOut} logoURI={outMeta.logoURI} amount={outputAmount ?? ""} onAmountChange={() => {}} editable={false} />
+          <TokenField label={t("youReceive")} symbol={tokenOut} onSymbolChange={setTokenOut} logoURI={outMeta.logoURI} amount={outputAmount ?? ""} onAmountChange={() => {}} editable={false} />
         </fieldset>
       ) : (
         <SwapReview
@@ -200,13 +226,13 @@ export function SwapStudio() {
 
       <div className="swap-studio-actions mt-6 space-y-3">
         {stage === "editing" || stage === "quoting" ? (
-          !isConnected ? <ConnectWalletButton className="swap-studio-connect-button h-12 w-full" label="Connect wallet to swap" />
+          !isConnected ? <ConnectWalletButton className="swap-studio-connect-button h-12 w-full" label={t("connectToSwap")} />
             : <Button type="button" onClick={getQuote} disabled={busy} className="swap-studio-quote-button h-12 w-full">
                 {stage === "quoting" ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Get quote
               </Button>
         ) : stage === "review" ? (
           <><Button type="button" onClick={confirmSwap} className="swap-studio-confirm-button h-12 w-full">
-              {chainId === ARC_CHAIN_ID ? "Confirm & swap" : "Switch to Arc & swap"}<Send size={16} />
+              {chainId === ARC_CHAIN_ID ? t("confirmAndSwap") : t("switchAndSwap")}<Send size={16} />
             </Button>
             <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="swap-studio-back-button w-full">Back</Button></>
         ) : stage === "pending" ? (
@@ -232,16 +258,16 @@ export function SwapStudio() {
     <div className="swap-studio-root mx-auto max-w-[1120px]">
       <div className="swap-studio-header mb-8 border-b border-[var(--border)] pb-6">
         <PageHeading
-          eyebrow="Swap on Arc"
+          eyebrow={t("eyebrow")}
           title={`${tokenIn} ⇄ ${tokenOut}`}
-          subtitle="Same-chain swap between Arc tokens, via Circle's Swap Kit."
+          subtitle={t("subtitle")}
         />
       </div>
       <div className="swap-studio-layout grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="swap-studio-form-card overflow-hidden">{form}</Card>
 
         <div className="swap-studio-aside space-y-5 xl:sticky xl:top-20">
-          <Panel className="swap-studio-rate-panel" title="Rate" meta={networkLabel} bodyClassName="p-0">
+          <Panel className="swap-studio-rate-panel" title={t("rate")} meta={networkLabel} bodyClassName="p-0">
             <div className="swap-studio-rate-pair flex items-center gap-3 px-4 py-5">
               <TokenPair symbols={[tokenIn, tokenOut]} logoURIs={[inMeta.logoURI, outMeta.logoURI]} />
               <div className="swap-studio-rate-pair-copy min-w-0">
@@ -251,24 +277,29 @@ export function SwapStudio() {
             </div>
             <div className="swap-studio-rate-edge receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
             <div className="swap-studio-rate-details space-y-3 px-4 py-4">
-              <RateRow label="You pay" value={amountIn ? `${amountIn} ${tokenIn}` : "—"} />
+              <RateRow label={t("youPay")} value={amountIn ? `${amountIn} ${tokenIn}` : "—"} />
               <Divider className="swap-studio-rate-divider" />
-              <RateRow label="You receive" value={outputAmount ? `${outputAmount} ${tokenOut}` : "At quote"} strong />
+              <RateRow label="You receive" value={outputAmount ? `${outputAmount} ${tokenOut}` : t("atQuote")} strong />
               <Divider className="swap-studio-rate-divider" />
-              <RateRow label="Minimum received" value={quote ? `${quote.stopLimit.amount} ${quote.stopLimit.token}` : "At quote"} muted />
+              <RateRow label={t("minimumReceived")} value={quote ? `${quote.stopLimit.amount} ${quote.stopLimit.token}` : t("atQuote")} muted />
               <Divider className="swap-studio-rate-divider" />
-              <RateRow label="Slippage" value={formatBpsAsPercent(slippageBps)} muted />
+              <RateRow label={t("slippage")} value={formatBpsAsPercent(slippageBps)} muted />
             </div>
           </Panel>
 
           <p className="swap-studio-network-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
             <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
             <span>
-              {ARC.isTestnet
-                ? "These are Arc Testnet tokens and carry no monetary value."
-                : "These Arc tokens carry real monetary value."}{" "}
-              Slippage is set in{" "}
-              <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>.
+              {ARC.isTestnet ? t("noticeTestnet") : t("noticeMainnet")}{" "}
+              {/* `t.rich` so the link sits inside the sentence: word order around
+                  it differs per language, and a split string could not follow. */}
+              {t.rich("slippageSetIn", {
+                settings: (chunks) => (
+                  <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </span>
           </p>
         </div>
@@ -342,12 +373,13 @@ function SwapReview({ stage, tokenIn, tokenOut, amountIn, quote, amountOut, inLo
   stage: Stage; tokenIn: SwapToken; tokenOut: SwapToken; amountIn: string; quote: SwapEstimate | undefined;
   amountOut: string | undefined; inLogo?: string; outLogo?: string;
 }) {
+  const t = useTranslations("swap");
   return (
     <div className="swap-studio-review">
       <div className="swap-studio-review-header mb-6 flex items-center justify-between gap-3">
         <h2 className="swap-studio-review-title text-xl font-semibold tracking-tight">
-          {stage === "review" ? "Review your swap" : stage === "signing" ? "Confirm in your wallet"
-            : stage === "success" ? "Swap complete" : stage === "failed" ? "Swap not completed" : "Waiting for confirmation"}
+          {stage === "review" ? t("reviewTitle") : stage === "signing" ? t("confirmInWallet")
+            : stage === "success" ? t("swapComplete") : stage === "failed" ? t("swapNotCompleted") : t("waitingConfirmation")}
         </h2>
       </div>
       <div className="swap-studio-review-amounts mb-6 flex items-center justify-between gap-4 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-6">
@@ -363,27 +395,27 @@ function SwapReview({ stage, tokenIn, tokenOut, amountIn, quote, amountOut, inLo
       </div>
       {quote && stage !== "success" && (
         <div className="swap-studio-review-details space-y-2.5 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
-          <DetailRow label="Estimated output" value={`${quote.estimatedOutput.amount} ${quote.estimatedOutput.token}`} />
+          <DetailRow label={t("estimatedOutput")} value={`${quote.estimatedOutput.amount} ${quote.estimatedOutput.token}`} />
           <Divider className="swap-studio-review-divider my-1" />
-          <DetailRow label="Minimum received" value={`${quote.stopLimit.amount} ${quote.stopLimit.token}`} />
+          <DetailRow label={t("minimumReceived")} value={`${quote.stopLimit.amount} ${quote.stopLimit.token}`} />
         </div>
       )}
       {(stage === "pending" || stage === "signing" || stage === "success") && (
         <div className="swap-studio-progress mt-6">
           <ProgressBar
-            label={stage === "success" ? "Swap confirmed" : stage === "signing" ? "Waiting for you to confirm in your wallet" : "Submitted — waiting for the network to confirm"}
+            label={stage === "success" ? t("swapConfirmed") : stage === "signing" ? t("signingLabel") : t("submittedLabel")}
             indeterminate={stage !== "success"}
           />
           <p className="swap-studio-progress-message mt-2.5 text-xs leading-5 text-[var(--text-muted)]">
-            {stage === "signing" ? "Approve the transaction in your wallet. Nothing has been sent yet."
-              : stage === "pending" ? "Sent to Arc. This page checks for confirmation every few seconds."
-              : "The swap settled onchain."}
+            {stage === "signing" ? t("signingHint")
+              : stage === "pending" ? t("pendingHint")
+              : t("settledHint")}
           </p>
         </div>
       )}
       {stage === "success" && (
         <p className="swap-studio-success-notice mt-5 flex items-center gap-2 text-xs leading-5 text-[var(--positive)]">
-          <CheckCircle2 size={14} />Received {amountOut ?? "—"} {tokenOut}.
+          <CheckCircle2 size={14} />{t("received", { amount: amountOut ?? "—", token: tokenOut })}
         </p>
       )}
     </div>

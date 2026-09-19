@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ArrowRight, ArrowUpRight, ExternalLink, Link2, Send } from "lucide-react";
 import { useAccount, useReadContract } from "wagmi";
 import { erc20Abi, formatUnits } from "viem";
@@ -13,14 +14,10 @@ import { ARC_FAUCET_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { usePayments } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
-const firstPayment = [
-  "Connect a wallet you use for testing",
-  "Get mainnet USDC from the Circle faucet",
-  "Send a small amount",
-  "Verify the receipt on ArcScan",
-];
-
 export function WorkspaceOverview() {
+  const t = useTranslations("workspace");
+  // Inside the component: every step is a translated string now.
+  const firstPayment = [t("step1"), t("step2"), t("step3"), t("step4")];
   const { address } = useAccount();
   const hydrated = useHydrated();
   const payments = usePayments((s) => s.payments);
@@ -43,8 +40,8 @@ export function WorkspaceOverview() {
     <div className="workspace-root mx-auto max-w-[1240px] space-y-6">
       <div className="workspace-header flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
         <div className="workspace-heading">
-          <Label className="workspace-eyebrow text-[var(--action)]">Your payment workspace</Label>
-          <h1 className="workspace-title mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">Good things, in motion.</h1>
+          <Label className="workspace-eyebrow text-[var(--action)]">{t("eyebrow")}</Label>
+          <h1 className="workspace-title mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">{t("title")}</h1>
           <p className="workspace-description mt-2 text-sm text-[var(--text-muted)]">A calmer home for your digital dollars.</p>
         </div>
         <Chip className="workspace-network-chip" tone="muted">
@@ -54,7 +51,7 @@ export function WorkspaceOverview() {
 
       <div className="workspace-layout grid items-start gap-5 lg:grid-cols-[1.5fr_1fr]">
         <div className="workspace-main space-y-5">
-          <Panel className="workspace-balance-panel" title="Wallet balance" meta={address ? "ERC-20 · 6 DECIMALS" : "NOT CONNECTED"} bodyClassName="p-0">
+          <Panel className="workspace-balance-panel" title={t("walletBalance")} meta={address ? t("ercNote") : t("notConnected")} bodyClassName="p-0">
             <div className="workspace-balance-content px-5 py-8">
               <div className="workspace-balance-amount-group flex flex-wrap items-baseline gap-3">
                 {!address || balance.data !== undefined || balance.isError ? (
@@ -67,13 +64,13 @@ export function WorkspaceOverview() {
                 <span className="workspace-balance-currency font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--action)]">USDC</span>
               </div>
               <p className="workspace-wallet-address mt-4 break-all font-mono text-[11px] text-[var(--text-muted)]">
-                {address || "Connect your wallet to get started"}
+                {address || t("step1")}
               </p>
             </div>
             <div className="workspace-wallet-actions flex flex-wrap border-t border-[var(--border)]">
               {!address ? (
                 <div className="workspace-connect-wrapper p-3">
-                  <ConnectWalletButton className="workspace-connect-button" label="Connect wallet" />
+                  <ConnectWalletButton className="workspace-connect-button" label={t("connectWallet")} />
                 </div>
               ) : (
                 <Link
@@ -96,18 +93,18 @@ export function WorkspaceOverview() {
             <StatCell
               label="Confirmed"
               value={address ? String(completed) : "—"}
-              note="This wallet · saved in this browser"
+              note={t("walletNote")}
             />
             <StatCell
               label="Pending"
               value={address ? String(pending) : "—"}
-              note="Awaiting an onchain receipt"
+              note={t("awaitingReceipt")}
               tone={pending ? "primary" : "default"}
             />
             <StatCell
-              label="Requests"
+              label={t("requests")}
               value={String(requestCount)}
-              note="This browser · not a paid/unpaid count"
+              note={t("requestsNote")}
               href="/requests"
             />
           </div>
@@ -126,7 +123,7 @@ export function WorkspaceOverview() {
       <div className="workspace-aside grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
         <PaymentActivity compact />
 
-        <Panel className="workspace-onboarding-panel" title="Your first Arc payment" meta="04 STEPS" bodyClassName="p-0">
+        <Panel className="workspace-onboarding-panel" title={t("firstPaymentTitle")} meta="04 STEPS" bodyClassName="p-0">
           {firstPayment.map((step, index) => (
             <TraceRow key={step} index={index + 1} label={step} state="pending" />
           ))}
@@ -149,7 +146,7 @@ export function WorkspaceOverview() {
         className="workspace-next-payment-link flex items-center justify-between border border-[var(--border)] px-5 py-4 text-sm transition-colors hover:bg-[var(--surface)]"
       >
         <span className="workspace-next-payment-label">
-          Ready when you are. <span className="workspace-next-payment-title text-[var(--text-muted)]">Make your next payment.</span>
+          Ready when you are. <span className="workspace-next-payment-title text-[var(--text-muted)]">{t("subtitle")}</span>
         </span>
         <ArrowRight size={16} className="text-[var(--action)]" />
       </Link>

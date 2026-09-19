@@ -1,6 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Moon, RotateCcw, SlidersHorizontal, Sun } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import { useSyncExternalStore } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Chip } from "@/components/chaos/Terminal";
@@ -40,6 +42,7 @@ export function SettingsPanel() {
     ? ""
     : String(slippagePercent);
   const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const t = useTranslations("settings");
   const setTheme = useThemeMorphTransition();
 
   return (
@@ -47,16 +50,18 @@ export function SettingsPanel() {
       <Card className="settings-intro-card p-5">
         <div className="settings-intro-content flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="settings-intro-copy">
-            <Chip tone="positive">Saved locally</Chip>
+            <Chip tone="positive">{t("savedLocally")}</Chip>
             <h2 className="settings-intro-title mt-4 text-2xl font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
-              Slippage for the Swap page.
+              {t("heading")}
             </h2>
             <p className="settings-intro-description mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
-              Stored in your browser and used the next time you get a quote on{" "}
-              <a href="/swap" className="settings-intro-swap-link text-[var(--action)] underline">
+              {t("storedNote")}{" "}
+              {/* A locale-aware Link, not a bare anchor: an `<a href="/swap">`
+                  drops the language prefix and reloads the whole app. */}
+              <Link href="/swap" className="settings-intro-swap-link text-[var(--action)] underline">
                 /swap
-              </a>
-              . An in-flight quote keeps the slippage it was already given.
+              </Link>
+              {t("inFlightNote")}
             </p>
           </div>
         </div>
@@ -65,12 +70,12 @@ export function SettingsPanel() {
       <div className="settings-columns grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="settings-execution-card">
           <CardHeader
-            title="Swap slippage"
-            subtitle="How much the received amount can drop before a quote is rejected"
+            title={t("title")}
+            subtitle={t("explain")}
             action={
               <Button variant="ghost" className="settings-reset-button h-9 px-3" onClick={reset}>
                 <RotateCcw className="size-4" />
-                Reset
+                {t("reset")}
               </Button>
             }
           />
@@ -79,7 +84,7 @@ export function SettingsPanel() {
               <div className="settings-control-heading flex gap-3">
                 <SlidersHorizontal className="mt-0.5 size-4 shrink-0 text-[var(--action)]" />
                 <div className="settings-control-copy">
-                  <p className="settings-control-title text-sm font-semibold text-[var(--text-primary)]">Default slippage</p>
+                  <p className="settings-control-title text-sm font-semibold text-[var(--text-primary)]">{t("defaultSlippage")}</p>
                   <p className="settings-control-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">
                     Higher slippage may fill more often, but can return fewer tokens.
                   </p>
@@ -113,8 +118,8 @@ export function SettingsPanel() {
                       if (Number.isFinite(next)) setSlippageBps(Math.round(next * 100));
                     }}
                     inputMode="decimal"
-                    placeholder="Custom"
-                    aria-label="Custom slippage"
+                    placeholder={t("custom")}
+                    aria-label={t("customSlippage")}
                     className="settings-slippage-input payment-input h-10 w-28"
                   />
                   <Chip tone={slippageBps >= 300 ? "negative" : slippageBps >= 100 ? "primary" : "positive"}>
@@ -127,13 +132,13 @@ export function SettingsPanel() {
         </Card>
 
         <Card className="settings-appearance-card">
-          <CardHeader title="Display" subtitle="Frontend-only preference" />
+          <CardHeader title={t("display")} subtitle={t("meta")} />
           <div className="settings-appearance-fields space-y-3 p-4">
             <div className="settings-option-row flex flex-col gap-4 border border-[var(--border)] bg-[var(--surface)] p-4 md:flex-row md:items-center md:justify-between">
               <div className="settings-option-heading flex gap-3">
                 <Sun className="mt-0.5 size-4 shrink-0 text-[var(--action)]" />
                 <div className="settings-option-copy">
-                  <p className="settings-option-title text-sm font-semibold text-[var(--text-primary)]">Theme</p>
+                  <p className="settings-option-title text-sm font-semibold text-[var(--text-primary)]">{t("theme")}</p>
                   <p className="settings-option-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">
                     Use the top bar icon on desktop to switch between light and dark.
                   </p>

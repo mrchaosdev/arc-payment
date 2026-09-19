@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, ExternalLink } from "lucide-react";
 import { Chip, Num, Panel } from "@/components/chaos/Terminal";
 import { ShareActions } from "@/components/payments/ShareActions";
@@ -29,6 +30,8 @@ function linkFor(origin: string, request: SavedRequest) {
 }
 
 export function SavedRequests() {
+  const t = useTranslations("activity");
+  const format = useFormatter();
   const requests = usePayments((s) => s.requests);
   const cursor = usePayments((s) => s.reconcileCursor);
   const hydrated = useHydrated();
@@ -39,7 +42,7 @@ export function SavedRequests() {
     <div className="saved-requests-root mx-auto mt-8 max-w-[1240px]">
       <Panel
         className="saved-requests-panel"
-        title="Saved requests"
+        title={t("savedRequests")}
         meta={hydrated ? `${settled}/${requests.length} PAID` : "—"}
         bodyClassName="p-0"
       >
@@ -47,9 +50,9 @@ export function SavedRequests() {
           Links created in this browser. A request is marked paid when a USDC transfer of the exact
           amount reaches it on Arc.{" "}
           {hydrated && cursor ? (
-            <>Checked to block <span className="saved-requests-cursor font-mono">{cursor.toLocaleString()}</span>. Anything paid while this browser was closed for long is not seen.</>
+            <>{t("checkedToBlock")}<span className="saved-requests-cursor font-mono">{format.number(cursor)}</span>. Anything paid while this browser was closed for long is not seen.</>
           ) : (
-            <>Matching runs only while this app is open.</>
+            <>{t("matchingNote")}</>
           )}
         </p>
 
@@ -69,7 +72,7 @@ export function SavedRequests() {
                       <p className="saved-requests-item-title break-words text-[13px] font-semibold">{r.memo || r.reference}</p>
                       <p className="saved-requests-recipient mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">{r.to}</p>
                       <p className="saved-requests-metadata mt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
-                        {r.reference} · {new Date(r.createdAt).toLocaleDateString()}
+                        {r.reference} · {format.dateTime(new Date(r.createdAt), { dateStyle: "medium" })}
                       </p>
                     </div>
                     {/* The mark sits outside the link so the link's name stays the amount. */}
@@ -95,9 +98,9 @@ export function SavedRequests() {
                   */}
                   {r.settlement ? (
                     <div className="saved-requests-settlement mt-3 flex flex-wrap items-center gap-2">
-                      <Chip className="saved-requests-settled-chip" tone="positive">Paid</Chip>
+                      <Chip className="saved-requests-settled-chip" tone="positive">{t("paid")}</Chip>
                       <span className="saved-requests-settled-payer font-mono text-[10px] text-[var(--text-muted)]">
-                        from {compactAddress(r.settlement.from)} · {new Date(r.settlement.at).toLocaleString()}
+                        from {compactAddress(r.settlement.from)} · {format.dateTime(new Date(r.settlement.at), { dateStyle: "medium", timeStyle: "short" })}
                       </span>
                       <a
                         className="saved-requests-settled-explorer flex items-center gap-1 font-mono text-[10px] text-[var(--action)]"

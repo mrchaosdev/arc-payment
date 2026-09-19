@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, QrCode, Share2 } from "lucide-react";
 import { PaymentQr } from "@/components/payments/PaymentQr";
@@ -15,13 +16,16 @@ import { useHydrated } from "@/hooks/useHydrated";
  */
 export function ShareActions({
   url,
-  title = "Payment request",
+  title,
   preview = true,
 }: {
   url: string;
   title?: string;
   preview?: boolean;
 }) {
+  const t = useTranslations("pay");
+  // Resolved here rather than as a default argument: a default cannot call a hook.
+  const heading = title ?? t("paymentRequest");
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -40,19 +44,19 @@ export function ShareActions({
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast({ title: "Payment link copied", tone: "success" });
+      toast({ title: t("linkCopied"), tone: "success" });
     } catch {
-      toast({ title: "Copy blocked", description: "Select the link and copy it manually.", tone: "info" });
+      toast({ title: t("copyBlocked"), description: t("copyManually"), tone: "info" });
     }
   }
 
   async function share() {
     try {
-      await navigator.share({ title, text: title, url });
+      await navigator.share({ title: heading, text: heading, url });
     } catch (error) {
       // Dismissing the sheet is a normal outcome, not a failure worth a toast.
       if (error instanceof Error && error.name === "AbortError") return;
-      toast({ title: "Sharing was not available", description: "The link is still on your clipboard button.", tone: "info" });
+      toast({ title: t("shareUnavailable"), description: t("stillOnClipboard"), tone: "info" });
     }
   }
 

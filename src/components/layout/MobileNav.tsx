@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
 import {
   CircleDollarSign,
   BookUser,
@@ -9,22 +9,23 @@ import {
   LayoutDashboard,
   Link2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/pay", label: "Pay", icon: CircleDollarSign },
-  { href: "/history", label: "Activity", icon: History },
-  { href: "/requests", label: "Requests", icon: Link2 },
-  { href: "/contacts", label: "Contacts", icon: BookUser },
-];
-
 export function MobileNav() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
+  const navItems = [
+    { href: "/dashboard", label: t("overview"), icon: LayoutDashboard },
+    { href: "/pay", label: t("pay"), icon: CircleDollarSign },
+    { href: "/history", label: t("activity"), icon: History },
+    { href: "/requests", label: t("requests"), icon: Link2 },
+    { href: "/contacts", label: t("contacts"), icon: BookUser },
+  ];
 
   return (
     <nav
-      aria-label="Mobile workspace"
+      aria-label={t("mobileLabel")}
       className="mobile-nav-root fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--app-bg)] pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="mobile-nav-list grid grid-cols-5">

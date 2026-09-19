@@ -1,16 +1,9 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowUpRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Label, Num } from "@/components/chaos/Terminal";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { GithubMark } from "@/components/ui/GithubMark";
-
-const productLinks = [
-  { href: "/pay", label: "Pay USDC" },
-  { href: "/pay?mode=request", label: "Request payment" },
-  { href: "/history", label: "Payment activity" },
-  { href: "/settings", label: "Settings" },
-  { href: "/docs", label: "Docs" },
-];
 
 const resourceLinks = [
   { href: "https://github.com/mrchaosdev/arc-payment", label: "GitHub", icon: GithubMark },
@@ -21,14 +14,21 @@ const resourceLinks = [
   { href: "https://developers.circle.com", label: "Circle Developers" },
 ];
 
-const stack = [
-  ["Network", "Arc"],
-  ["Wallet", "RainbowKit"],
-  ["Settlement", "USDC ERC-20"],
-  ["Custody", "User wallet"],
-];
-
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations("footer");
+  const productLinks = [
+    { href: "/pay", label: t("payUsdc") },
+    { href: "/pay?mode=request", label: t("requestPayment") },
+    { href: "/history", label: t("paymentActivity") },
+    { href: "/settings", label: t("settings") },
+    { href: "/docs", label: t("docs") },
+  ];
+  const stack: [string, string][] = [
+    [t("network"), "Arc"],
+    [t("wallet"), "RainbowKit"],
+    [t("settlement"), "USDC ERC-20"],
+    [t("custody"), t("userWallet")],
+  ];
   return (
     <footer className="site-footer-root border-t border-[var(--border)] pb-28 md:pb-0">
       <div className="site-footer-content mx-auto grid max-w-[1400px] border-[var(--border)] px-4 md:px-8 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.9fr]">
@@ -39,12 +39,11 @@ export function Footer() {
           </Link>
 
           <p className="site-footer-description mt-5 max-w-sm text-[13px] leading-6 text-[var(--text-muted)]">
-            A non-custodial payment workspace for creating requests and settling USDC on Arc
-            with fast, predictable finality.
+            {t("description")}
           </p>
         </div>
 
-        <FooterColumn title="Product">
+        <FooterColumn title={t("product")}>
           {productLinks.map((link) => (
             <Link key={link.href} href={link.href} className={`site-footer-internal-link ${(linkClass)}`}>
               {link.label}
@@ -52,7 +51,7 @@ export function Footer() {
           ))}
         </FooterColumn>
 
-        <FooterColumn title="Resources">
+        <FooterColumn title={t("resources")}>
           {resourceLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -64,7 +63,7 @@ export function Footer() {
         </FooterColumn>
 
         <div className="site-footer-stack py-10">
-          <Label className="site-footer-stack-title">Live stack</Label>
+          <Label className="site-footer-stack-title">{t("liveStack")}</Label>
           <div className="site-footer-stack-list mt-4 border border-[var(--border)]">
             {stack.map(([label, value]) => (
               <div
@@ -82,8 +81,8 @@ export function Footer() {
       </div>
 
       <div className="site-footer-bottom mx-auto flex max-w-[1400px] flex-col gap-2 border-t border-[var(--border)] px-4 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] md:flex-row md:items-center md:justify-between md:px-8">
-        <p className="site-footer-copyright">© 2026 ChaosPay · Arc Mainnet MVP · No private keys stored · Built by Chaos_Davidson</p>
-        <p className="site-footer-reminder">Verify recipient, amount, network and wallet prompt before signing</p>
+        <p className="site-footer-copyright">{t("copyright")}</p>
+        <p className="site-footer-reminder">{t("reminder")}</p>
       </div>
     </footer>
   );

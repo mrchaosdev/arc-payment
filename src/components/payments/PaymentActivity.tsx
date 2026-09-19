@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { ArrowUpRight, Download, ExternalLink, Receipt, RefreshCw } from "lucide-react";
@@ -17,6 +18,8 @@ import { publicClients } from "@/lib/wagmi/clients";
 const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 
 export function PaymentActivity({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations("activity");
+  const format = useFormatter();
   const { address } = useAccount();
   const hydrated = useHydrated();
   const payments = usePayments((s) => s.payments);
@@ -45,9 +48,9 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
         receipt.status === "success" ? "Success" : "Failed",
         (receipt.gasUsed * receipt.effectiveGasPrice).toString()
       );
-      setNotice("Receipt verified on Arc.");
+      setNotice(t("receiptVerified"));
     } catch {
-      setNotice("Receipt not available yet. Check ArcScan before sending another payment.");
+      setNotice(t("receiptPending"));
     } finally {
       setChecking(undefined);
     }
@@ -63,7 +66,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
               chainId: ARC_CHAIN_ID,
               token: "USDC",
               explorer: arcTransactionUrl(p.hash),
-              note: "Browser record. Verify settlement on ArcScan; memo and reference are not onchain.",
+              note: t("browserRecordNote"),
             },
             null,
             2
@@ -81,10 +84,10 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
 
   return (
     <Panel className="payment-activity-panel"
-      title={compact ? "Recent payments" : "Your payment activity"}
+      title={compact ? t("recentPayments") : t("eyebrow")}
       meta={
         compact ? (
-          <Link href="/history" aria-label="View all payments" className="payment-activity-view-all-link hover:text-[var(--text-primary)]">
+          <Link href="/history" aria-label={t("viewAll")} className="payment-activity-view-all-link hover:text-[var(--text-primary)]">
             VIEW ALL →
           </Link>
         ) : (
@@ -107,12 +110,12 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
       {!items.length ? (
         <div className="payment-activity-empty-state px-6 py-12 text-center">
           <p className="payment-activity-empty-title text-sm font-semibold">
-            {address ? "Your first payment starts here" : "Connect to see your payments"}
+            {address ? t("emptyTitle") : t("connectPrompt")}
           </p>
           <p className="payment-activity-empty-description mx-auto mt-2 max-w-sm text-[13px] leading-6 text-[var(--text-muted)]">
             {address
-              ? "Once you send USDC, your transaction and its confirmation will appear here."
-              : "Only this browser’s saved transactions for the connected wallet are displayed."}
+              ? t("emptyBody")
+              : t("browserOnlyNote")}
           </p>
           <Link
             href="/pay"
@@ -126,10 +129,10 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
           {items.slice(0, compact ? 4 : 200).map((p) => (
             <li key={p.hash} className="payment-activity-item flex flex-wrap items-start gap-4 border-b border-[var(--border)] px-4 py-4 last:border-b-0">
               <div className="payment-activity-item-details min-w-0 flex-1">
-                <p className="payment-activity-item-title break-words text-[13px] font-semibold">{p.memo || "USDC payment"}</p>
+                <p className="payment-activity-item-title break-words text-[13px] font-semibold">{p.memo || t("usdcPayment")}</p>
                 <p className="payment-activity-recipient mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">To {p.to}</p>
                 <p className="payment-activity-metadata mt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
-                  {new Date(p.createdAt).toLocaleString()}
+                  {format.dateTime(new Date(p.createdAt), { dateStyle: "medium", timeStyle: "short" })}
                   {p.reference && ` · ${p.reference}`}
                 </p>
 
@@ -174,7 +177,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
                   {/* Everything stored here has already left the wallet, so the
                       open question is the receipt, not the signature. */}
                   <Chip className="payment-activity-status" tone={p.status === "Success" ? "positive" : p.status === "Failed" ? "negative" : "primary"}>
-                    {p.status === "Success" ? "Confirmed" : p.status === "Failed" ? "Failed" : "Awaiting receipt"}
+                    {p.status === "Success" ? t("confirmed") : p.status === "Failed" ? t("failed") : t("awaitingReceipt")}
                   </Chip>
                 </div>
               </div>
@@ -185,7 +188,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
 
       {!compact && items.length ? (
         <div className="payment-activity-footer border-t border-[var(--border)] px-4 py-3">
-          <Label className="payment-activity-storage-limit">Capped at 200 records per browser</Label>
+          <Label className="payment-activity-storage-limit">{t("cappedNote")}</Label>
         </div>
       ) : null}
 

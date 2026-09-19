@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { useState } from "react";
 import {
   ArrowLeftRight,
@@ -16,6 +16,7 @@ import {
   Send,
   Settings,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ARC, ARC_FAUCET_URL } from "@/lib/arc";
 import { useAssistant } from "@/store/assistant";
@@ -23,34 +24,26 @@ import { BrandMark } from "@/components/ui/BrandMark";
 
 // Circle's faucet mints testnet USDC and nothing else, so on mainnet the card
 // sends people to the funding guide instead of naming a token it cannot hand
-// out. Resolved once: the network is fixed at build time.
+// out. Only the destination is fixed at build time; the wording is translated.
 const faucet = ARC.isTestnet
-  ? {
-      title: "Start with test USDC",
-      description: "Try your first payment on Arc.",
-      action: "Get test USDC",
-      href: ARC_FAUCET_URL,
-    }
-  : {
-      title: "Fund your Arc wallet",
-      description: "Mainnet USDC has real value. Bring it in from a bridge or a DEX.",
-      action: "How to fund",
-      href: "/docs",
-    };
+  ? { keyPrefix: "testnet", href: ARC_FAUCET_URL }
+  : { keyPrefix: "mainnet", href: "/docs" };
 
 // Adapted from ChaoUi/navigation/dashboard-sidebar. Next links preserve native
 // navigation semantics; CSS width transitions respect reduced motion.
 export function DashboardSidebar() {
+  const t = useTranslations("nav");
+  const tf = useTranslations("funding");
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const available = useAssistant(state => state.available);
   const openAssistant = useAssistant(state => state.setOpen);
   const links = [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/requests", label: "Payment requests", icon: Link2 },
-    { href: "/swap", label: "Swap", icon: ArrowLeftRight },
-    { href: "/history", label: "Activity", icon: History },
-    { href: "/contacts", label: "Contacts", icon: BookUser },
+    { href: "/dashboard", label: t("overview"), icon: LayoutDashboard },
+    { href: "/requests", label: t("paymentRequests"), icon: Link2 },
+    { href: "/swap", label: t("swap"), icon: ArrowLeftRight },
+    { href: "/history", label: t("activity"), icon: History },
+    { href: "/contacts", label: t("contacts"), icon: BookUser },
   ];
 
   return (
@@ -63,7 +56,7 @@ export function DashboardSidebar() {
     >
       <Link
         href="/"
-        aria-label="ChaosPay home"
+        aria-label={t("home")}
         className="dashboard-sidebar-brand flex h-14 shrink-0 items-center gap-2.5 border-b border-[var(--border)] px-5"
       >
         <BrandMark className="dashboard-sidebar-brand-mark" />
@@ -74,14 +67,14 @@ export function DashboardSidebar() {
         )}
       </Link>
 
-      <nav aria-label="Workspace" className="dashboard-sidebar-nav min-h-0 flex-1 overflow-y-auto px-3 pt-6">
-        <Link href="/pay" aria-label="Send USDC" title="Send USDC" aria-current={pathname === "/pay" ? "page" : undefined}
+      <nav aria-label={t("workspace")} className="dashboard-sidebar-nav min-h-0 flex-1 overflow-y-auto px-3 pt-6">
+        <Link href="/pay" aria-label={t("sendUsdc")} title={t("sendUsdc")} aria-current={pathname === "/pay" ? "page" : undefined}
           className="dashboard-sidebar-send-button mb-5 flex h-11 items-center justify-center gap-2 bg-[var(--action)] text-xs font-semibold text-[var(--on-action)]">
-          <Send className="dashboard-sidebar-send-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-send-label">Send USDC</span>}
+          <Send className="dashboard-sidebar-send-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-send-label">{t("sendUsdc")}</span>}
         </Link>
         {!collapsed && (
           <p className="dashboard-sidebar-nav-label mb-3 px-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
-            Workspace
+            {t("workspace")}
           </p>
         )}
         {links.map(({ href, label, icon: Icon }) => {
@@ -108,9 +101,9 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      <button type="button" aria-label="Ask assistant" title={available ? "Ask assistant" : "Assistant unavailable"} disabled={!available}
+      <button type="button" aria-label={t("askAssistant")} title={available ? t("askAssistant") : t("assistantUnavailable")} disabled={!available}
         onClick={() => openAssistant(true)} className="dashboard-sidebar-assistant-button mx-3 mb-3 flex min-h-10 items-center justify-center gap-2 border border-[var(--border)] px-2 text-xs text-[var(--action)] disabled:cursor-not-allowed disabled:opacity-40">
-        <Bot className="dashboard-sidebar-assistant-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-assistant-label">Ask assistant</span>}
+        <Bot className="dashboard-sidebar-assistant-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-assistant-label">{t("askAssistant")}</span>}
       </button>
 
       {/* The faucet only mints testnet USDC. On mainnet the same card used to
@@ -119,10 +112,10 @@ export function DashboardSidebar() {
       {!collapsed ? (
         <div className="dashboard-sidebar-faucet-card mx-3 mb-4 border border-[var(--border)] p-3">
           <p className="dashboard-sidebar-faucet-title font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            {faucet.title}
+            {tf(`${faucet.keyPrefix}Title`)}
           </p>
           <p className="dashboard-sidebar-faucet-description mt-2 text-xs leading-5 text-[var(--text-muted)]">
-            {faucet.description}
+            {tf(`${faucet.keyPrefix}Description`)}
           </p>
           <a
             href={faucet.href}
@@ -130,10 +123,10 @@ export function DashboardSidebar() {
             rel="noreferrer"
             className="dashboard-sidebar-faucet-link mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
-            {faucet.action} <ArrowUpRight size={12} />
+            {tf(`${faucet.keyPrefix}Action`)} <ArrowUpRight size={12} />
           </a>
         </div>
-      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={faucet.href} target="_blank" rel="noreferrer" aria-label={faucet.action} title={faucet.action}><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
+      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={faucet.href} target="_blank" rel="noreferrer" aria-label={tf(`${faucet.keyPrefix}Action`)} title={tf(`${faucet.keyPrefix}Action`)}><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
 
       <div className="dashboard-sidebar-footer flex items-center justify-between border-t border-[var(--border)] p-3">
         {!collapsed && (
@@ -141,12 +134,12 @@ export function DashboardSidebar() {
             href="/settings"
             className="dashboard-sidebar-settings-link flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
-            <Settings size={14} /> Settings
+            <Settings size={14} /> {t("settings")}
           </Link>
         )}
         <button
           type="button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
           aria-expanded={!collapsed}
           onClick={() => setCollapsed(!collapsed)}
           className="dashboard-sidebar-collapse-button grid size-8 place-items-center text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"

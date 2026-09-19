@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ export function PaymentQr({
   logo?: boolean;
   className?: string;
 }) {
+  const t = useTranslations("pay");
   const [code, setCode] = useState<DrawnCode>();
   const [failedFor, setFailedFor] = useState<string>();
 
@@ -86,7 +88,7 @@ export function PaymentQr({
   return (
     <svg
       role="img"
-      aria-label="Payment link as a QR code"
+      aria-label={t("qrAlt")}
       width={size}
       height={size}
       viewBox={`0 0 ${modules} ${modules}`}

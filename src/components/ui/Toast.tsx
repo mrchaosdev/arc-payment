@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -119,6 +120,7 @@ function ToastViewport({
   toasts: ToastItem[];
   onDismiss: (id: string) => void;
 }) {
+  const t = useTranslations("pay");
   if (toasts.length === 0) return null;
 
   return (
@@ -150,7 +152,7 @@ function ToastViewport({
             </div>
             <button
               type="button"
-              aria-label="Dismiss notification"
+              aria-label={t("dismissNotification")}
               onClick={() => onDismiss(toast.id)}
               className="toast-dismiss-button flex size-7 shrink-0 items-center justify-center text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
             >

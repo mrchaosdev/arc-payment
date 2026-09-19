@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Label, PageHeading, Panel } from "@/components/chaos/Terminal";
@@ -9,6 +10,7 @@ import { useContacts } from "@/store/contacts";
 import { useHydrated } from "@/hooks/useHydrated";
 
 export function ContactsPanel() {
+  const t = useTranslations("contacts");
   const { contacts, save, remove } = useContacts();
   const hydrated = useHydrated();
   const [name, setName] = useState("");
@@ -34,13 +36,13 @@ export function ContactsPanel() {
     <div className="contacts-page mx-auto max-w-[1000px] space-y-6">
       <div className="contacts-heading border-b border-[var(--border)] pb-6">
         <PageHeading
-          eyebrow="Your payment workspace"
-          title="Recipient contacts"
-          subtitle="Save a name and address for your next USDC payment. Contacts stay in this browser."
+          eyebrow={t("eyebrow")}
+          title={t("title")}
+          subtitle={t("description")}
         />
       </div>
 
-      <Panel title={editing ? "Edit contact" : "Add recipient"} meta={hydrated ? `${contacts.length} SAVED` : "—"} bodyClassName="p-0">
+      <Panel title={editing ? t("editContact") : t("addRecipient")} meta={hydrated ? `${contacts.length} SAVED` : "—"} bodyClassName="p-0">
         <form
           className="contacts-form space-y-5 p-4"
           onSubmit={(event) => {
@@ -49,18 +51,18 @@ export function ContactsPanel() {
             setNotice("");
             try {
               save(name, address, editing);
-              setNotice(editing ? "Contact updated." : "Contact saved.");
+              setNotice(editing ? t("updated") : t("saved"));
               reset();
             } catch (failure) {
-              setError(failure instanceof Error ? failure.message : "Could not save contact.");
+              setError(failure instanceof Error ? failure.message : t("saveFailed"));
             }
           }}
         >
           <div className="contacts-name-field">
-            <Label className="mb-2">Name</Label>
+            <Label className="mb-2">{t("name")}</Label>
             <input
               ref={nameInput}
-              aria-label="Name"
+              aria-label={t("name")}
               className="contacts-name-input payment-input"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -70,9 +72,9 @@ export function ContactsPanel() {
             />
           </div>
           <div className="contacts-address-field">
-            <Label className="mb-2">Wallet address</Label>
+            <Label className="mb-2">{t("walletAddress")}</Label>
             <input
-              aria-label="Wallet address"
+              aria-label={t("walletAddress")}
               className="contacts-address-input payment-input font-mono text-xs"
               value={address}
               onChange={(event) => setAddress(event.target.value)}
@@ -99,7 +101,7 @@ export function ContactsPanel() {
 
           <div className="contacts-form-actions flex gap-3">
             <Button className="contacts-save-button" type="submit" disabled={!hydrated}>
-              {editing ? "Save changes" : "Save contact"}
+              {editing ? t("saveChanges") : t("saveContact")}
             </Button>
             {editing && (
               <Button className="contacts-cancel-button" type="button" variant="ghost" onClick={reset}>
@@ -110,21 +112,21 @@ export function ContactsPanel() {
         </form>
       </Panel>
 
-      <Panel title="Saved contacts" meta={hydrated ? `${visible.length} SHOWN` : "—"} bodyClassName="p-0">
+      <Panel title={t("savedContacts")} meta={hydrated ? `${visible.length} SHOWN` : "—"} bodyClassName="p-0">
         <div className="contacts-search border-b border-[var(--border)] p-4">
-          <Label className="mb-2">Search contacts</Label>
+          <Label className="mb-2">{t("searchContacts")}</Label>
           <input
-            aria-label="Search contacts"
+            aria-label={t("searchContacts")}
             className="contacts-search-input payment-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name or address"
+            placeholder={t("nameOrAddress")}
           />
         </div>
 
         {!visible.length ? (
           <p className="contacts-empty px-6 py-12 text-center text-[13px] text-[var(--text-muted)]">
-            {!hydrated ? "Loading contacts…" : contacts.length ? "No matching contacts." : "Add your first recipient above."}
+            {!hydrated ? t("loading") : contacts.length ? t("noMatch") : t("empty")}
           </p>
         ) : (
           <ul className="contacts-list">
@@ -179,7 +181,7 @@ export function ContactsPanel() {
                         remove(contact.id);
                         setRemoving(undefined);
                         if (editing === contact.id) reset();
-                        setNotice("Contact removed.");
+                        setNotice(t("removed"));
                       }}
                     >
                       Confirm removal

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { Panel, TraceRow, Num } from "@/components/chaos/Terminal";
 import { ARC } from "@/lib/arc";
 import { derivePulse, intensityFromConfirmed, type SettlementStage } from "@/lib/visual/pulse";
@@ -38,11 +39,12 @@ export function SettlementPulse({
   height?: number;
   interactive?: boolean;
 }) {
+  const t = useTranslations("pulse");
   const pulse = derivePulse(stage, intensityFromConfirmed(confirmed));
   const busy = stage === "signing" || stage === "settling";
 
   return (
-    <Panel className="settlement-pulse-panel" title="Settlement pulse" meta="DERIVED, NOT PREDICTED" bodyClassName="p-0">
+    <Panel className="settlement-pulse-panel" title={t("pulseTitle")} meta={t("pulseMeta")} bodyClassName="p-0">
       <div className="settlement-pulse-visual chaos-dot-field" style={{ minHeight: height }}>
         <ChaosSphere
           bpm={pulse.bpm}
@@ -56,14 +58,14 @@ export function SettlementPulse({
         />
       </div>
       <div className="settlement-pulse-stats grid grid-cols-3 border-t border-[var(--border)]">
-        <PulseCell label="Rate" value={`${pulse.bpm} BPM`} note={stage === "offline" ? "no wallet" : "settlement stage"} />
+        <PulseCell label={t("rate")} value={`${pulse.bpm} BPM`} note={stage === "offline" ? t("noWallet") : t("settlementStage")} />
         <PulseCell
-          label="Amplitude"
+          label={t("amplitude")}
           value={`${Math.round(pulse.amplitude * 1000) / 10}%`}
-          note={`${confirmed} confirmed`}
+          note={t("confirmedCount", { count: confirmed })}
           bordered
         />
-        <PulseCell label="Rhythm" value={pulse.rhythm.split(" · ")[0]} note={pulse.rhythm.split(" · ")[1] ?? ""} />
+        <PulseCell label={t("rhythm")} value={pulse.rhythm.split(" · ")[0]} note={pulse.rhythm.split(" · ")[1] ?? ""} />
       </div>
     </Panel>
   );
@@ -94,12 +96,14 @@ function PulseCell({
  * moves a transfer through — not a scripted animation, which is why the numbers
  * stop advancing when the payment does.
  */
-const path: { label: string; reached: SettlementStage[] }[] = [
-  { label: "Validate recipient & amount", reached: ["review", "signing", "settling", "settled", "failed"] },
-  { label: "Estimate gas · check balance", reached: ["review", "signing", "settling", "settled", "failed"] },
-  { label: "Sign in wallet", reached: ["settling", "settled", "failed"] },
-  { label: "Broadcast to Arc", reached: ["settling", "settled", "failed"] },
-  { label: "Await onchain receipt", reached: ["settled", "failed"] },
+// Message keys rather than English: the reached-stages logic below is what the
+// list is really for, and the wording is looked up at render time.
+const path: { key: string; reached: SettlementStage[] }[] = [
+  { key: "step1", reached: ["review", "signing", "settling", "settled", "failed"] },
+  { key: "step2", reached: ["review", "signing", "settling", "settled", "failed"] },
+  { key: "step3", reached: ["settling", "settled", "failed"] },
+  { key: "step4", reached: ["settling", "settled", "failed"] },
+  { key: "step5", reached: ["settled", "failed"] },
 ];
 
 const activeIndex: Partial<Record<SettlementStage, number>> = {
@@ -110,12 +114,13 @@ const activeIndex: Partial<Record<SettlementStage, number>> = {
 };
 
 export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; fee?: string; hash?: string }) {
+  const t = useTranslations("pulse");
   const active = activeIndex[stage];
 
   return (
     <Panel className="settlement-path-panel"
-      title="Settlement path"
-      meta={stage === "failed" ? "REVERTED" : stage === "settled" ? "COMPLETE" : NETWORK_LABEL}
+      title={t("pathTitle")}
+      meta={stage === "failed" ? t("reverted") : stage === "settled" ? t("complete") : NETWORK_LABEL}
       bodyClassName="p-0"
     >
       {path.map((step, index) => {
@@ -125,9 +130,9 @@ export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; f
 
         return (
           <TraceRow
-            key={step.label}
+            key={step.key}
             index={index + 1}
-            label={step.label}
+            label={t(step.key)}
             state={state}
             detail={index === 1 && fee ? <Num className="settlement-path-fee" value={`${fee} USDC`} tone="muted" /> : undefined}
           />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Printer, X } from "lucide-react";
@@ -20,6 +21,8 @@ import { usePayments, type PaymentRecord } from "@/store/payments";
  * PDF" lives — no renderer to ship, and the output is real selectable text.
  */
 export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; onClose: () => void }) {
+  const t = useTranslations("receipt");
+  const format = useFormatter();
   const hydrated = useHydrated();
   const updateStatus = usePayments((s) => s.updateStatus);
 
@@ -61,14 +64,14 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
 
   const issued = new Date(payment.createdAt);
   const status =
-    payment.status === "Success" ? "PAID" : payment.status === "Failed" ? "NOT COMPLETED" : "AWAITING RECEIPT";
+    payment.status === "Success" ? t("statusPaid") : payment.status === "Failed" ? t("statusNotCompleted") : t("statusAwaiting");
 
   return createPortal(
     <div
       data-receipt-overlay
       role="dialog"
       aria-modal="true"
-      aria-label="Payment receipt"
+      aria-label={t("title")}
       className="payment-receipt-overlay fixed inset-0 z-[120] overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:p-8"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -80,7 +83,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
             <Printer size={14} />
             Print / Save as PDF
           </Button>
-          <Button className="payment-receipt-close-button" type="button" variant="secondary" onClick={onClose} aria-label="Close receipt">
+          <Button className="payment-receipt-close-button" type="button" variant="secondary" onClick={onClose} aria-label={t("close")}>
             <X size={14} />
             Close
           </Button>
@@ -93,27 +96,27 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
               <span className="payment-receipt-brand-name">ChaosPay</span>
             </div>
             <div className="payment-receipt-heading receipt-headline">
-              <h2 className="payment-receipt-title">Payment receipt</h2>
+              <h2 className="payment-receipt-title">{t("title")}</h2>
               <p className="payment-receipt-status receipt-status">{status}</p>
             </div>
           </header>
 
           <dl className="payment-receipt-metadata receipt-meta">
-            <Meta label="Reference" value={payment.reference || "—"} />
-            <Meta label="Issued" value={issued.toLocaleString()} />
-            <Meta label="Network" value="Arc" />
-            <Meta label="Token" value="USDC (6 decimals)" />
+            <Meta label={t("reference")} value={payment.reference || "—"} />
+            <Meta label={t("issued")} value={format.dateTime(issued, { dateStyle: "medium", timeStyle: "short" })} />
+            <Meta label={t("network")} value="Arc" />
+            <Meta label={t("token")} value={t("tokenValue")} />
           </dl>
 
           <div className="payment-receipt-parties receipt-parties">
-            <Party label="Paid by" value={payment.from} />
-            <Party label="Paid to" value={payment.to} />
+            <Party label={t("paidBy")} value={payment.from} />
+            <Party label={t("paidTo")} value={payment.to} />
           </div>
 
           <table className="payment-receipt-table receipt-table">
             <thead className="payment-receipt-table-head">
               <tr className="payment-receipt-heading-row">
-                <th className="payment-receipt-description-heading" scope="col">Description</th>
+                <th className="payment-receipt-description-heading" scope="col">{t("description")}</th>
                 <th scope="col" className="payment-receipt-amount-heading receipt-right">
                   Amount
                 </th>
@@ -121,19 +124,19 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
             </thead>
             <tbody className="payment-receipt-table-body">
               <tr className="payment-receipt-payment-row">
-                <td className="payment-receipt-description">{payment.memo || "USDC payment"}</td>
+                <td className="payment-receipt-description">{payment.memo || t("usdcPayment")}</td>
                 <td className="payment-receipt-amount receipt-right receipt-num">{totals.amount} USDC</td>
               </tr>
               <tr className="payment-receipt-fee-row">
-                <td className="payment-receipt-fee-label">Network fee</td>
+                <td className="payment-receipt-fee-label">{t("networkFee")}</td>
                 <td className="payment-receipt-fee receipt-right receipt-num">
-                  {totals.fee ? `${totals.fee} USDC` : "Not recorded"}
+                  {totals.fee ? `${totals.fee} USDC` : t("notRecorded")}
                 </td>
               </tr>
             </tbody>
             <tfoot className="payment-receipt-table-foot">
               <tr className="payment-receipt-total-row">
-                <th className="payment-receipt-total-label" scope="row">Total debited</th>
+                <th className="payment-receipt-total-label" scope="row">{t("totalDebited")}</th>
                 <td className="payment-receipt-total receipt-right receipt-num receipt-total">
                   {totals.total ? `${totals.total} USDC` : `${totals.amount} USDC`}
                 </td>
@@ -142,9 +145,9 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
           </table>
 
           <div className="payment-receipt-transaction receipt-tx">
-            <p className="payment-receipt-hash-label receipt-label">Transaction hash</p>
+            <p className="payment-receipt-hash-label receipt-label">{t("transactionHash")}</p>
             <p className="payment-receipt-hash receipt-mono">{payment.hash}</p>
-            <p className="payment-receipt-explorer-label receipt-label receipt-spaced">Verify at</p>
+            <p className="payment-receipt-explorer-label receipt-label receipt-spaced">{t("verifyAt")}</p>
             <p className="payment-receipt-explorer-url receipt-mono">{arcTransactionUrl(payment.hash)}</p>
           </div>
 

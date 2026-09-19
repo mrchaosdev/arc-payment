@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -25,25 +26,28 @@ import {
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
-import { CHAOSPAY_LIMITS } from "@/lib/limits";
+import { CHAOSPAY_LIMIT_KEYS } from "@/lib/limits";
 import { DEFAULT_SLIPPAGE_BPS, SWAP_TOKENS } from "@/lib/swap-constants";
 
+// Section ids stay fixed (they are anchors); the labels are message keys.
 const navigation = [
-  { label: "Start here", items: [["overview", "What is ChaosPay"], ["quickstart", "Quickstart"]] },
-  { label: "Payments", items: [["requests", "Payment requests"], ["settlement", "Settlement flow"], ["receipts", "Receipts & proof"]] },
-  { label: "Trust", items: [["security", "Custody & security"], ["network", "Network reference"], ["limits", "Current limits"]] },
-  { label: "Reference", items: [["features", "Other features"], ["faq", "FAQ"]] },
+  { key: "startHere", items: [["overview", "whatIsChaosPay"], ["quickstart", "quickstart"]] },
+  { key: "payments", items: [["requests", "paymentRequests"], ["settlement", "settlementFlow"], ["receipts", "receiptsProof"]] },
+  { key: "trust", items: [["security", "custodySecurity"], ["network", "networkReference"], ["limits", "currentLimits"]] },
+  { key: "reference", items: [["features", "otherFeatures"], ["faq", "faqShort"]] },
 ] as const;
 
 const settlementPath = [
-  ["Validate", "Recipient, amount and six-decimal precision"],
-  ["Estimate", "Balance and network fee with a 20% buffer"],
-  ["Sign", "Your wallet shows the final transaction"],
-  ["Broadcast", "The signed transfer is sent to Arc"],
-  ["Verify", "An onchain receipt confirms success or failure"],
+  ["stepValidate", "stepValidateNote"],
+  ["stepEstimate", "stepEstimateNote"],
+  ["sign", "beforeSignatureBody"],
+  ["stepBroadcast", "stepBroadcastNote"],
+  ["stepVerify", "stepVerifyNote"],
 ] as const;
 
-export function DocsPage() {
+export async function DocsPage() {
+  const t = await getTranslations("docs");
+  const tl = await getTranslations("limits");
   return (
     <div className="docs-page relative isolate">
       <div aria-hidden className="docs-page-grid chaos-grid pointer-events-none absolute inset-0 -z-10 opacity-50" />
@@ -54,7 +58,7 @@ export function DocsPage() {
             <Label className="text-[var(--action)]">[DOC.001] · Protocol reference</Label>
             <div className="flex flex-wrap gap-2">
               <Chip tone="positive"><StatusDot tone="positive" /> Public mainnet</Chip>
-              <Chip tone="muted">One-page reference</Chip>
+              <Chip tone="muted">{t("onePageReference")}</Chip>
             </div>
           </div>
 
@@ -80,9 +84,9 @@ export function DocsPage() {
           </div>
 
           <div className="docs-hero-stats mt-10 grid border border-[var(--border)] bg-[var(--surface)] sm:grid-cols-3">
-            <HeroStat index="01" label="Network" value="Arc" />
-            <HeroStat index="02" label="Settlement" value="Direct USDC" bordered />
-            <HeroStat index="03" label="Custody" value="Your wallet" />
+            <HeroStat index="01" label={t("network")} value="Arc" />
+            <HeroStat index="02" label={t("settlement")} value={t("settlementValue")} bordered />
+            <HeroStat index="03" label={t("custody")} value={t("yourWallet")} />
           </div>
         </div>
       </header>
@@ -90,15 +94,15 @@ export function DocsPage() {
       <div className="docs-layout mx-auto grid min-w-0 max-w-[1400px] overflow-x-clip lg:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="docs-sidebar min-w-0 overflow-hidden border-b border-[var(--border)] bg-[var(--app-bg)] lg:overflow-visible lg:border-b-0 lg:border-r">
           <div className="docs-sidebar-inner min-w-0 lg:sticky lg:top-14 lg:max-h-[calc(100svh-56px)] lg:overflow-y-auto lg:px-6 lg:py-10">
-            <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)] lg:block">On this page</p>
-            <nav aria-label="Documentation sections" className="docs-nav flex w-full min-w-0 gap-1 overflow-x-auto px-4 py-3 lg:mt-5 lg:block lg:space-y-6 lg:overflow-visible lg:px-0 lg:py-0">
+            <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)] lg:block">{t("onThisPage")}</p>
+            <nav aria-label={t("sections")} className="docs-nav flex w-full min-w-0 gap-1 overflow-x-auto px-4 py-3 lg:mt-5 lg:block lg:space-y-6 lg:overflow-visible lg:px-0 lg:py-0">
               {navigation.map((group) => (
-                <div key={group.label} className="docs-nav-group contents lg:block">
-                  <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)] lg:block">{group.label}</p>
+                <div key={group.key} className="docs-nav-group contents lg:block">
+                  <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)] lg:block">{t(group.key)}</p>
                   <div className="contents lg:mt-2 lg:block">
-                    {group.items.map(([id, label]) => (
+                    {group.items.map(([id, labelKey]) => (
                       <a key={id} href={`#${id}`} className="docs-nav-link block shrink-0 border border-[var(--border)] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)] lg:border-0 lg:border-l-2 lg:border-l-transparent lg:px-3 lg:py-2 lg:text-[11px] lg:normal-case lg:tracking-normal">
-                        {label}
+                        {t(labelKey)}
                       </a>
                     ))}
                   </div>
@@ -109,65 +113,65 @@ export function DocsPage() {
         </aside>
 
         <main id="documentation" className="docs-content min-w-0 px-4 md:px-8 lg:px-12 xl:px-16">
-          <DocSection id="overview" index="01" eyebrow="Start here" title="What is ChaosPay?">
+          <DocSection id="overview" index="01" eyebrow={t("startHere")} title={t("whatIsChaosPayQ")}>
             <p className="docs-lead text-lg leading-8 text-[var(--text-secondary)]">
               A browser-based payment interface. It prepares a standard USDC transfer, asks your wallet
               to sign it, broadcasts it to Arc, and keeps the resulting transaction hash as a receipt.
             </p>
             <div className="mt-8 grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
-              <Principle icon={WalletCards} title="Wallet signed">Private keys stay in your wallet. ChaosPay cannot sign or move funds for you.</Principle>
-              <Principle icon={Network} title="Direct settlement">USDC moves from payer to recipient without a ChaosPay custody account.</Principle>
-              <Principle icon={FileCheck2} title="Public proof">The transaction hash and ArcScan receipt are the shared source of truth.</Principle>
+              <Principle icon={WalletCards} title={t("walletSigned")}>{t("yourWalletBody")}</Principle>
+              <Principle icon={Network} title={t("directSettlement")}>{t("directSettlementBody")}</Principle>
+              <Principle icon={FileCheck2} title={t("publicProof")}>{t("publicProofBody")}</Principle>
             </div>
-            <Callout tone="info" title="No ChaosPay settlement contract">
+            <Callout tone="info" title={t("custodyValue")}>
               Payments use the USDC token contract directly. ChaosPay is the interface that prepares and
               records the transfer; it is not an escrow, bank, or payment processor.
             </Callout>
           </DocSection>
 
-          <DocSection id="quickstart" index="02" eyebrow="Start here" title="Your first test payment">
+          <DocSection id="quickstart" index="02" eyebrow={t("startHere")} title={t("firstPayment")}>
             <ol className="mt-2 border border-[var(--border)] bg-[var(--surface)]">
-                <QuickStep index="01" title="Connect a wallet">Use an injected wallet or WalletConnect, then switch to Arc.</QuickStep>
-                <QuickStep index="02" title="Fund it with USDC">Use a mainnet USDC source. Mainnet USDC has monetary value.</QuickStep>
-              <QuickStep index="03" title="Enter and review">Add the full recipient address and amount. Check both again on the review screen.</QuickStep>
-              <QuickStep index="04" title="Sign in your wallet">The wallet presents the final transaction and network fee before approval.</QuickStep>
-              <QuickStep index="05" title="Keep the receipt">Wait for confirmation, then open the transaction hash on ArcScan.</QuickStep>
+                <QuickStep index="01" title={t("connectWallet")}>{t("connectWalletBody")}</QuickStep>
+                <QuickStep index="02" title={t("fundIt")}>{t("fundItBody")}</QuickStep>
+              <QuickStep index="03" title={t("enterReview")}>{t("enterReviewBody")}</QuickStep>
+              <QuickStep index="04" title={t("signWallet")}>{t("signWalletBody")}</QuickStep>
+              <QuickStep index="05" title={t("keepReceipt")}>{t("keepReceiptBody")}</QuickStep>
             </ol>
             <div className="mt-5 flex flex-wrap gap-3">
-              <a href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" className="docs-action-link">Get mainnet USDC <ArrowUpRight size={13} /></a>
-              <Link href="/pay" className="docs-action-link">Open payment terminal <ArrowRight size={13} /></Link>
+              <a href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" className="docs-action-link">{t("getMainnetUsdc")} <ArrowUpRight size={13} /></a>
+              <Link href="/pay" className="docs-action-link">{t("openPaymentTerminal")} <ArrowRight size={13} /></Link>
             </div>
           </DocSection>
 
-          <DocSection id="requests" index="03" eyebrow="Payments" title="A request is a link">
+          <DocSection id="requests" index="03" eyebrow={t("payments")} title={t("requestIsLink")}>
             <p className="docs-body-copy">
               A payment request carries the recipient, amount, optional memo, and reference in a shareable
               checkout URL. The payer can open it without an account and chooses when to connect and sign.
             </p>
             <div className="mt-7 border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
-              <Label>Request anatomy</Label>
+              <Label>{t("requestAnatomy")}</Label>
               <code className="mt-4 block overflow-x-auto whitespace-nowrap border border-[var(--border)] bg-[var(--app-bg)] p-4 font-mono text-[11px] leading-6 text-[var(--text-secondary)]">
                 /checkout?to=0x…&amp;amount=250&amp;memo=Design+sprint&amp;ref=INV-001
               </code>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <SmallFact label="Onchain">Recipient · amount · transfer hash</SmallFact>
-                <SmallFact label="Link / browser">Memo · reference · saved request</SmallFact>
+                <SmallFact label={t("onchain")}>{t("recipientAmountHash")}</SmallFact>
+                <SmallFact label={t("linkBrowser")}>{t("memoReference")}</SmallFact>
               </div>
             </div>
-            <Callout tone="warning" title="A link is not proof of payment">
+            <Callout tone="warning" title={t("linkNotProof")}>
               Link contents are readable and editable by whoever holds the URL. Treat the onchain transfer
               receipt—not the request screen—as proof that funds moved.
             </Callout>
           </DocSection>
 
-          <DocSection id="settlement" index="04" eyebrow="Payments" title="Settlement flow">
+          <DocSection id="settlement" index="04" eyebrow={t("payments")} title={t("settlementFlow")}>
             <p className="docs-body-copy">
               The payment screen separates preparation from the irreversible wallet action. Nothing is
               broadcast until the wallet approves the transaction.
             </p>
             <div className="mt-7 border border-[var(--border)] bg-[var(--surface)]">
-              {settlementPath.map(([label, detail], index) => (
-                <TraceRow key={label} index={index + 1} label={label} detail={detail} state={index === 4 ? "done" : "pending"} />
+              {settlementPath.map(([labelKey, detailKey], index) => (
+                <TraceRow key={labelKey} index={index + 1} label={t(labelKey)} detail={t(detailKey)} state={index === 4 ? "done" : "pending"} />
               ))}
             </div>
             <p className="mt-5 text-xs leading-6 text-[var(--text-muted)]">
@@ -176,11 +180,11 @@ export function DocsPage() {
             </p>
           </DocSection>
 
-          <DocSection id="receipts" index="05" eyebrow="Payments" title="Receipts and verification">
+          <DocSection id="receipts" index="05" eyebrow={t("payments")} title={t("receiptsVerification")}>
             <div className="grid gap-5 md:grid-cols-[0.9fr_1.1fr]">
               <div className="border border-[var(--border)] bg-[var(--surface)] p-5">
                 <ReceiptText className="size-5 text-[var(--action)]" />
-                <h3 className="mt-5 text-base font-semibold">Browser receipt</h3>
+                <h3 className="mt-5 text-base font-semibold">{t("browserReceipt")}</h3>
                 <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
                   Useful for people: amount, sender, recipient, memo, reference, fee, status, and hash. It can
                   be printed or saved as PDF and exported as JSON.
@@ -188,39 +192,39 @@ export function DocsPage() {
               </div>
               <div className="border border-[var(--border)] bg-[var(--surface)] p-5">
                 <ShieldCheck className="size-5 text-[var(--positive)]" />
-                <h3 className="mt-5 text-base font-semibold">Onchain receipt</h3>
+                <h3 className="mt-5 text-base font-semibold">{t("onchainReceipt")}</h3>
                 <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
                   Useful for verification: transaction status, block, token contract, Transfer event, addresses,
                   value, and actual gas used. ArcScan can verify it without trusting ChaosPay.
                 </p>
               </div>
             </div>
-            <Callout tone="success" title="Verification rule">
+            <Callout tone="success" title={t("verificationRule")}>
               Match the network, token contract, recipient, amount, and successful status. A screenshot or a
               locally saved memo is not an independent settlement record.
             </Callout>
           </DocSection>
 
-          <DocSection id="security" index="06" eyebrow="Trust" title="Custody and security boundary">
+          <DocSection id="security" index="06" eyebrow={t("trust")} title={t("custodyBoundary")}>
             <div className="grid gap-6 md:grid-cols-2">
-              <TrustList title="ChaosPay can" items={["Read public balances and receipts", "Estimate a transfer before signing", "Store local history and contacts", "Prepare a wallet transaction"]} />
-              <TrustList title="ChaosPay cannot" items={["Read a seed phrase or private key", "Sign a transaction for you", "Reverse a confirmed transfer", "Prove that a connected address is your identity"]} negative />
+              <TrustList title={t("canTitle")} items={[t("can3"), t("can2"), t("can4"), t("can1")]} />
+              <TrustList title={t("cannotTitle")} items={[t("cannot1"), t("cannot2"), t("cannot3"), t("cannot4")]} negative />
             </div>
-            <Callout tone="warning" title="Before every signature">
+            <Callout tone="warning" title={t("beforeSignature")}>
               Verify the full recipient address, USDC amount, Arc network, and wallet prompt. Blockchain
               transfers are not reversed by ChaosPay.
             </Callout>
           </DocSection>
 
-          <DocSection id="network" index="07" eyebrow="Trust" title="Network reference">
+          <DocSection id="network" index="07" eyebrow={t("trust")} title={t("networkReference")}>
             <div className="border border-[var(--border)] bg-[var(--surface)]">
-              <ConstantRow label="Network" value="Arc" />
-              <ConstantRow label="Chain ID" value={String(ARC_CHAIN_ID)} />
+              <ConstantRow label={t("network")} value="Arc" />
+              <ConstantRow label={t("chainId")} value={String(ARC_CHAIN_ID)} />
               <ConstantRow label="RPC" value={ARC_RPC_URL} href={ARC_RPC_URL} />
-              <ConstantRow label="Explorer" value={ARC_EXPLORER_URL} href={ARC_EXPLORER_URL} />
-              <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
+              <ConstantRow label={t("explorer")} value={ARC_EXPLORER_URL} href={ARC_EXPLORER_URL} />
+              <ConstantRow label={t("usdcErc20")} value={ARC_USDC_ADDRESS} />
               <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
-              <ConstantRow label="EURC (ERC-20)" value={ARC_EURC_ADDRESS} />
+              <ConstantRow label={t("eurcErc20")} value={ARC_EURC_ADDRESS} />
             </div>
             <p className="mt-5 text-xs leading-6 text-[var(--text-muted)]">
               These values are imported from the same constants used by the payment code, so the documentation
@@ -228,18 +232,18 @@ export function DocsPage() {
             </p>
           </DocSection>
 
-          <DocSection id="limits" index="08" eyebrow="Trust" title="Current limits">
+          <DocSection id="limits" index="08" eyebrow={t("trust")} title={t("currentLimits")}>
             <div className="border border-[var(--border)] bg-[var(--surface)]">
-              {CHAOSPAY_LIMITS.map((text, index) => (
-                <div key={text} className="flex gap-4 border-b border-[var(--border)] px-4 py-4 last:border-b-0 sm:px-5">
+              {CHAOSPAY_LIMIT_KEYS.map((key, index) => (
+                <div key={key} className="flex gap-4 border-b border-[var(--border)] px-4 py-4 last:border-b-0 sm:px-5">
                   <Num value={String(index + 1).padStart(2, "0")} tone="muted" className="mt-0.5 shrink-0 text-[11px]" />
-                  <p className="text-[13px] leading-6 text-[var(--text-secondary)]">{text}</p>
+                  <p className="text-[13px] leading-6 text-[var(--text-secondary)]">{tl(key)}</p>
                 </div>
               ))}
             </div>
           </DocSection>
 
-          <DocSection id="features" index="09" eyebrow="Reference" title="Other features">
+          <DocSection id="features" index="09" eyebrow={t("reference")} title={t("otherFeatures")}>
             <div className="grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
               <FeatureNote title="Swap" meta={`${DEFAULT_SLIPPAGE_BPS / 100}% DEFAULT SLIPPAGE`}>
                 {/* The space after the list is explicit: JSX drops the literal
@@ -247,30 +251,30 @@ export function DocsPage() {
                 Exchange {SWAP_TOKENS.join(", ")}{" "}
                 on Arc through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
               </FeatureNote>
-              <FeatureNote title="Contacts" meta="BROWSER LOCAL">
+              <FeatureNote title={t("featContacts")} meta={t("featContactsMeta")}>
                 Save frequently used recipients under a name. Contacts stay in this browser and are never an address-ownership claim.
               </FeatureNote>
-              <FeatureNote title="Assistant" meta="READ ONLY">
+              <FeatureNote title={t("featAssistant")} meta={t("featAssistantMeta")}>
                 Read balances, estimate transfers, and look up transactions. It has no signing or sending tool and cannot see local payment history.
               </FeatureNote>
             </div>
           </DocSection>
 
-          <DocSection id="faq" index="10" eyebrow="Reference" title="Frequently asked questions">
+          <DocSection id="faq" index="10" eyebrow={t("reference")} title={t("faq")}>
             <div className="border border-[var(--border)] bg-[var(--surface)]">
-              <Faq question="Does ChaosPay hold my funds?">No. Your wallet signs a direct USDC transfer. ChaosPay has no custody account and no private-key access.</Faq>
-              <Faq question="Does ChaosPay charge a service fee?">ChaosPay does not add a service fee. Arc charges the network fee in USDC, and your wallet shows the final amount before signing.</Faq>
-              <Faq question="Why can a saved request still show unpaid?">Request reconciliation scans a bounded range while the app is open. “Unpaid” only means no exact-amount match was found through the block printed on the Requests page.</Faq>
-              <Faq question="Are memo and reference stored onchain?">No. They travel in the shared URL and local receipt. Only the token transfer and its transaction data are public onchain.</Faq>
-              <Faq question="Can I use real money here?">Yes. ChaosPay targets Arc mainnet. USDC on Arc has monetary value.</Faq>
+              <Faq question={t("faq1Q")}>{t("faq1A")}</Faq>
+              <Faq question={t("faq3Q")}>{t("faq3A")}</Faq>
+              <Faq question={t("faq4Q")}>{t("faq4A")}</Faq>
+              <Faq question={t("faq5Q")}>{t("faq5A")}</Faq>
+              <Faq question={t("faq2Q")}>{t("faq2A")}</Faq>
             </div>
           </DocSection>
 
           <div className="docs-end my-12 flex flex-col justify-between gap-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:flex-row sm:items-center">
-            <div><Label className="text-[var(--action)]">End of reference</Label><p className="mt-2 text-sm text-[var(--text-secondary)]">Ready to create a payment?</p></div>
+            <div><Label className="text-[var(--action)]">{t("endOfReference")}</Label><p className="mt-2 text-sm text-[var(--text-secondary)]">{t("readyTitle")}</p></div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/" className="docs-action-link">Back home</Link>
-              <Link href="/pay" className="inline-flex h-10 items-center gap-2 bg-[var(--action)] px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--on-action)]">Open terminal <ArrowRight size={13} /></Link>
+              <Link href="/" className="docs-action-link">{t("backHome")}</Link>
+              <Link href="/pay" className="inline-flex h-10 items-center gap-2 bg-[var(--action)] px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--on-action)]">{t("openTerminal")} <ArrowRight size={13} /></Link>
             </div>
           </div>
         </main>

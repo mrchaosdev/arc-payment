@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeading, Panel } from "@/components/chaos/Terminal";
 import { Card } from "@/components/ui/Card";
@@ -14,7 +15,7 @@ import { Card } from "@/components/ui/Card";
  * "loading": a route transition should look like the terminal pausing, not
  * like a different, older app flashing in between two terminal screens.
  */
-export function PageLoading({
+export async function PageLoading({
   title,
   subtitle,
   rows = 5,
@@ -23,10 +24,11 @@ export function PageLoading({
   subtitle: string;
   rows?: number;
 }) {
+  const t = await getTranslations("pages");
   return (
     <AppShell>
       <div className="page-loading-heading mb-6 border-b border-[var(--border)] pb-6">
-        <PageHeading eyebrow="Your payment workspace" title={title} subtitle={subtitle} />
+        <PageHeading eyebrow={t("eyebrow")} title={title} subtitle={subtitle} />
       </div>
       <div className="page-loading-content space-y-5">
         <div className="page-loading-grid grid gap-5 lg:grid-cols-[1fr_360px]">

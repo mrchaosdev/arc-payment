@@ -2,7 +2,11 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_SLIPPAGE_BPS } from "@/lib/swap";
+// From `swap-constants`, not `swap`: the latter pulls in Circle's Swap Kit,
+// which bundles @solana/web3.js and @coral-xyz/anchor — a megabyte of code this
+// EVM-only app never runs. This store is read by the settings panel, so that
+// import put the whole kit on every route that touches settings.
+import { DEFAULT_SLIPPAGE_BPS } from "@/lib/swap-constants";
 
 type SettingsState = {
   slippageBps: number;

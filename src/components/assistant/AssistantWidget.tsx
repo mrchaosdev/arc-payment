@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Bot, Square, X } from "lucide-react";
@@ -35,13 +36,8 @@ const ANSWERING = { bpm: 96, amplitude: 0.062, tone: "positive" } as const;
 const ANSWER_TIMEOUT_MS = 65_000;
 
 /** Opening prompts, kept here so the server-side reference never enters this bundle. */
-const SUGGESTIONS = [
-  "How do I get USDC?",
-  "Why is the fee paid in USDC?",
-  "What is my USDC balance on Arc?",
-  "Help me estimate a USDC payment.",
-  "Check a transaction on Arc.",
-];
+// Keys, not sentences: these are shown to the reader, so they follow the locale.
+const SUGGESTION_KEYS = ["s4", "s5", "s1", "s2", "s3"] as const;
 
 /**
  * The support panel.
@@ -51,6 +47,7 @@ const SUGGESTIONS = [
  * from model prose so it survives an explanation failure.
  */
 export function AssistantWidget() {
+  const t = useTranslations("assistant");
   // Asked at runtime, not baked in at build: the pages this widget sits on are
   // prerendered, so a server-side env check would freeze the answer into the
   // build and hide the assistant on any deployment whose key arrives later.
@@ -116,7 +113,7 @@ export function AssistantWidget() {
     setDraft("");
     setError("");
     setPending(true);
-    setStatus("Reading your question…");
+    setStatus(t("reading"));
 
     const controller = new AbortController();
     abort.current = controller;
@@ -138,7 +135,7 @@ export function AssistantWidget() {
 
       if (!response.ok || !response.body) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error || "The assistant could not answer.");
+        throw new Error(payload?.error || t("failed"));
       }
 
       const receive = (event: AssistantEvent) => {
@@ -169,10 +166,10 @@ export function AssistantWidget() {
       // stops mid-sentence with no explanation.
       if (failure instanceof DOMException && failure.name === "AbortError") {
         if (!timedOut) return;
-        setError("The assistant took too long to answer. Ask again, or try a shorter question.");
+        setError(t("timeout"));
         return;
       }
-      setError(failure instanceof Error ? failure.message : "The assistant could not answer.");
+      setError(failure instanceof Error ? failure.message : t("failed"));
     } finally {
       clearTimeout(guard);
       setTurns(current => current.filter((turn, index) => !(index === current.length - 1 && turn.role === "assistant" && !turn.content && !turn.evidence?.length)));
@@ -191,8 +188,8 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open the ChaosPay assistant"
-        title="Ask about ChaosPay"
+        aria-label={t("open")}
+        title={t("askAbout")}
         /* Bare on purpose: no plate, no frame. The motion is what marks it as a
            control, so the only affordance is a lift on hover. Keyboard focus
            still draws the global focus-visible outline. */
@@ -218,18 +215,18 @@ export function AssistantWidget() {
 
   return (
     <section
-      aria-label="ChaosPay assistant"
+      aria-label={t("title")}
       className="assistant-panel fixed inset-x-4 bottom-24 z-[80] flex max-h-[min(70vh,560px)] flex-col border border-[var(--border-strong)] bg-[var(--surface)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:inset-x-auto sm:right-4 sm:w-[400px] lg:bottom-6 lg:right-6"
     >
       <header className="assistant-header flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
         <p className="assistant-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
           <Bot size={14} className="text-[var(--action)]" />
-          ChaosPay assistant
+          {t("title")}
         </p>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          aria-label="Close the assistant"
+          aria-label={t("close")}
           className="assistant-close-button text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
         >
           <X size={16} />
@@ -254,16 +251,16 @@ export function AssistantWidget() {
               Check a USDC balance, estimate a payment, or look up a transaction on Arc.
               Share a wallet address or transaction hash to start. Reads never send a payment.
             </p>
-            <Label className="assistant-suggestions-label mt-5 mb-2">Try one</Label>
+            <Label className="assistant-suggestions-label mt-5 mb-2">{t("tryOne")}</Label>
             <div className="assistant-suggestions space-y-2">
-              {SUGGESTIONS.map((suggestion) => (
+              {SUGGESTION_KEYS.map((key) => (
                 <button
-                  key={suggestion}
+                  key={key}
                   type="button"
-                  onClick={() => ask(suggestion)}
+                  onClick={() => ask(t(key))}
                   className="assistant-suggestion-button block w-full border border-[var(--border)] px-3 py-2 text-left text-[12px] leading-5 text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 >
-                  {suggestion}
+                  {t(key)}
                 </button>
               ))}
             </div>
@@ -323,8 +320,8 @@ export function AssistantWidget() {
                 void ask(draft);
               }
             }}
-            placeholder="Ask about ChaosPay…"
-            aria-label="Your question"
+            placeholder={t("placeholder")}
+            aria-label={t("yourQuestion")}
             maxLength={2000}
             className="assistant-input max-h-28 min-h-[40px] flex-1 resize-y border border-[var(--border)] bg-[var(--app-bg)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none transition-colors focus:border-[var(--action)]"
           />
@@ -334,7 +331,7 @@ export function AssistantWidget() {
               Stop
             </Button>
           ) : (
-            <Button type="submit" className="assistant-send-button h-10 px-3" disabled={!draft.trim()} aria-label="Send question">
+            <Button type="submit" className="assistant-send-button h-10 px-3" disabled={!draft.trim()} aria-label={t("sendQuestion")}>
               <ArrowUp size={15} />
             </Button>
           )}
@@ -348,6 +345,8 @@ export function AssistantWidget() {
 }
 
 function EvidenceCard({ evidence }: { evidence: ReadEvidence }) {
+  const t = useTranslations("assistant");
+  const format = useFormatter();
   return <details open className="assistant-evidence mt-3 border border-[var(--border)] p-3 text-left">
     <summary className="assistant-evidence-title cursor-pointer text-xs font-semibold">
       {evidence.title}{!evidence.ok ? " — could not complete" : ""}
@@ -358,9 +357,9 @@ function EvidenceCard({ evidence }: { evidence: ReadEvidence }) {
         <dd className="assistant-evidence-value break-words font-mono text-xs">{row.value}</dd>
       </div>)}
     </dl>
-    <p className="assistant-evidence-source mt-3 text-[11px] text-[var(--text-muted)]">Source: {evidence.source}</p>
+    <p className="assistant-evidence-source mt-3 text-[11px] text-[var(--text-muted)]">{t("source")}: {evidence.source}</p>
     <time className="assistant-evidence-time block text-[11px] text-[var(--text-muted)]" dateTime={evidence.checkedAt}>
-      Checked {new Date(evidence.checkedAt).toLocaleString()}
+      {t("checked")} {format.dateTime(new Date(evidence.checkedAt), { dateStyle: "medium", timeStyle: "short" })}
     </time>
     {evidence.url && /^https:\/\/testnet\.arcscan\.app\/(?:tx|address)\/0x[a-fA-F0-9]+$/.test(evidence.url) &&
       <a className="assistant-evidence-link mt-2 inline-block text-xs text-[var(--action)]" href={evidence.url} target="_blank" rel="noreferrer">Verify on ArcScan ↗</a>}

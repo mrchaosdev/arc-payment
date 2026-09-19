@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, ExternalLink, Link2 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -8,7 +9,7 @@ import { CapabilityAccordion } from "@/components/chaos/CapabilityAccordion";
 import { Chip, Divider, Label, Num, Panel, StatusDot, TraceRow } from "@/components/chaos/Terminal";
 import { GithubMark } from "@/components/ui/GithubMark";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
-import { CHAOSPAY_LIMITS } from "@/lib/limits";
+import { CHAOSPAY_LIMIT_KEYS } from "@/lib/limits";
 import { derivePulse } from "@/lib/visual/pulse";
 import {
   ARC_EXPLORER_URL,
@@ -30,75 +31,25 @@ const SplashCursor = dynamic(() => import("@/components/chaos/SplashCursor").the
   ssr: false,
 });
 
-const settlementPath = [
-  "Validate recipient & amount",
-  "Estimate gas · check balance",
-  "Sign in wallet",
-  "Broadcast to Arc",
-  "Await onchain receipt",
-];
+// Keys into the shared pulse namespace, which already names these steps.
+const SETTLEMENT_STEP_KEYS = ["step1", "step2", "step3", "step4", "step5"] as const;
 
+// Message keys, not sentences: the route and the id are the structure here, and
+// the wording is looked up per locale at render time.
 const capabilities: {
   id: string;
-  title: string;
-  body: string;
-  meta: string;
+  key: string;
   href?: string;
-  hrefLabel?: string;
   /** Used when the feature has no route of its own to link to. */
-  hint?: string;
+  hint?: boolean;
 }[] = [
-  {
-    id: "01",
-    title: "One currency all the way down",
-    body: "USDC moves and USDC pays the fee. There is no second volatile token to acquire before a payment can go out.",
-    meta: "ERC-20 · 6 DECIMALS",
-  },
-  {
-    id: "02",
-    title: "The wallet signs, the app never holds",
-    body: "ChaosPay builds the transfer and hands it to your wallet. No private key, no custody, no account to create.",
-    meta: "NON-CUSTODIAL",
-  },
-  {
-    id: "03",
-    title: "A request is a URL, or a QR",
-    body: "Recipient, amount, memo and reference travel in the link. Share it as a URL or scan the code — the checkout opens already filled in.",
-    meta: "SHAREABLE",
-    href: "/pay?mode=request",
-    hrefLabel: "Create a request",
-  },
-  {
-    id: "04",
-    title: "Every payment ends in a receipt",
-    body: "The hash goes straight to ArcScan, and the same payment prints as an invoice your browser can save as a PDF. Both sides check one public record.",
-    meta: "VERIFIABLE",
-    href: "/history",
-    hrefLabel: "Open activity",
-  },
-  {
-    id: "05",
-    title: "Recipients you keep",
-    body: "Addresses you pay often are saved in this browser under a name, so a transfer starts from a label instead of forty hex characters.",
-    meta: "CONTACTS",
-    href: "/contacts",
-    hrefLabel: "Open contacts",
-  },
-  {
-    id: "06",
-    title: "An assistant that only reads",
-    body: "It checks a balance, estimates a transfer and looks up a transaction, then shows the evidence with a block number and a check time. It has no tool that signs or sends.",
-    meta: "READ-ONLY",
-    hint: "Bottom right of this page",
-  },
-  {
-    id: "07",
-    title: "Or trade what you're holding",
-    body: "Swap USDC, EURC and cirBTC on Arc through Circle's Swap Kit — same chain, one signature, no bridge leg.",
-    meta: "SAME-CHAIN SWAP",
-    href: "/swap",
-    hrefLabel: "Open swap",
-  },
+  { id: "01", key: "cap1" },
+  { id: "02", key: "cap2" },
+  { id: "03", key: "cap3", href: "/pay?mode=request" },
+  { id: "04", key: "cap4", href: "/history" },
+  { id: "05", key: "cap5", href: "/contacts" },
+  { id: "06", key: "cap6", hint: true },
+  { id: "07", key: "cap7", href: "/swap" },
 ];
 
 /**
@@ -111,6 +62,19 @@ const capabilities: {
  * worse than one that prints them.
  */
 export function ArcHome() {
+  const t = useTranslations("landing");
+  const tp = useTranslations("pulse");
+  const tl = useTranslations("limits");
+  // The accordion takes finished strings, so the keys above are resolved here.
+  const capabilityItems = capabilities.map((c) => ({
+    id: c.id,
+    title: t(`${c.key}Title`),
+    body: t(`${c.key}Body`),
+    meta: t(`${c.key}Meta`),
+    href: c.href,
+    hrefLabel: c.href ? t(`${c.key}Link`) : undefined,
+    hint: c.hint ? t(`${c.key}Hint`) : undefined,
+  }));
   const [drag, setDrag] = useState(0);
   const pulse = derivePulse("idle", 0.35);
   const root = useRef<HTMLDivElement>(null);
@@ -159,9 +123,9 @@ export function ArcHome() {
       <div className="landing-meta-bar relative z-10 border-b border-[var(--border)]">
         <div className="landing-meta-container mx-auto grid max-w-[1400px] gap-0 px-4 md:grid-cols-[1fr_auto] md:px-8">
           <div className="landing-meta-labels flex flex-wrap items-center gap-x-3 gap-y-1 py-5">
-            <Label className="landing-network-label">Arc Mainnet</Label>
+            <Label className="landing-network-label">{t("network")}</Label>
             <span className="landing-meta-separator text-[var(--border-strong)]">/</span>
-            <Label className="landing-custody-label">Non-custodial settlement</Label>
+            <Label className="landing-custody-label">{t("custody")}</Label>
           </div>
           <div className="landing-network-stats grid grid-cols-3 border-t border-[var(--border)] md:border-t-0">
             <MetaCell label="Network" value="ARC" />
@@ -174,12 +138,12 @@ export function ArcHome() {
       <section className="landing-hero relative z-10 overflow-hidden border-b border-[var(--border)]">
         <div className="landing-hero-container relative z-10 mx-auto grid max-w-[1400px] items-start gap-0 px-4 md:px-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="landing-hero-copy py-12 lg:py-16 lg:pr-12">
-            <Label className="landing-hero-eyebrow text-[var(--action)]">Sign once · settle in seconds · keep the proof</Label>
+            <Label className="landing-hero-eyebrow text-[var(--action)]">{t("eyebrow")}</Label>
 
             {/* Each line is its own span so the two can print in sequence. */}
             <h1 className="landing-hero-title mt-6 max-w-[16ch] text-5xl font-semibold leading-[0.95] tracking-[-0.03em] sm:text-6xl lg:text-7xl">
-              <span className="landing-hero-title-primary block">A link is a promise.</span>
-              <span className="landing-hero-title-secondary mt-2 block text-[var(--text-muted)]">A receipt is proof.</span>
+              <span className="landing-hero-title-primary block">{t("titleA")}</span>
+              <span className="landing-hero-title-secondary mt-2 block text-[var(--text-muted)]">{t("titleB")}</span>
             </h1>
 
             <p className="landing-hero-description mt-7 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">
@@ -190,19 +154,19 @@ export function ArcHome() {
             <div className="landing-settlement-card mt-9 max-w-md border border-[var(--border)] bg-[var(--surface)]">
               <div className="landing-settlement-header flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
                 <p className="landing-settlement-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                  Settlement path
+                  {t("settlementPath")}
                 </p>
                 <Num value="05 STEPS" tone="muted" className="landing-settlement-step-count text-[11px]" />
               </div>
-              {settlementPath.map((label, index) => (
-                <TraceRow key={label} index={index + 1} label={label} state="pending" />
+              {SETTLEMENT_STEP_KEYS.map((key, index) => (
+                <TraceRow key={key} index={index + 1} label={tp(key)} state="pending" />
               ))}
               <div className="landing-hero-actions grid grid-cols-2 border-t border-[var(--border)]">
                 <Link
                   href="/dashboard"
                   className="landing-workspace-link flex h-12 items-center justify-center gap-2 bg-[var(--action)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
                 >
-                  Open workspace <ArrowRight className="size-3.5" />
+                  {t("openWorkspace")} <ArrowRight className="size-3.5" />
                 </Link>
                 <Link
                   href="/pay?mode=request"
@@ -217,8 +181,8 @@ export function ArcHome() {
               <Chip className="landing-signup-chip" tone="muted">
                 <StatusDot /> No signup
               </Chip>
-              <Chip className="landing-wallet-chip" tone="muted">Wallet-native signing</Chip>
-              <Chip className="landing-testnet-chip" tone="muted">Arc USDC</Chip>
+              <Chip className="landing-wallet-chip" tone="muted">{t("walletNative")}</Chip>
+              <Chip className="landing-testnet-chip" tone="muted">{t("arcUsdc")}</Chip>
               <a
                 href="https://github.com/mrchaosdev/arc-payment"
                 target="_blank"
@@ -240,7 +204,7 @@ export function ArcHome() {
             <div className="landing-pulse-visual chaos-dot-field border-b border-[var(--border)]">
               <button
                 type="button"
-                aria-label="Spin the settlement pulse"
+                aria-label={t("spinPulse")}
                 onClick={() => setDrag((value) => value + 1)}
                 style={{ minHeight: 320 }}
                 className="landing-pulse-button block w-full cursor-grab active:cursor-grabbing"
@@ -258,8 +222,8 @@ export function ArcHome() {
             </div>
             <div className="landing-pulse-stats grid grid-cols-3 border-b border-[var(--border)]">
               <MetaCell label="Rate" value={`${pulse.bpm} BPM`} note="RESTING" />
-              <MetaCell label="Finality" value="SUB-SECOND" note="ARC" bordered />
-              <MetaCell label="Fee token" value="USDC" note="NO GAS TOKEN" />
+              <MetaCell label={t("finality")} value={t("subSecond")} note="ARC" bordered />
+              <MetaCell label={t("feeToken")} value="USDC" note={t("noGasToken")} />
             </div>
             <ReceiptPreview />
           </div>
@@ -269,29 +233,29 @@ export function ArcHome() {
       <section className="landing-capabilities relative z-10 border-b border-[var(--border)] py-14">
         <div className="landing-capabilities-container mx-auto max-w-[1400px] px-4 md:px-8">
           <div className="landing-capabilities-heading max-w-2xl">
-            <Label className="landing-capabilities-eyebrow text-[var(--action)]">What it does today</Label>
+            <Label className="landing-capabilities-eyebrow text-[var(--action)]">{t("capabilitiesEyebrow")}</Label>
             {/* The heading no longer counts. A number here would have to be
                 edited every time the app grows, and the last one was already
                 wrong by four features. "Nothing implied" is the part that
                 mattered, so that is the part that stays. */}
             <h2 className="landing-capabilities-title mt-4 text-3xl font-semibold tracking-[-0.02em] md:text-4xl">
-              Everything here is finished. Nothing implied.
+              {t("capabilitiesTitle")}
             </h2>
           </div>
 
           <div className="landing-capabilities-grid mt-10">
-            <CapabilityAccordion items={capabilities} />
+            <CapabilityAccordion items={capabilityItems} />
           </div>
         </div>
       </section>
 
       <section className="landing-details relative z-10 py-14">
         <div className="landing-details-grid mx-auto grid max-w-[1400px] gap-8 px-4 md:px-8 lg:grid-cols-[1fr_1fr]">
-          <Panel className="landing-network-panel" title="Network constants" meta="ARC MAINNET" bodyClassName="p-0">
-            <ConstantRow label="Chain id" value={String(ARC_CHAIN_ID)} />
-            <ConstantRow label="USDC (ERC-20)" value={ARC_USDC_ADDRESS} />
-            <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
-            <ConstantRow label="Explorer" value="explorer.arc.io" />
+          <Panel className="landing-network-panel" title={t("constantsTitle")} meta={t("constantsMeta")} bodyClassName="p-0">
+            <ConstantRow label={t("chainId")} value={String(ARC_CHAIN_ID)} />
+            <ConstantRow label={t("usdcErc20")} value={ARC_USDC_ADDRESS} />
+            <ConstantRow label={t("usdcDecimals")} value={String(ARC_USDC_DECIMALS)} />
+            <ConstantRow label={t("explorer")} value="explorer.arc.io" />
             <div className="landing-network-links flex flex-wrap gap-0 border-t border-[var(--border)]">
               <a
                 href={ARC_FAUCET_URL}
@@ -299,7 +263,7 @@ export function ArcHome() {
                 rel="noreferrer"
                 className="landing-faucet-link flex h-11 flex-1 items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
               >
-                Get Arc USDC <ArrowUpRight className="size-3.5" />
+                {t("getArcUsdc")} <ArrowUpRight className="size-3.5" />
               </a>
               <a
                 href={ARC_EXPLORER_URL}
@@ -307,7 +271,7 @@ export function ArcHome() {
                 rel="noreferrer"
                 className="landing-explorer-link flex h-11 flex-1 items-center justify-center gap-2 border-l border-[var(--border)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-soft)]"
               >
-                Open ArcScan <ExternalLink className="size-3.5" />
+                {t("openArcScan")} <ExternalLink className="size-3.5" />
               </a>
             </div>
           </Panel>
@@ -315,8 +279,8 @@ export function ArcHome() {
           {/* The limits, on the landing page rather than buried in a doc. This is
               the one thing ChaosPay already did better than the projects it is
               measured against, so it belongs where a reader arrives. */}
-          <Panel className="landing-limits-panel" title="What this is not" meta="READ THIS FIRST" bodyClassName="p-0">
-            {CHAOSPAY_LIMITS.map((text) => <LimitRow key={text} text={text} />)}
+          <Panel className="landing-limits-panel" title={t("limitsTitle")} meta={t("limitsMeta")} bodyClassName="p-0">
+            {CHAOSPAY_LIMIT_KEYS.map((key) => <LimitRow key={key} text={tl(key)} />)}
           </Panel>
         </div>
       </section>
@@ -368,16 +332,17 @@ function LimitRow({ text }: { text: string }) {
 /** The sample receipt. Kept from the previous design — it was the one element
     already saying "payment" rather than "SaaS" — and rebuilt square. */
 function ReceiptPreview() {
+  const t = useTranslations("landing");
   return (
     <div className="landing-receipt-preview p-6">
       <div className="landing-receipt-card border border-[var(--border)] bg-[var(--surface)]">
         <div className="landing-receipt-header flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
-          <Label className="landing-receipt-label">Pay request</Label>
+          <Label className="landing-receipt-label">{t("payRequest")}</Label>
           <Num value="SP-8F2A10BC" tone="muted" className="landing-receipt-reference text-[11px]" />
         </div>
 
         <div className="landing-receipt-amount-block px-4 py-7 text-center">
-          <Label className="landing-receipt-amount-label">Amount due</Label>
+          <Label className="landing-receipt-amount-label">{t("amountDue")}</Label>
           <p className="landing-receipt-amount mt-3 font-mono text-5xl tabular tracking-tight">250.00</p>
           <p className="landing-receipt-currency mt-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">USDC</p>
         </div>
@@ -385,11 +350,11 @@ function ReceiptPreview() {
         <div className="landing-receipt-edge receipt-edge h-3 border-b border-dashed border-[var(--border)]" />
 
         <div className="landing-receipt-details px-4 py-4">
-          <ReceiptLine label="For" value="Product design sprint" />
+          <ReceiptLine label={t("forLabel")} value={t("sampleMemo")} />
           <Divider className="landing-receipt-divider my-3" />
           <ReceiptLine label="To" value="0x84A2…91F2" />
           <Divider className="landing-receipt-divider my-3" />
-          <ReceiptLine label="Network fee" value="Paid in USDC" />
+          <ReceiptLine label={t("networkFee")} value={t("paidInUsdc")} />
         </div>
 
         <div className="landing-receipt-footer flex h-11 items-center justify-center gap-2 border-t border-[var(--border)] bg-[var(--surface-soft)] font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
