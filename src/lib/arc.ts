@@ -2,6 +2,13 @@ import type { Address } from "viem";
 
 export type ArcNetworkKey = "testnet" | "mainnet";
 
+/**
+ * The two Arc values in Circle Swap Kit's `SwapChain`. Spelled out here rather
+ * than imported so this module keeps its single type-only dependency and stays
+ * cheap for server components to pull in; `swap.ts` is where the kit checks it.
+ */
+export type ArcSwapChain = "Arc" | "Arc_Testnet";
+
 export type ArcNetworkDraft = {
   key: ArcNetworkKey;
   chainId: number;
@@ -11,7 +18,7 @@ export type ArcNetworkDraft = {
   explorerUrl: string | null;
   usdc: Address | null;
   eurc: Address | null;
-  swapChain: string | null;
+  swapChain: ArcSwapChain | null;
 };
 
 export type ArcNetwork = ArcNetworkDraft & {
@@ -19,7 +26,7 @@ export type ArcNetwork = ArcNetworkDraft & {
   explorerUrl: string;
   usdc: Address;
   eurc: Address;
-  swapChain: string;
+  swapChain: ArcSwapChain;
 };
 
 export const ARC_NETWORKS: Record<ArcNetworkKey, ArcNetworkDraft> = {
@@ -42,14 +49,18 @@ export const ARC_NETWORKS: Record<ArcNetworkKey, ArcNetworkDraft> = {
     rpcUrl: "https://rpc.blockdaemon.mainnet.arc.io",
     explorerUrl: "https://explorer.arc.io",
     usdc: "0x3600000000000000000000000000000000000000" as Address,
-    eurc: null,
-    swapChain: null,
+    eurc: "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1" as Address,
+    // Circle published the Arc mainnet swap deployment in Swap Kit 1.7.0, under
+    // the plain "Arc" identifier. Both addresses above match the chain
+    // definition the kit ships, so a quote resolves the same token the
+    // portfolio reads.
+    swapChain: "Arc",
   },
 };
 
 export const ARC_FAUCET_URL = "https://faucet.circle.com";
 
-const REQUIRED = ["rpcUrl", "explorerUrl", "usdc"] as const;
+const REQUIRED = ["rpcUrl", "explorerUrl", "usdc", "eurc", "swapChain"] as const;
 
 export function resolveArcNetwork(draft: ArcNetworkDraft): ArcNetwork {
   const missing = REQUIRED.filter((field) => draft[field] === null);

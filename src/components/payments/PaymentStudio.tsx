@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC, ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -437,7 +437,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
         <SettlementPulse stage={pulseStage} confirmed={confirmed} impulse={impulse} />
         <SettlementPath stage={pulseStage} fee={totals?.fee} hash={hash} />
 
-        <Panel className="payment-studio-preview-panel" title={stage === "success" ? "Payment receipt" : "Payment preview"} meta="ARC TESTNET · USDC" bodyClassName="p-0">
+        <Panel className="payment-studio-preview-panel" title={stage === "success" ? "Payment receipt" : "Payment preview"} meta={`${ARC.name.toUpperCase()} · USDC`} bodyClassName="p-0">
           <div className="payment-studio-preview-amount-block px-4 py-8 text-center">
             <Label className="payment-studio-preview-amount-label">{stage === "success" ? "Amount sent" : "Amount"}</Label>
             <p className="payment-studio-preview-amount mt-3 break-all font-mono text-5xl tabular tracking-tight">{current.amount || "0.00"}</p>

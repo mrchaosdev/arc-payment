@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar, TokenPair } from "@/components/ui/TokenAvatar";
-import { ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
+import { ARC, ARC_CHAIN_ID, arcTransactionUrl } from "@/lib/arc";
 import { findTokenBySymbol } from "@/lib/tokenlist/tokens";
 import {
   SWAP_TOKENS,
@@ -31,7 +31,8 @@ const POLL_MS = 5_000;
 // cirBTC has no confirmed Arc contract address in Arc's own docs or
 // in the Swap Kit's bundled type data, so it stays out of the shared token
 // list (which other reads/transfers key off address) and gets its icon here
-// instead — sourced straight from Circle's own faucet, not redrawn.
+// instead — sourced straight from Circle's own faucet, not redrawn. It is also
+// testnet-only, so `SWAP_TOKENS` drops it entirely on mainnet.
 const CIRBTC_LOGO = "/tokens/cirbtc.svg";
 
 function tokenMeta(symbol: SwapToken) {
@@ -162,11 +163,16 @@ export function SwapStudio() {
   const inMeta = tokenMeta(tokenIn);
   const outMeta = tokenMeta(tokenOut);
   const outputAmount = amountOut ?? quote?.estimatedOutput.amount;
+  const networkLabel = ARC.name.toUpperCase();
 
   const form = (
     <div className="swap-studio-form p-5 sm:p-7">
       {stage === "editing" || stage === "quoting" ? (
-        <fieldset disabled={busy} className="swap-studio-fields space-y-3">
+        // A fieldset carries `min-inline-size: min-content` from the UA sheet,
+        // which no reset here overrides. The amount input's default `size=20` at
+        // 30px mono then made that minimum 558px and pushed both token rows out
+        // through the card's right edge, so the minimum has to be cleared.
+        <fieldset disabled={busy} className="swap-studio-fields min-w-0 space-y-3">
           <TokenField label="You pay" symbol={tokenIn} onSymbolChange={setTokenIn} logoURI={inMeta.logoURI} amount={amountIn} onAmountChange={setAmountIn} editable />
           <div className="swap-studio-flip-row relative flex justify-center py-1">
             <Divider className="swap-studio-flip-divider absolute left-0 right-0 top-1/2" />
@@ -175,7 +181,7 @@ export function SwapStudio() {
               <ArrowLeftRight size={15} />
             </button>
           </div>
-          <TokenField label="You receive (estimated)" symbol={tokenOut} onSymbolChange={setTokenOut} logoURI={outMeta.logoURI} amount="" onAmountChange={() => {}} editable={false} />
+          <TokenField label="You receive (estimated)" symbol={tokenOut} onSymbolChange={setTokenOut} logoURI={outMeta.logoURI} amount={outputAmount ?? ""} onAmountChange={() => {}} editable={false} />
         </fieldset>
       ) : (
         <SwapReview
@@ -235,7 +241,7 @@ export function SwapStudio() {
         <Card className="swap-studio-form-card overflow-hidden">{form}</Card>
 
         <div className="swap-studio-aside space-y-5 xl:sticky xl:top-20">
-          <Panel className="swap-studio-rate-panel" title="Rate" meta="ARC TESTNET" bodyClassName="p-0">
+          <Panel className="swap-studio-rate-panel" title="Rate" meta={networkLabel} bodyClassName="p-0">
             <div className="swap-studio-rate-pair flex items-center gap-3 px-4 py-5">
               <TokenPair symbols={[tokenIn, tokenOut]} logoURIs={[inMeta.logoURI, outMeta.logoURI]} />
               <div className="swap-studio-rate-pair-copy min-w-0">
@@ -255,10 +261,15 @@ export function SwapStudio() {
             </div>
           </Panel>
 
-          <p className="swap-studio-testnet-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
+          <p className="swap-studio-network-notice flex gap-2.5 text-xs leading-6 text-[var(--text-muted)]">
             <ShieldCheck className="mt-0.5 shrink-0 text-[var(--action)]" size={15} />
-            These Arc tokens may have real monetary value. Slippage is set in{" "}
-            <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>
+            <span>
+              {ARC.isTestnet
+                ? "These are Arc Testnet tokens and carry no monetary value."
+                : "These Arc tokens carry real monetary value."}{" "}
+              Slippage is set in{" "}
+              <Link href="/settings" className="swap-studio-settings-link text-[var(--action)] underline">Settings</Link>.
+            </span>
           </p>
         </div>
       </div>
@@ -273,21 +284,38 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
   return (
     <div className="swap-studio-token-field block">
       <Label className="swap-studio-token-field-label mb-2">{label}</Label>
-      <div className="swap-studio-token-field-row flex items-center gap-3 border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
-        <div className="swap-studio-token-select-wrap relative flex shrink-0 items-center gap-2 bg-[var(--surface-soft)] py-1.5 pl-2 pr-7">
+      {/* Both controls inside suppress their own focus ring, so the row carries
+          the affordance for the pair — one border, the same way the amount field
+          on /pay does it, rather than a ring per control. */}
+      <div className="swap-studio-token-field-row flex items-center gap-3 border border-[var(--border)] bg-[var(--surface)] px-3 py-3 transition-colors focus-within:border-[var(--action)]">
+        {/* A label, so the avatar and the chevron open the list too — the chip
+            reads as one control and only its 66px of text used to be clickable.
+            `bg-transparent` leaves the browser to paint the popup: the theme's
+            `color-scheme` tells it which way, and the explicit option colours
+            below cover the engines that ignore it. */}
+        <label className="swap-studio-token-select-wrap relative flex shrink-0 cursor-pointer items-center gap-2 bg-[var(--surface-soft)] py-1.5 pl-2 pr-7">
           <TokenAvatar symbol={symbol} logoURI={logoURI} size="sm" />
           <select
             aria-label={`${label} token`}
             value={symbol}
             onChange={(event) => onSymbolChange(event.target.value as SwapToken)}
-            className="swap-studio-token-select appearance-none bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-primary)] outline-none"
+            className="swap-studio-token-select cursor-pointer appearance-none bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-primary)] outline-none"
           >
             {SWAP_TOKENS.map((token) => (
-              <option key={token} className="swap-studio-token-option" value={token}>{token}</option>
+              <option
+                key={token}
+                className="swap-studio-token-option"
+                value={token}
+                style={{ background: "var(--surface)", color: "var(--text-primary)" }}
+              >
+                {token}
+              </option>
             ))}
           </select>
-          <ChevronDown size={13} className="swap-studio-token-select-chevron pointer-events-none absolute right-2 text-[var(--text-muted)]" />
-        </div>
+          <ChevronDown size={13} className="swap-studio-token-select-chevron pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        </label>
+        {/* Both sides render one 30px mono line so the two rows stay the same
+            height whether the receive side is still empty or showing a quote. */}
         {editable ? (
           <input
             aria-label={`${label} amount`}
@@ -295,10 +323,15 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
             onChange={(event) => onAmountChange(event.target.value)}
             inputMode="decimal"
             placeholder="0.00"
-            className="swap-studio-token-field-input min-w-0 flex-1 bg-transparent text-right font-mono text-3xl tabular outline-none"
+            className="swap-studio-token-field-input min-w-0 flex-1 bg-transparent text-right font-mono text-3xl leading-9 tabular outline-none"
           />
         ) : (
-          <span className="swap-studio-token-field-placeholder flex-1 text-right font-mono text-3xl tabular text-[var(--text-muted)]">—</span>
+          <output
+            aria-label={`${label} amount`}
+            className={`swap-studio-token-field-output min-w-0 flex-1 truncate text-right font-mono text-3xl leading-9 tabular ${amount ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}
+          >
+            {amount || "—"}
+          </output>
         )}
       </div>
     </div>

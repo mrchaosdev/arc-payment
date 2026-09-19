@@ -6,6 +6,12 @@
    component already reads them, so the retone lands everywhere at once. */
 
 :root {
+  /* Native controls (the token <select> popup, date pickers, scrollbars) are
+     painted by the browser, not by these tokens. Without this they render on a
+     light chrome while inheriting near-white text, which is what made the swap
+     token dropdown open to an unreadable list. */
+  color-scheme: light;
+
   --palette-ink: #0f0e17;
   --palette-paper: #fffffe;
   --palette-muted: #a7a9be;
@@ -59,6 +65,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   --app-bg: var(--palette-ink);
   --sidebar-bg: var(--palette-ink);
   --surface: color-mix(in srgb, var(--palette-paper) 3%, var(--palette-ink));

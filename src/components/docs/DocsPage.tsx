@@ -242,7 +242,10 @@ export function DocsPage() {
           <DocSection id="features" index="09" eyebrow="Reference" title="Other features">
             <div className="grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
               <FeatureNote title="Swap" meta={`${DEFAULT_SLIPPAGE_BPS / 100}% DEFAULT SLIPPAGE`}>
-                Exchange {SWAP_TOKENS.join(", ")} on Arc through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
+                {/* The space after the list is explicit: JSX drops the literal
+                    one here, which rendered as &quot;EURCon Arc&quot;. */}
+                Exchange {SWAP_TOKENS.join(", ")}{" "}
+                on Arc through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
               </FeatureNote>
               <FeatureNote title="Contacts" meta="BROWSER LOCAL">
                 Save frequently used recipients under a name. Contacts stay in this browser and are never an address-ownership claim.

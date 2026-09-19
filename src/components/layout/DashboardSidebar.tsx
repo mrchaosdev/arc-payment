@@ -17,9 +17,26 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ARC_FAUCET_URL } from "@/lib/arc";
+import { ARC, ARC_FAUCET_URL } from "@/lib/arc";
 import { useAssistant } from "@/store/assistant";
 import { BrandMark } from "@/components/ui/BrandMark";
+
+// Circle's faucet mints testnet USDC and nothing else, so on mainnet the card
+// sends people to the funding guide instead of naming a token it cannot hand
+// out. Resolved once: the network is fixed at build time.
+const faucet = ARC.isTestnet
+  ? {
+      title: "Start with test USDC",
+      description: "Try your first payment on Arc.",
+      action: "Get test USDC",
+      href: ARC_FAUCET_URL,
+    }
+  : {
+      title: "Fund your Arc wallet",
+      description: "Mainnet USDC has real value. Bring it in from a bridge or a DEX.",
+      action: "How to fund",
+      href: "/docs",
+    };
 
 // Adapted from ChaoUi/navigation/dashboard-sidebar. Next links preserve native
 // navigation semantics; CSS width transitions respect reduced motion.
@@ -96,24 +113,27 @@ export function DashboardSidebar() {
         <Bot className="dashboard-sidebar-assistant-icon size-4 shrink-0" />{!collapsed && <span className="dashboard-sidebar-assistant-label">Ask assistant</span>}
       </button>
 
+      {/* The faucet only mints testnet USDC. On mainnet the same card used to
+          offer "test USDC" beside balances that spend for real, so the copy and
+          the link both follow the selected network. */}
       {!collapsed ? (
         <div className="dashboard-sidebar-faucet-card mx-3 mb-4 border border-[var(--border)] p-3">
           <p className="dashboard-sidebar-faucet-title font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-            Start with test USDC
+            {faucet.title}
           </p>
           <p className="dashboard-sidebar-faucet-description mt-2 text-xs leading-5 text-[var(--text-muted)]">
-            Try your first payment on Arc.
+            {faucet.description}
           </p>
           <a
-            href={ARC_FAUCET_URL}
+            href={faucet.href}
             target="_blank"
             rel="noreferrer"
             className="dashboard-sidebar-faucet-link mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
-            Get test USDC <ArrowUpRight size={12} />
+            {faucet.action} <ArrowUpRight size={12} />
           </a>
         </div>
-      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" aria-label="Get test USDC" title="Get test USDC"><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
+      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={faucet.href} target="_blank" rel="noreferrer" aria-label={faucet.action} title={faucet.action}><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
 
       <div className="dashboard-sidebar-footer flex items-center justify-between border-t border-[var(--border)] p-3">
         {!collapsed && (

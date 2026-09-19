@@ -1,6 +1,12 @@
-// Token list tối giản theo chain cho MVP portfolio. Sau này có thể thay bằng
-// token list chuẩn (Uniswap/PancakeSwap) tải động. Native coin dùng address
+// Token list tối giản theo chain cho MVP portfolio. Native coin dùng address
 // "native" + coingeckoId để lấy giá; ERC-20 lấy giá theo contract.
+//
+// KHÔNG thay bằng token list tải động cho Arc. Explorer Arc mainnet hiện có ít
+// nhất 11 token mạo danh Circle: 4 cái tên "USDC" (UpSideDownCat, USDigitalCoin,
+// FatCatBatRatWifHat...), 2 cái "EURC", 5 cái "cirBTC" — nhiều cái hơn 10.000
+// holder. Tất cả đều 18 decimals, trong khi USDC/EURC thật là 6. Một danh sách
+// tra theo symbol sẽ trả về hàng giả, nên các địa chỉ dưới đây được ghi cứng và
+// đối chiếu trực tiếp với chain định nghĩa trong Circle Swap Kit.
 
 export type TokenInfo = {
   chainId: number;
@@ -24,7 +30,13 @@ export const TOKENS: TokenInfo[] = [
   { chainId: 5042002, address: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", symbol: "EURC", name: "Euro Coin", decimals: 6, coingeckoId: "euro-coin", logoURI: "/tokens/eurc.svg" },
 
   // --- Arc Mainnet (5042) ---
+  // Both addresses are the ones Circle's Swap Kit ships in its own Arc mainnet
+  // chain definition, so a swap quote and the portfolio agree on the token.
+  // Verified against chain 5042 directly: symbol/decimals/name read back as
+  // USDC·6 and EURC·6, and the explorer counts 670.410 and 2.830 holders.
+  // Arc mainnet carries no USDT: the kit's definition lists `usdtAddress: null`.
   { chainId: 5_042, address: "0x3600000000000000000000000000000000000000" as `0x${string}`, symbol: "USDC", name: "USD Coin", decimals: 6, coingeckoId: "usd-coin", logoURI: "/tokens/usdc.svg" },
+  { chainId: 5_042, address: "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1" as `0x${string}`, symbol: "EURC", name: "Euro Coin", decimals: 6, coingeckoId: "euro-coin", logoURI: "/tokens/eurc.svg" },
 
   // --- Ethereum (1) ---
   { chainId: 1, address: "native", symbol: "ETH", name: "Ether", decimals: 18, coingeckoId: "ethereum", logoURI: `${TW}/ethereum/info/logo.png` },

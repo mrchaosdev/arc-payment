@@ -2,7 +2,12 @@
 
 import dynamic from "next/dynamic";
 import { Panel, TraceRow, Num } from "@/components/chaos/Terminal";
+import { ARC } from "@/lib/arc";
 import { derivePulse, intensityFromConfirmed, type SettlementStage } from "@/lib/visual/pulse";
+
+// The panel meta names the network a payment settles on, so it has to follow
+// the selected one. It used to read ARC TESTNET beside mainnet balances.
+const NETWORK_LABEL = ARC.name.toUpperCase();
 
 // A canvas renderer with its own animation loop has no business in the bundle
 // that draws the payment form, and there is nothing about it to prerender. The
@@ -110,7 +115,7 @@ export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; f
   return (
     <Panel className="settlement-path-panel"
       title="Settlement path"
-      meta={stage === "failed" ? "REVERTED" : stage === "settled" ? "COMPLETE" : "ARC TESTNET"}
+      meta={stage === "failed" ? "REVERTED" : stage === "settled" ? "COMPLETE" : NETWORK_LABEL}
       bodyClassName="p-0"
     >
       {path.map((step, index) => {

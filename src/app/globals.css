@@ -30,13 +30,6 @@ body {
 }
 
 button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
@@ -46,9 +39,15 @@ a {
   color: var(--on-action);
 }
 
-:where(button, a, input, select, textarea):focus-visible {
-  outline: 1px solid var(--action);
-  outline-offset: 2px;
+/* The keyboard focus ring every control gets unless it draws its own. It has to
+   sit in `base`: unlayered it outranks every utility, so a field that already
+   lights its own border on focus could not turn this off with `outline-none`
+   and lit up twice — an orange border and an orange ring 2px outside it. */
+@layer base {
+  :where(button, a, input, select, textarea):focus-visible {
+    outline: 1px solid var(--action);
+    outline-offset: 2px;
+  }
 }
 
 .tabular {
