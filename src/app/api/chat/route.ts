@@ -122,12 +122,18 @@ export async function POST(request: NextRequest) {
   if (walletAddress !== undefined && (typeof walletAddress !== "string" || !isAddress(walletAddress)))
     return fail(400, "Invalid shared wallet address.");
 
-  // When Cagent server is configured, proxy to it instead of using Gemini directly.
-  // The Cagent server handles agents, tools, RAG and memory. This route translates
-  // Cagent SSE events into the app's ndjson format so the widget stays unchanged.
-  const cagentUrl = process.env.CAGENT_SERVER_URL;
-  if (cagentUrl) {
-    return proxyToCagent(request, payload, walletAddress as Address | undefined);
+  // When a Cagent server is configured, it answers instead of Gemini: it owns the
+  // agents, tools, RAG and memory, and this route only translates its SSE events
+  // into the ndjson the widget already reads.
+  //
+  // `proxyToCagent` returns null when that server cannot answer — unreachable,
+  // erroring, or up but with `agentReady: false` because its model backend is not
+  // wired yet. Falling through to Gemini then costs the reader a less capable
+  // answer instead of a broken assistant, which matters because the Cagent host
+  // is the part most likely to be down.
+  if (process.env.CAGENT_SERVER_URL) {
+    const answered = await proxyToCagent(request, messages, walletAddress as Address | undefined);
+    if (answered) return answered;
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -229,27 +235,30 @@ export async function POST(request: NextRequest) {
   });
 }
 
+/**
+ * Hands the turn to the Cagent server, or returns null so the caller can answer
+ * with Gemini instead.
+ *
+ * It reads the conversation the widget actually posts — `messages`, an array of
+ * turns. It used to read `envelope.message`, a single string no client ever
+ * sends, so the first check below rejected every real request with a 400 before
+ * Cagent was contacted at all: setting CAGENT_SERVER_URL disabled the assistant
+ * rather than redirecting it.
+ */
 async function proxyToCagent(
   request: NextRequest,
-  payload: unknown,
+  messages: Turn[],
   walletAddress: Address | undefined,
 ) {
   const cagentServer = (process.env.CAGENT_SERVER_URL ?? "http://localhost:3001").replace(/\/$/, "");
   const agentId = process.env.CAGENT_AGENT_ID ?? "chaospay";
-  const envelope = payload as { agentId?: unknown; message?: unknown; threadId?: unknown };
-  const message = (envelope.message ?? "") as string;
-  const threadId = envelope.threadId as string | undefined;
 
-  if (typeof message !== "string" || !message.trim()) {
-    return fail(400, "Send a non-empty conversation ending in a user message.");
-  }
+  // The turn to answer is the last user message; the rest is history Cagent
+  // keeps itself, keyed by thread.
+  const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content.trim();
+  if (!latest) return null;
 
-  const body = JSON.stringify({
-    agentId,
-    message: message.trim(),
-    walletAddress,
-    ...(threadId ? { threadId } : {}),
-  });
+  const body = JSON.stringify({ agentId, message: latest, walletAddress });
 
   try {
     const upstream = await fetch(`${cagentServer}/api/agent/chat`, {
@@ -259,9 +268,10 @@ async function proxyToCagent(
       signal: request.signal,
     });
 
-    if (!upstream.ok) {
-      return fail(502, "Cagent server returned an error.");
-    }
+    // Anything other than a usable stream — 5xx, a health check that says the
+    // model backend is not wired, an empty body — is a reason to fall back, not
+    // a reason to fail the request.
+    if (!upstream.ok || !upstream.body) return null;
 
     const encoder = new TextEncoder();
     let cancelled = false;
@@ -318,6 +328,8 @@ async function proxyToCagent(
       },
     });
   } catch {
-    return fail(502, "Cagent server unavailable. Check CAGENT_SERVER_URL.");
+    // Unreachable host, DNS failure, connection refused: the reader gets a
+    // Gemini answer rather than an error naming an environment variable.
+    return null;
   }
 }
