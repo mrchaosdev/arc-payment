@@ -86,7 +86,7 @@ export function SettingsPanel() {
                 <div className="settings-control-copy">
                   <p className="settings-control-title text-sm font-semibold text-[var(--text-primary)]">{t("defaultSlippage")}</p>
                   <p className="settings-control-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">
-                    Higher slippage may fill more often, but can return fewer tokens.
+                    {t("slippageHint")}
                   </p>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export function SettingsPanel() {
                 <div className="settings-option-copy">
                   <p className="settings-option-title text-sm font-semibold text-[var(--text-primary)]">{t("theme")}</p>
                   <p className="settings-option-description mt-1 text-[13px] leading-6 text-[var(--text-muted)]">
-                    Use the top bar icon on desktop to switch between light and dark.
+                    {t("themeHint")}
                   </p>
                 </div>
               </div>

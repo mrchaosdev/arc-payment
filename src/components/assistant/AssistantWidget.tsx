@@ -7,6 +7,7 @@ import { ArrowUp, Bot, Square, X } from "lucide-react";
 import { useAccount } from "wagmi";
 import { Label } from "@/components/chaos/Terminal";
 import { Button } from "@/components/ui/Button";
+import { ARC_EXPLORER_URL } from "@/lib/arc";
 import { cn, compactAddress } from "@/lib/utils";
 import { readAssistantStream, type AssistantEvent, type ReadEvidence } from "@/lib/assistant/protocol";
 import { useAssistant } from "@/store/assistant";
@@ -19,6 +20,13 @@ type Turn = { role: "user" | "assistant"; content: string; evidence?: ReadEviden
 const ChaosSphere = dynamic(() => import("@/components/chaos/ChaosSphere").then((m) => m.ChaosSphere), {
   ssr: false,
 });
+
+// The evidence link is gated on the explorer this build actually targets.
+// It used to be pinned to testnet.arcscan.app, so on mainnet the check never
+// matched and the "Verify on ArcScan" link silently never rendered.
+const EVIDENCE_LINK = new RegExp(
+  `^${ARC_EXPLORER_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/(?:tx|address)/0x[a-fA-F0-9]+$`,
+);
 
 /**
  * The sphere beats for one reason only: whether the assistant is working.
@@ -237,10 +245,10 @@ export function AssistantWidget() {
         <label className="assistant-wallet-label flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <input className="assistant-wallet-checkbox" type="checkbox" disabled={!address || pending}
             checked={!!walletAddress} onChange={event => setSharedAddress(event.target.checked ? address : undefined)} />
-          Use connected wallet {address ? `(${compactAddress(address)})` : "— connect a wallet first"}
+          {t("useConnected")} {address ? `(${compactAddress(address)})` : t("connectFirst")}
         </label>
         <p className="assistant-context-notice mt-1.5 text-[11px] leading-5 text-[var(--text-muted)]">
-          Addresses you share and public read results are sent to the AI. Payment history stays in this browser.
+          {t("contextNotice")}
         </p>
       </div>
 
@@ -248,8 +256,7 @@ export function AssistantWidget() {
         {!turns.length ? (
           <div className="assistant-welcome">
             <p className="assistant-introduction text-[13px] leading-6 text-[var(--text-muted)]">
-              Check a USDC balance, estimate a payment, or look up a transaction on Arc.
-              Share a wallet address or transaction hash to start. Reads never send a payment.
+              {t("introduction")}
             </p>
             <Label className="assistant-suggestions-label mt-5 mb-2">{t("tryOne")}</Label>
             <div className="assistant-suggestions space-y-2">
@@ -337,7 +344,7 @@ export function AssistantWidget() {
           )}
         </div>
         <p className="assistant-disclaimer mt-2 text-[10px] leading-4 text-[var(--text-muted)]">
-          Answers can be wrong. Verify anything that moves money against the app and ArcScan.
+          {t("disclaimer")}
         </p>
       </form>
     </section>
@@ -361,7 +368,7 @@ function EvidenceCard({ evidence }: { evidence: ReadEvidence }) {
     <time className="assistant-evidence-time block text-[11px] text-[var(--text-muted)]" dateTime={evidence.checkedAt}>
       {t("checked")} {format.dateTime(new Date(evidence.checkedAt), { dateStyle: "medium", timeStyle: "short" })}
     </time>
-    {evidence.url && /^https:\/\/testnet\.arcscan\.app\/(?:tx|address)\/0x[a-fA-F0-9]+$/.test(evidence.url) &&
-      <a className="assistant-evidence-link mt-2 inline-block text-xs text-[var(--action)]" href={evidence.url} target="_blank" rel="noreferrer">Verify on ArcScan ↗</a>}
+    {evidence.url && EVIDENCE_LINK.test(evidence.url) &&
+      <a className="assistant-evidence-link mt-2 inline-block text-xs text-[var(--action)]" href={evidence.url} target="_blank" rel="noreferrer">{t("verifyOnArcScan")}</a>}
   </details>;
 }

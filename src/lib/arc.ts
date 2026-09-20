@@ -60,6 +60,21 @@ export const ARC_NETWORKS: Record<ArcNetworkKey, ArcNetworkDraft> = {
 
 export const ARC_FAUCET_URL = "https://faucet.circle.com";
 
+/**
+ * Where to send someone who needs USDC, per network.
+ *
+ * Circle's faucet mints testnet USDC and nothing else. Linking to it from a
+ * mainnet build put a button reading "Get Arc USDC (mainnet has monetary
+ * value)" directly above a note explaining that mainnet USDC comes from a
+ * bridge or a DEX and *not* the testnet faucet — the two contradicted each
+ * other on the same panel. On mainnet there is no faucet to offer, so the
+ * pointer goes to the documentation instead.
+ */
+export const ARC_FUNDING = {
+  href: ARC_NETWORKS[selected()].isTestnet ? ARC_FAUCET_URL : "/docs#quickstart",
+  isExternal: ARC_NETWORKS[selected()].isTestnet,
+} as const;
+
 const REQUIRED = ["rpcUrl", "explorerUrl", "usdc", "eurc", "swapChain"] as const;
 
 export function resolveArcNetwork(draft: ArcNetworkDraft): ArcNetwork {

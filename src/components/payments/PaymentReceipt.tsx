@@ -118,7 +118,7 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
               <tr className="payment-receipt-heading-row">
                 <th className="payment-receipt-description-heading" scope="col">{t("description")}</th>
                 <th scope="col" className="payment-receipt-amount-heading receipt-right">
-                  Amount
+                  {t("amountHeading")}
                 </th>
               </tr>
             </thead>
@@ -153,12 +153,10 @@ export function PaymentReceipt({ payment, onClose }: { payment: PaymentRecord; o
 
           <footer className="payment-receipt-footer receipt-foot">
             <p className="payment-receipt-verification-note">
-              The description and reference above are held by ChaosPay and are not written onchain. The transaction
-              hash is the authoritative record; anyone can verify it at the address above.
+              {t("verificationNote")}
             </p>
             <p className="payment-receipt-testnet-note">
-              Arc USDC may have monetary value. This document is a record of a transfer, not a demand for
-              payment or a tax invoice.
+              {t("valueNote")}
             </p>
           </footer>
         </article>

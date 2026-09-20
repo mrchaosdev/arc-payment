@@ -3,19 +3,25 @@
 ChaosPay is a non-custodial USDC payment MVP built for the Arc network. It lets users:
 
 - connect an EVM wallet with RainbowKit;
-- switch safely to Arc Testnet (or Arc mainnet — see below);
+- switch safely to Arc mainnet (Arc Testnet is still supported — see below);
 - send USDC through its 6-decimal ERC-20 interface;
 - create shareable payment-request links, with a QR code for paying from a phone;
 - save pending and confirmed payment records with ArcScan links in local browser storage;
 - see a saved request marked paid when a matching USDC transfer reaches it on Arc;
 - print or save a receipt as PDF for any recorded payment;
 - keep named recipient contacts in the browser; and
+- swap between the Circle stablecoins Arc carries, through Circle's Swap Kit;
+- read the interface in English, Vietnamese, Simplified Chinese or Russian; and
 - ask a grounded assistant about ChaosPay, Arc and its own reads.
 
 ## Deployment target
 
 ChaosPay is deployed on **Arc mainnet** at [chaospayment.xyz](https://chaospayment.xyz).
-The local dev server (`npm run dev`) runs on **Arc Testnet**. Arc mainnet is live as of 2026-09-16.
+Arc mainnet has been live since 2026-09-16.
+
+The network is chosen by `NEXT_PUBLIC_ARC_NETWORK` (`mainnet` or `testnet`), which Next.js inlines
+at build time. `.env.local` currently sets `mainnet`, so `npm run dev` runs against **mainnet too** —
+with real USDC. Set it to `testnet` if you want a throwaway network locally.
 
 ## Local development
 
@@ -49,22 +55,37 @@ create and revisit links at `/requests`, open shared links at `/checkout`, keep 
 effect — it must be present when the app is built. See [docs/handover.md](docs/handover.md) for the
 deployment steps and the traps that follow from this.
 
-## Test an Arc payment
+## Make an Arc payment
 
-1. Connect a test wallet.
-2. Get testnet USDC from the [Circle Faucet](https://faucet.circle.com).
-3. Open `/pay`, enter a recipient and amount, review the recipient/amount/estimated fee in the app, then sign in your wallet.
-4. Confirm the receipt on [ArcScan](https://testnet.arcscan.app).
+1. Connect a wallet.
+2. Fund it with USDC. **Mainnet USDC does not come from a faucet** — bring it in from a bridge, an
+   exchange or a DEX. Circle's faucet mints testnet USDC only.
+3. Open `/pay`, enter a recipient and amount, review the recipient/amount/estimated fee in the app,
+   then sign in your wallet.
+4. Confirm the receipt on [ArcScan](https://explorer.arc.io).
 
-Arc Testnet configuration:
+Arc mainnet configuration (what this build targets):
+
+| Field | Value |
+| --- | --- |
+| Chain ID | `5042` (`0x13B2`) |
+| RPC | `https://rpc.blockdaemon.mainnet.arc.io` |
+| Explorer | `https://explorer.arc.io` |
+| USDC ERC-20 | `0x3600000000000000000000000000000000000000` |
+| EURC ERC-20 | `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1` |
+| Decimals | `6` for both |
+
+Arc mainnet carries USDC and EURC and no USDT; Circle's Swap Kit routes that same pair. cirBTC is a
+testnet-only token, and several impostor contracts on mainnet reuse all three symbols — see the
+warning at the top of `src/lib/tokenlist/tokens.ts`.
+
+Arc Testnet configuration, if `NEXT_PUBLIC_ARC_NETWORK=testnet`:
 
 | Field | Value |
 | --- | --- |
 | Chain ID | `5042002` (`0x4CEF52`) |
 | RPC | `https://rpc.testnet.arc.io` |
 | Explorer | `https://testnet.arcscan.app` |
-| USDC ERC-20 | `0x3600000000000000000000000000000000000000` |
-| USDC decimals | `6` |
 
 Arc exposes one USDC balance through native and ERC-20 views. ChaosPay uses the 6-decimal ERC-20
 interface for display and transfers and does not add the native view to it.

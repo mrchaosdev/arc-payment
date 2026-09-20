@@ -42,7 +42,7 @@ export function ContactsPanel() {
         />
       </div>
 
-      <Panel title={editing ? t("editContact") : t("addRecipient")} meta={hydrated ? `${contacts.length} SAVED` : "—"} bodyClassName="p-0">
+      <Panel title={editing ? t("editContact") : t("addRecipient")} meta={hydrated ? t("savedCount", { count: contacts.length }) : "—"} bodyClassName="p-0">
         <form
           className="contacts-form space-y-5 p-4"
           onSubmit={(event) => {
@@ -84,7 +84,7 @@ export function ContactsPanel() {
               placeholder="0x..."
             />
             <p className="contacts-address-hint mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
-              Verify this address with the recipient. A saved name does not verify ownership.
+              {t("addressHint")}
             </p>
           </div>
 
@@ -105,14 +105,14 @@ export function ContactsPanel() {
             </Button>
             {editing && (
               <Button className="contacts-cancel-button" type="button" variant="ghost" onClick={reset}>
-                Cancel edit
+                {t("cancelEdit")}
               </Button>
             )}
           </div>
         </form>
       </Panel>
 
-      <Panel title={t("savedContacts")} meta={hydrated ? `${visible.length} SHOWN` : "—"} bodyClassName="p-0">
+      <Panel title={t("savedContacts")} meta={hydrated ? t("shownCount", { count: visible.length }) : "—"} bodyClassName="p-0">
         <div className="contacts-search border-b border-[var(--border)] p-4">
           <Label className="mb-2">{t("searchContacts")}</Label>
           <input
@@ -167,7 +167,7 @@ export function ContactsPanel() {
                     type="button"
                     onClick={() => setRemoving(contact.id)}
                   >
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
 

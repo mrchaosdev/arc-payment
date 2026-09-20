@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/chaos/Skeleton";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { SettlementPulse } from "./SettlementPulse";
 import { PaymentActivity } from "./PaymentActivity";
-import { ARC_FAUCET_URL, ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { ARC_FUNDING, ARC_CHAIN_ID, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { usePayments } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
@@ -42,7 +42,7 @@ export function WorkspaceOverview() {
         <div className="workspace-heading">
           <Label className="workspace-eyebrow text-[var(--action)]">{t("eyebrow")}</Label>
           <h1 className="workspace-title mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">{t("title")}</h1>
-          <p className="workspace-description mt-2 text-sm text-[var(--text-muted)]">A calmer home for your digital dollars.</p>
+          <p className="workspace-description mt-2 text-sm text-[var(--text-muted)]">{t("description")}</p>
         </div>
         <Chip className="workspace-network-chip" tone="muted">
           <StatusDot /> Arc · USDC
@@ -91,12 +91,12 @@ export function WorkspaceOverview() {
 
           <div className="workspace-metrics grid gap-5 sm:grid-cols-3">
             <StatCell
-              label="Confirmed"
+              label={t("confirmed")}
               value={address ? String(completed) : "—"}
               note={t("walletNote")}
             />
             <StatCell
-              label="Pending"
+              label={t("pending")}
               value={address ? String(pending) : "—"}
               note={t("awaitingReceipt")}
               tone={pending ? "primary" : "default"}
@@ -123,20 +123,20 @@ export function WorkspaceOverview() {
       <div className="workspace-aside grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
         <PaymentActivity compact />
 
-        <Panel className="workspace-onboarding-panel" title={t("firstPaymentTitle")} meta="04 STEPS" bodyClassName="p-0">
+        <Panel className="workspace-onboarding-panel" title={t("firstPaymentTitle")} meta={t("steps", { n: 4 })} bodyClassName="p-0">
           {firstPayment.map((step, index) => (
             <TraceRow key={step} index={index + 1} label={step} state="pending" />
           ))}
           <a
-            href={ARC_FAUCET_URL}
-            target="_blank"
-            rel="noreferrer"
+            href={ARC_FUNDING.href}
+            target={ARC_FUNDING.isExternal ? "_blank" : undefined}
+            rel={ARC_FUNDING.isExternal ? "noreferrer" : undefined}
             className="workspace-faucet-link flex h-11 items-center justify-between border-t border-[var(--border)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
           >
-            Get Arc USDC (mainnet has monetary value) <ExternalLink size={13} />
+            {t("fundingCta")} <ExternalLink size={13} />
           </a>
           <p className="workspace-wallet-notice border-t border-[var(--border)] px-4 py-3 text-[11px] leading-5 text-[var(--text-muted)]">
-            Mainnet USDC has real value. Get it from a bridge or a DEX, not the testnet faucet. Your wallet always reviews and signs.
+            {t("mainnetNote")}
           </p>
         </Panel>
       </div>

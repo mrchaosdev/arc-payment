@@ -24,7 +24,9 @@
     "askAssistant": "Ask assistant",
     "assistantUnavailable": "Assistant unavailable",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar"
+    "collapseSidebar": "Collapse sidebar",
+    "connectWallet": "Connect wallet",
+    "connectShort": "Connect"
   },
   "funding": {
     "testnetTitle": "Start with test USDC",
@@ -140,7 +142,11 @@
     "stillOnClipboard": "The link is still on your clipboard button.",
     "dismissNotification": "Dismiss notification",
     "qrAlt": "Payment link as a QR code",
-    "copyBlocked": "Copy blocked"
+    "copyBlocked": "Copy blocked",
+    "tablistAria": "Payment action",
+    "linkCaution": "Anyone can create a payment link. Check this address against the person who sent it to you before paying.",
+    "amountLabelRow": "Amount",
+    "reviewPayment": "Review payment"
   },
   "swap": {
     "eyebrow": "Swap on Arc",
@@ -180,7 +186,10 @@
     "loadFailed": "Could not load the swap module. Check your connection and try again.",
     "noticeTestnet": "These are Arc Testnet tokens and carry no monetary value.",
     "noticeMainnet": "These Arc tokens carry real monetary value.",
-    "slippageSetIn": "Slippage is set in <settings>Settings</settings>."
+    "slippageSetIn": "Slippage is set in <settings>Settings</settings>.",
+    "youReceiveShort": "You receive",
+    "tokenFor": "{field} token",
+    "amountFor": "{field} amount"
   },
   "footer": {
     "description": "A non-custodial payment workspace for creating requests and settling USDC on Arc with fast, predictable finality.",
@@ -244,12 +253,17 @@
     "saved": "Contact saved.",
     "updated": "Contact updated.",
     "removed": "Contact removed.",
-    "saveFailed": "Could not save contact."
+    "saveFailed": "Could not save contact.",
+    "addressHint": "Verify this address with the recipient. A saved name does not verify ownership.",
+    "savedCount": "{count} SAVED",
+    "shownCount": "{count} SHOWN",
+    "remove": "Remove",
+    "cancelEdit": "Cancel edit"
   },
   "activity": {
     "eyebrow": "Your payment activity",
     "recentPayments": "Recent payments",
-    "viewAll": "View all payments",
+    "viewAll": "VIEW ALL →",
     "connectPrompt": "Connect to see your payments",
     "emptyTitle": "Your first payment starts here",
     "emptyBody": "Once you send USDC, your transaction and its confirmation will appear here.",
@@ -267,7 +281,13 @@
     "savedRequests": "Saved requests",
     "paid": "Paid",
     "checkedToBlock": "Checked to block",
-    "matchingNote": "Matching runs only while this app is open."
+    "matchingNote": "Matching runs only while this app is open.",
+    "storageNote": "Sent from this wallet, saved in this browser. Not a full onchain history.",
+    "autoRefresh": " Unconfirmed payments refresh on their own.",
+    "emptyLinks": "Your payment links will appear here.",
+    "paidCount": "{settled}/{total} PAID",
+    "records": "{count} RECORDS",
+    "toPrefix": "To {address}"
   },
   "workspace": {
     "eyebrow": "Your payment workspace",
@@ -286,7 +306,12 @@
     "step3": "Send a small amount",
     "step4": "Verify the receipt on ArcScan",
     "confirmed": "Confirmed",
-    "awaitingReceipt": "Awaiting an onchain receipt"
+    "awaitingReceipt": "Awaiting an onchain receipt",
+    "description": "A calmer home for your digital dollars.",
+    "pending": "Pending",
+    "mainnetNote": "Mainnet USDC has real value. Get it from a bridge or a DEX, not the testnet faucet. Your wallet always reviews and signs.",
+    "steps": "{n} STEPS",
+    "fundingCta": "How to get Arc USDC"
   },
   "receipt": {
     "title": "Payment receipt",
@@ -307,7 +332,10 @@
     "statusPaid": "PAID",
     "statusAwaiting": "AWAITING RECEIPT",
     "statusNotCompleted": "NOT COMPLETED",
-    "usdcPayment": "USDC payment"
+    "usdcPayment": "USDC payment",
+    "verificationNote": "The description and reference above are held by ChaosPay and are not written onchain. The transaction hash is the authoritative record; anyone can verify it at the address above.",
+    "valueNote": "Arc USDC may have monetary value. This document is a record of a transfer, not a demand for payment or a tax invoice.",
+    "amountHeading": "Amount"
   },
   "pulse": {
     "pulseTitle": "Settlement pulse",
@@ -326,7 +354,23 @@
     "transaction": "Transaction",
     "noWallet": "no wallet",
     "settlementStage": "settlement stage",
-    "confirmedCount": "{count} confirmed"
+    "confirmedCount": "{count} confirmed",
+    "rhythmV_offline": "no wallet",
+    "rhythmN_offline": "resting",
+    "rhythmV_idle": "connected",
+    "rhythmN_idle": "idle",
+    "rhythmV_drafting": "drafting",
+    "rhythmN_drafting": "unsigned",
+    "rhythmV_review": "review",
+    "rhythmN_review": "awaiting signature",
+    "rhythmV_signing": "signing",
+    "rhythmN_signing": "in wallet",
+    "rhythmV_settling": "broadcast",
+    "rhythmN_settling": "awaiting receipt",
+    "rhythmV_settled": "settled",
+    "rhythmN_settled": "confirmed onchain",
+    "rhythmV_failed": "reverted",
+    "rhythmN_failed": "not settled"
   },
   "invoices": {
     "eyebrow": "Invoices",
@@ -364,7 +408,10 @@
     "savedLocally": "Saved locally",
     "display": "Display",
     "theme": "Theme",
-    "reset": "Reset"
+    "reset": "Reset",
+    "slippageHint": "Higher slippage may fill more often, but can return fewer tokens.",
+    "themeHint": "Use the top bar icon on desktop to switch between light and dark.",
+    "toggleTheme": "Toggle theme"
   },
   "assistant": {
     "title": "ChaosPay assistant",
@@ -386,7 +433,12 @@
     "timeout": "The assistant took too long to answer. Ask again, or try a shorter question.",
     "source": "Source",
     "checked": "Checked",
-    "verifyOnArcScan": "Verify on ArcScan ↗"
+    "verifyOnArcScan": "Verify on ArcScan ↗",
+    "useConnected": "Use connected wallet",
+    "connectFirst": "— connect a wallet first",
+    "contextNotice": "Addresses you share and public read results are sent to the AI. Payment history stays in this browser.",
+    "introduction": "Check a USDC balance, estimate a payment, or look up a transaction on Arc. Share a wallet address or transaction hash to start. Reads never send a payment.",
+    "disclaimer": "Answers can be wrong. Verify anything that moves money against the app and ArcScan."
   },
   "limits": {
     "l1": "A mainnet MVP, not a production payment processor.",
@@ -397,7 +449,7 @@
     "l6": "Browser tests run against a mock wallet and RPC. They do not prove live settlement."
   },
   "landing": {
-    "network": "Arc Mainnet",
+    "network": "Network",
     "custody": "Non-custodial settlement",
     "eyebrow": "Sign once · settle in seconds · keep the proof",
     "titleA": "A link is a promise.",
@@ -456,7 +508,14 @@
     "cap7Link": "Open swap",
     "cap5Meta": "CONTACTS",
     "cap6Body": "It checks a balance, estimates a transfer and looks up a transaction, then shows the evidence with a block number and a check time. It has no tool that signs or sends.",
-    "capabilitiesTitle": "Everything here is finished. Nothing implied."
+    "capabilitiesTitle": "Everything here is finished. Nothing implied.",
+    "capabilitiesAria": "What ChaosPay does today",
+    "pulseTitle": "Settlement pulse",
+    "pulseCaption": "DERIVED, NOT PREDICTED",
+    "chain": "Chain",
+    "steps": "{n} STEPS",
+    "gas": "Gas",
+    "resting": "RESTING"
   },
   "docs": {
     "onThisPage": "On this page",
@@ -565,7 +624,23 @@
     "verificationRule": "Verification rule",
     "walletSigned": "Wallet signed",
     "referenceLabel": "Reference",
-    "whatIsChaosPayQ": "What is ChaosPay?"
+    "whatIsChaosPayQ": "What is ChaosPay?",
+    "heroEyebrow": "[DOC.001] · Protocol reference",
+    "heroTitle": "A payment ends in proof.",
+    "intro": "ChaosPay is a non-custodial workspace for sending and requesting USDC on Arc. This reference explains what the app does, what your wallet signs, and which facts can be verified independently.",
+    "whatItIs": "A browser-based payment interface. It prepares a standard USDC transfer, asks your wallet to sign it, broadcasts it to Arc, and keeps the resulting transaction hash as a receipt.",
+    "notProcessor": "Payments use the USDC token contract directly. ChaosPay is the interface that prepares and records the transfer; it is not an escrow, bank, or payment processor.",
+    "requestBody": "A payment request carries the recipient, amount, optional memo, and reference in a shareable checkout URL. The payer can open it without an account and chooses when to connect and sign.",
+    "linkCaution": "Link contents are readable and editable by whoever holds the URL. Treat the onchain transfer receipt—not the request screen—as proof that funds moved.",
+    "settlementBody": "The payment screen separates preparation from the irreversible wallet action. Nothing is broadcast until the wallet approves the transaction.",
+    "feeBody": "At review, ChaosPay estimates gas × gas price with a 20% buffer. The wallet remains the final authority on the fee. If a transaction reverts, the payment fails but a network fee may still be charged.",
+    "browserReceiptBody": "Useful for people: amount, sender, recipient, memo, reference, fee, status, and hash. It can be printed or saved as PDF and exported as JSON.",
+    "onchainReceiptBody": "Useful for verification: transaction status, block, token contract, Transfer event, addresses, value, and actual gas used. ArcScan can verify it without trusting ChaosPay.",
+    "matchBody": "Match the network, token contract, recipient, amount, and successful status. A screenshot or a locally saved memo is not an independent settlement record.",
+    "beforeSignBody": "Verify the full recipient address, USDC amount, Arc network, and wallet prompt. Blockchain transfers are not reversed by ChaosPay.",
+    "constantsNote": "These values are imported from the same constants used by the payment code, so the documentation cannot silently describe a different network configuration.",
+    "publicMainnet": "Public mainnet",
+    "usdcDecimalsLabel": "USDC decimals"
   },
   "pages": {
     "eyebrow": "Your payment workspace",
@@ -587,5 +662,11 @@
     "swapSubtitle": "Preparing the Arc swap workspace.",
     "preferences": "Preferences",
     "settingsPageSubtitle": "Theme, routing preferences, chain defaults, and swap execution settings."
+  },
+  "error": {
+    "eyebrow": "Something broke",
+    "title": "This screen hit an error.",
+    "body": "Nothing was sent or signed. Reload to try again — if it keeps happening, note what you were doing right before it (especially resizing the window or opening dev tools).",
+    "retry": "Try again"
   }
 }

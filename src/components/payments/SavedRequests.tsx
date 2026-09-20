@@ -43,7 +43,7 @@ export function SavedRequests() {
       <Panel
         className="saved-requests-panel"
         title={t("savedRequests")}
-        meta={hydrated ? `${settled}/${requests.length} PAID` : "—"}
+        meta={hydrated ? t("paidCount", { settled, total: requests.length }) : "—"}
         bodyClassName="p-0"
       >
         <p className="saved-requests-storage-notice border-b border-[var(--border)] px-4 py-2.5 text-[11px] leading-5 text-[var(--text-muted)]">
@@ -58,7 +58,7 @@ export function SavedRequests() {
 
         {!hydrated || !requests.length ? (
           <p className="saved-requests-empty-state px-6 py-12 text-center text-[13px] text-[var(--text-muted)]">
-            Your payment links will appear here.
+            {t("emptyLinks")}
           </p>
         ) : (
           <ul className="saved-requests-list">

@@ -65,7 +65,10 @@ export function SettlementPulse({
           note={t("confirmedCount", { count: confirmed })}
           bordered
         />
-        <PulseCell label={t("rhythm")} value={pulse.rhythm.split(" · ")[0]} note={pulse.rhythm.split(" · ")[1] ?? ""} />
+        {/* Keyed off the stage rather than split out of one string: the two
+            halves are separate messages, so no language has to keep a " · "
+            separator in the middle of a translated phrase. */}
+        <PulseCell label={t("rhythm")} value={t(`rhythmV_${stage}`)} note={t(`rhythmN_${stage}`)} />
       </div>
     </Panel>
   );
@@ -140,7 +143,7 @@ export function SettlementPath({ stage, fee, hash }: { stage: SettlementStage; f
       })}
       {hash ? (
         <div className="settlement-transaction border-t border-[var(--border)] px-3 py-2.5">
-          <p className="settlement-transaction-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Transaction</p>
+          <p className="settlement-transaction-label font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{t("transaction")}</p>
           <p className="settlement-transaction-hash mt-1 break-all font-mono text-[11px] text-[var(--text-primary)]">{hash}</p>
         </div>
       ) : null}

@@ -13,7 +13,7 @@ import { CHAOSPAY_LIMIT_KEYS } from "@/lib/limits";
 import { derivePulse } from "@/lib/visual/pulse";
 import {
   ARC_EXPLORER_URL,
-  ARC_FAUCET_URL,
+  ARC_FUNDING,
   ARC_CHAIN_ID,
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
@@ -128,9 +128,9 @@ export function ArcHome() {
             <Label className="landing-custody-label">{t("custody")}</Label>
           </div>
           <div className="landing-network-stats grid grid-cols-3 border-t border-[var(--border)] md:border-t-0">
-            <MetaCell label="Network" value="ARC" />
-            <MetaCell label="Chain" value={String(ARC_CHAIN_ID)} bordered />
-            <MetaCell label="Gas" value="USDC" />
+            <MetaCell label={t("network")} value="ARC" />
+            <MetaCell label={t("chain")} value={String(ARC_CHAIN_ID)} bordered />
+            <MetaCell label={t("gas")} value="USDC" />
           </div>
         </div>
       </div>
@@ -147,8 +147,7 @@ export function ArcHome() {
             </h1>
 
             <p className="landing-hero-description mt-7 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">
-              ChaosPay sends USDC on Arc and turns every payment into a record both sides can check on
-              the public explorer. Mainnet USDC has real monetary value.
+              {t("description")}
             </p>
 
             <div className="landing-settlement-card mt-9 max-w-md border border-[var(--border)] bg-[var(--surface)]">
@@ -156,7 +155,7 @@ export function ArcHome() {
                 <p className="landing-settlement-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
                   {t("settlementPath")}
                 </p>
-                <Num value="05 STEPS" tone="muted" className="landing-settlement-step-count text-[11px]" />
+                <Num value={t("steps", { n: 5 })} tone="muted" className="landing-settlement-step-count text-[11px]" />
               </div>
               {SETTLEMENT_STEP_KEYS.map((key, index) => (
                 <TraceRow key={key} index={index + 1} label={tp(key)} state="pending" />
@@ -197,9 +196,9 @@ export function ArcHome() {
           <div className="landing-pulse-column border-t border-[var(--border)] lg:border-l lg:border-t-0">
             <div className="landing-pulse-header flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
               <p className="landing-pulse-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
-                Settlement pulse
+                {t("pulseTitle")}
               </p>
-              <span className="landing-pulse-caption font-mono text-[11px] text-[var(--text-muted)]">DERIVED, NOT PREDICTED</span>
+              <span className="landing-pulse-caption font-mono text-[11px] text-[var(--text-muted)]">{t("pulseCaption")}</span>
             </div>
             <div className="landing-pulse-visual chaos-dot-field border-b border-[var(--border)]">
               <button
@@ -221,7 +220,7 @@ export function ArcHome() {
               </button>
             </div>
             <div className="landing-pulse-stats grid grid-cols-3 border-b border-[var(--border)]">
-              <MetaCell label="Rate" value={`${pulse.bpm} BPM`} note="RESTING" />
+              <MetaCell label={tp("rate")} value={`${pulse.bpm} BPM`} note={t("resting")} />
               <MetaCell label={t("finality")} value={t("subSecond")} note="ARC" bordered />
               <MetaCell label={t("feeToken")} value="USDC" note={t("noGasToken")} />
             </div>
@@ -258,9 +257,9 @@ export function ArcHome() {
             <ConstantRow label={t("explorer")} value="explorer.arc.io" />
             <div className="landing-network-links flex flex-wrap gap-0 border-t border-[var(--border)]">
               <a
-                href={ARC_FAUCET_URL}
-                target="_blank"
-                rel="noreferrer"
+                href={ARC_FUNDING.href}
+                target={ARC_FUNDING.isExternal ? "_blank" : undefined}
+                rel={ARC_FUNDING.isExternal ? "noreferrer" : undefined}
                 className="landing-faucet-link flex h-11 flex-1 items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)] transition-colors hover:bg-[var(--surface-soft)]"
               >
                 {t("getArcUsdc")} <ArrowUpRight className="size-3.5" />

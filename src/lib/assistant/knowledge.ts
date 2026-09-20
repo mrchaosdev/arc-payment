@@ -1,4 +1,5 @@
 import {
+  ARC,
   ARC_EXPLORER_URL,
   ARC_FAUCET_URL,
   ARC_CHAIN_ID,
@@ -29,7 +30,9 @@ const facts = `
 - Arc pays network fees in USDC. There is no separate gas token to acquire first.
 - The fee per unit of gas moves with recent network usage (an EIP-1559-style base fee smoothed by a moving average), so the fee on one payment can differ from the fee on the next even for the same transfer. That is normal, not an error.
 - Arc finality is deterministic and takes under a second: once a transfer is confirmed it cannot be undone by a chain reorganisation, so there is no need to wait out extra blocks.
-- USDC comes from Circle: ${ARC_FAUCET_URL}.
+- ${ARC.isTestnet
+  ? `Test USDC comes from Circle's faucet: ${ARC_FAUCET_URL}.`
+  : "Mainnet USDC is not handed out by a faucet. It comes from a bridge, an exchange or a DEX. Circle's faucet mints testnet USDC only, so do not point anyone at it for this network."}
 - Arc USDC has monetary value. This is the mainnet network.
 
 ## Sending a payment

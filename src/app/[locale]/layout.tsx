@@ -5,8 +5,8 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { Web3Provider } from "@/providers/Web3Provider";
-import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { ThemeClassGuard } from "@/components/layout/ThemeClassGuard";
+import { ThemeScript } from "@/components/layout/ThemeScript";
 import { LOCALES, routing } from "@/i18n/routing";
 
 // Two families, and the mono is not decoration: every address, hash, amount and
@@ -76,14 +76,19 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
     // after React remounts this element on a language change.
     <html className="app-document" lang={locale} suppressHydrationWarning>
       <head className="app-head">
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <ThemeScript code={themeScript} />
       </head>
       <body className={`app-body ${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeClassGuard />
         <NextIntlClientProvider>
+          {/* The assistant mounts in AppShell, not here. Mounting it in both put
+              two launchers on every AppShell page — the second sat outside
+              .app-shell-root, so the :has() rule that lifts it clear of the docs
+              back-to-top button never applied and the two overlapped. Keeping it
+              in AppShell also honours the note there: /checkout has no shell on
+              purpose, so the payer sees a payment screen and nothing else. */}
           <Web3Provider>
             {children}
-            <AssistantWidget />
           </Web3Provider>
         </NextIntlClientProvider>
       </body>

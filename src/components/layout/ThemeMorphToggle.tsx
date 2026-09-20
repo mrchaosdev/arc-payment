@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
@@ -130,6 +131,7 @@ export function useThemeMorphTransition() {
  * accessible theme trigger.
  */
 export function ThemeMorphToggle() {
+  const t = useTranslations("settings");
   const setTheme = useThemeMorphTransition();
 
   function toggleTheme() {
@@ -140,7 +142,7 @@ export function ThemeMorphToggle() {
   return (
     <button
       type="button"
-      aria-label="Toggle theme"
+      aria-label={t("toggleTheme")}
       onClick={toggleTheme}
       className="top-bar-theme-button grid size-9 place-items-center border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
     >

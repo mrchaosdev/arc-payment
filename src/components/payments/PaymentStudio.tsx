@@ -277,14 +277,14 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       </p>
     </div>
     <div className="payment-studio-summary-details mt-5 space-y-3">
-      <ReceiptRow label="Pay to" value={draft.to} />
+      <ReceiptRow label={t("payTo")} value={draft.to} />
       <Divider className="payment-studio-summary-divider" />
       <ReceiptRow label="For" value={draft.memo || t("noDescription")} />
       <Divider className="payment-studio-summary-divider" />
       <ReceiptRow label={t("reference")} value={draft.reference || "—"} />
     </div>
     <p className="payment-studio-summary-notice mt-5 text-xs leading-5 text-[var(--text-muted)]">
-      Anyone can create a payment link. Check this address against the person who sent it to you before paying.
+      {t("linkCaution")}
     </p>
   </>;
 
@@ -376,7 +376,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       <ReceiptRow label={t("reference")} value={review?.reference || "—"} />
     </div>
     <div className="payment-studio-receipt-totals mt-5 border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3">
-      <TotalRow label="Amount" value={`${totals?.amount ?? "—"} USDC`} />
+      <TotalRow label={t("amountLabelRow")} value={`${totals?.amount ?? "—"} USDC`} />
       <TotalRow label={actualFeeNative ? t("networkFee") : t("estimatedNetworkFee")} value={`${totals?.fee ?? "—"} USDC`} muted />
       <Divider className="payment-studio-receipt-divider my-2.5" />
       <TotalRow label={t("totalFromWallet")} value={`${totals?.total ?? "—"} USDC`} strong />
@@ -398,10 +398,10 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     <div className="payment-studio-actions mt-6 space-y-3">
       {mode === "request" ? <Button type="button" onClick={createRequest} disabled={!!shareUrl} className="payment-studio-create-request-button h-12 w-full"><Link2 size={16} />{shareUrl ? t("requestCreated") : t("createLink")}</Button>
         : stage === "summary" ? <>{!isConnected ? <ConnectWalletButton className="payment-studio-summary-connect-button h-12 w-full" label={t("connectToPay")} />
-          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-summary-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>}
+          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-summary-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}{t("reviewPayment")}</Button>}
           <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="payment-studio-edit-details-button w-full"><Pencil size={14} />{t("editDetails")}</Button></>
         : stage === "editing" ? !isConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label={t("connectToContinue")} />
-          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}Review payment</Button>
+          : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}{t("reviewPayment")}</Button>
         : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_CHAIN_ID ? t("confirmAndPay") : t("switchAndPay")}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />{t("editPayment")}</Button></>
         : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="payment-studio-recheck-button w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />{t("checkNow")}</Button>
         : stage === "success" || stage === "failed" ? <>
@@ -449,7 +449,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
 
         <Panel className="payment-studio-preview-panel" title={stage === "success" ? t("paymentReceipt") : t("paymentPreview")} meta={`${ARC.name.toUpperCase()} · USDC`} bodyClassName="p-0">
           <div className="payment-studio-preview-amount-block px-4 py-8 text-center">
-            <Label className="payment-studio-preview-amount-label">{stage === "success" ? t("amountSent") : "Amount"}</Label>
+            <Label className="payment-studio-preview-amount-label">{stage === "success" ? t("amountSent") : t("amount")}</Label>
             <p className="payment-studio-preview-amount mt-3 break-all font-mono text-5xl tabular tracking-tight">{current.amount || "0.00"}</p>
             <p className="payment-studio-preview-currency mt-2 flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--action)]">
               <TokenAvatar symbol="USDC" logoURI={usdc?.logoURI} size="sm" />USDC

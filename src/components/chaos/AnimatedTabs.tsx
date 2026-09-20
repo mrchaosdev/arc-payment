@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useId, useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ export function AnimatedTabs<T extends string>({ tabs, value, onChange, disabled
   disabled?: boolean;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("pay");
   const id = useId();
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const index = Math.max(0, tabs.findIndex(tab => tab.id === value));
@@ -27,7 +29,7 @@ export function AnimatedTabs<T extends string>({ tabs, value, onChange, disabled
     <>
       {/* The indicator is a rule under the active tab, not a moving pill: it
           reads as a terminal selection rather than as a segmented control. */}
-      <div role="tablist" aria-label="Payment action" className="animated-tabs-list relative flex border-b border-[var(--border)]">
+      <div role="tablist" aria-label={t("tablistAria")} className="animated-tabs-list relative flex border-b border-[var(--border)]">
         <span aria-hidden className="animated-tabs-indicator absolute bottom-0 left-0 h-px bg-[var(--action)] transition-transform duration-200 motion-reduce:transition-none"
           style={{ width: `calc(100% / ${tabs.length})`, transform: `translateX(${index * 100}%)` }} />
         {tabs.map((tab, i) => (

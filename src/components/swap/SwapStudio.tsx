@@ -279,7 +279,7 @@ export function SwapStudio() {
             <div className="swap-studio-rate-details space-y-3 px-4 py-4">
               <RateRow label={t("youPay")} value={amountIn ? `${amountIn} ${tokenIn}` : "—"} />
               <Divider className="swap-studio-rate-divider" />
-              <RateRow label="You receive" value={outputAmount ? `${outputAmount} ${tokenOut}` : t("atQuote")} strong />
+              <RateRow label={t("youReceiveShort")} value={outputAmount ? `${outputAmount} ${tokenOut}` : t("atQuote")} strong />
               <Divider className="swap-studio-rate-divider" />
               <RateRow label={t("minimumReceived")} value={quote ? `${quote.stopLimit.amount} ${quote.stopLimit.token}` : t("atQuote")} muted />
               <Divider className="swap-studio-rate-divider" />
@@ -312,6 +312,7 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
   label: string; symbol: SwapToken; onSymbolChange: (value: SwapToken) => void; logoURI?: string;
   amount: string; onAmountChange: (value: string) => void; editable: boolean;
 }) {
+  const t = useTranslations("swap");
   return (
     <div className="swap-studio-token-field block">
       <Label className="swap-studio-token-field-label mb-2">{label}</Label>
@@ -327,7 +328,7 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
         <label className="swap-studio-token-select-wrap relative flex shrink-0 cursor-pointer items-center gap-2 bg-[var(--surface-soft)] py-1.5 pl-2 pr-7">
           <TokenAvatar symbol={symbol} logoURI={logoURI} size="sm" />
           <select
-            aria-label={`${label} token`}
+            aria-label={t("tokenFor", { field: label })}
             value={symbol}
             onChange={(event) => onSymbolChange(event.target.value as SwapToken)}
             className="swap-studio-token-select cursor-pointer appearance-none bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-[var(--text-primary)] outline-none"
@@ -349,7 +350,7 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
             height whether the receive side is still empty or showing a quote. */}
         {editable ? (
           <input
-            aria-label={`${label} amount`}
+            aria-label={t("amountFor", { field: label })}
             value={amount}
             onChange={(event) => onAmountChange(event.target.value)}
             inputMode="decimal"
@@ -358,7 +359,7 @@ function TokenField({ label, symbol, onSymbolChange, logoURI, amount, onAmountCh
           />
         ) : (
           <output
-            aria-label={`${label} amount`}
+            aria-label={t("amountFor", { field: label })}
             className={`swap-studio-token-field-output min-w-0 flex-1 truncate text-right font-mono text-3xl leading-9 tabular ${amount ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}
           >
             {amount || "—"}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import gsap from "gsap";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
@@ -39,6 +40,7 @@ const LABEL_STAGGER = 0.045;
  * entirely there; the CSS does the rest.
  */
 export function CapabilityAccordion({ items }: { items: CapabilityItem[] }) {
+  const t = useTranslations("landing");
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<(HTMLElement | null)[]>([]);
   const metaRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -142,7 +144,7 @@ export function CapabilityAccordion({ items }: { items: CapabilityItem[] }) {
     <div
       ref={rootRef}
       role="list"
-      aria-label="What ChaosPay does today"
+      aria-label={t("capabilitiesAria")}
       className="capability-accordion flex max-md:flex-col border-l border-t border-[var(--border)] md:h-[420px] md:border-t-0"
     >
       {items.map((item, index) => {

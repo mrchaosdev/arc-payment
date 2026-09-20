@@ -88,17 +88,17 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
       meta={
         compact ? (
           <Link href="/history" aria-label={t("viewAll")} className="payment-activity-view-all-link hover:text-[var(--text-primary)]">
-            VIEW ALL →
+            {t("viewAll")}
           </Link>
         ) : (
-          `${items.length} RECORDS`
+          t("records", { count: items.length })
         )
       }
       bodyClassName="p-0"
     >
       <p className="payment-activity-storage-notice border-b border-[var(--border)] px-4 py-2.5 text-[11px] leading-5 text-[var(--text-muted)]">
-        Sent from this wallet, saved in this browser. Not a full onchain history.
-        {pendingKey ? " Unconfirmed payments refresh on their own." : ""}
+        {t("storageNote")}
+        {pendingKey ? t("autoRefresh") : ""}
       </p>
 
       {notice && (
@@ -130,7 +130,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
             <li key={p.hash} className="payment-activity-item flex flex-wrap items-start gap-4 border-b border-[var(--border)] px-4 py-4 last:border-b-0">
               <div className="payment-activity-item-details min-w-0 flex-1">
                 <p className="payment-activity-item-title break-words text-[13px] font-semibold">{p.memo || t("usdcPayment")}</p>
-                <p className="payment-activity-recipient mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">To {p.to}</p>
+                <p className="payment-activity-recipient mt-1.5 break-all font-mono text-[10px] text-[var(--text-muted)]">{t("toPrefix", { address: p.to })}</p>
                 <p className="payment-activity-metadata mt-1.5 font-mono text-[10px] text-[var(--text-muted)]">
                   {format.dateTime(new Date(p.createdAt), { dateStyle: "medium", timeStyle: "short" })}
                   {p.reference && ` · ${p.reference}`}

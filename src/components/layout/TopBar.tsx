@@ -65,7 +65,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
             <span className="top-bar-network-label hidden text-xs text-[var(--text-muted)] sm:inline">Arc</span>
             <button type="button" onClick={openConnectModal} className="top-bar-connect-button inline-flex h-9 items-center gap-2 bg-[var(--action)] px-3 font-mono text-[11px] uppercase text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]">
               <WalletGem className="size-4" />
-              <span className="top-bar-connect-label-desktop hidden sm:inline">Connect wallet</span><span className="top-bar-connect-label-mobile sm:hidden">Connect</span>
+              <span className="top-bar-connect-label-desktop hidden sm:inline">{t("connectWallet")}</span><span className="top-bar-connect-label-mobile sm:hidden">{t("connectShort")}</span>
             </button>
           </div>;
           return <WalletControls key={account.address} address={account.address as Address} chainId={chain.id} openAccountModal={openAccountModal} />;

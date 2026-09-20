@@ -24,7 +24,9 @@
     "askAssistant": "Hỏi trợ lý",
     "assistantUnavailable": "Trợ lý không khả dụng",
     "expandSidebar": "Mở rộng thanh bên",
-    "collapseSidebar": "Thu gọn thanh bên"
+    "collapseSidebar": "Thu gọn thanh bên",
+    "connectWallet": "Kết nối ví",
+    "connectShort": "Kết nối"
   },
   "funding": {
     "testnetTitle": "Bắt đầu với USDC thử nghiệm",
@@ -140,7 +142,11 @@
     "stillOnClipboard": "Liên kết vẫn nằm ở nút sao chép của bạn.",
     "dismissNotification": "Đóng thông báo",
     "qrAlt": "Liên kết thanh toán dưới dạng mã QR",
-    "copyBlocked": "Sao chép bị chặn"
+    "copyBlocked": "Sao chép bị chặn",
+    "tablistAria": "Thao tác thanh toán",
+    "linkCaution": "Ai cũng tạo được liên kết thanh toán. Hãy đối chiếu địa chỉ này với người đã gửi nó cho bạn trước khi trả.",
+    "amountLabelRow": "Số tiền",
+    "reviewPayment": "Xem lại giao dịch"
   },
   "swap": {
     "eyebrow": "Quy đổi trên Arc",
@@ -180,7 +186,10 @@
     "loadFailed": "Không tải được mô-đun quy đổi. Kiểm tra kết nối rồi thử lại.",
     "noticeTestnet": "Đây là token Arc Testnet, không có giá trị tiền tệ.",
     "noticeMainnet": "Các token Arc này có giá trị tiền tệ thật.",
-    "slippageSetIn": "Trượt giá được đặt trong <settings>Cài đặt</settings>."
+    "slippageSetIn": "Trượt giá được đặt trong <settings>Cài đặt</settings>.",
+    "youReceiveShort": "Bạn nhận",
+    "tokenFor": "Token cho {field}",
+    "amountFor": "Số tiền cho {field}"
   },
   "footer": {
     "description": "Không gian thanh toán phi lưu ký, để tạo yêu cầu và tất toán USDC trên Arc với tốc độ nhanh và độ chắc chắn đoán trước được.",
@@ -244,12 +253,17 @@
     "saved": "Đã lưu liên hệ.",
     "updated": "Đã cập nhật liên hệ.",
     "removed": "Đã xoá liên hệ.",
-    "saveFailed": "Không lưu được liên hệ."
+    "saveFailed": "Không lưu được liên hệ.",
+    "addressHint": "Hãy xác nhận địa chỉ này với người nhận. Một cái tên đã lưu không chứng minh quyền sở hữu.",
+    "savedCount": "{count} ĐÃ LƯU",
+    "shownCount": "{count} ĐANG HIỆN",
+    "remove": "Xoá",
+    "cancelEdit": "Huỷ sửa"
   },
   "activity": {
     "eyebrow": "Hoạt động thanh toán của bạn",
     "recentPayments": "Giao dịch gần đây",
-    "viewAll": "Xem tất cả giao dịch",
+    "viewAll": "XEM TẤT CẢ →",
     "connectPrompt": "Kết nối ví để xem giao dịch của bạn",
     "emptyTitle": "Giao dịch đầu tiên bắt đầu từ đây",
     "emptyBody": "Sau khi bạn gửi USDC, giao dịch và xác nhận của nó sẽ hiện ở đây.",
@@ -267,7 +281,13 @@
     "savedRequests": "Yêu cầu đã lưu",
     "paid": "Đã trả",
     "checkedToBlock": "Đã quét tới block",
-    "matchingNote": "Việc đối khớp chỉ chạy khi ứng dụng đang mở."
+    "matchingNote": "Việc đối khớp chỉ chạy khi ứng dụng đang mở.",
+    "storageNote": "Gửi từ ví này, lưu trong trình duyệt này. Không phải toàn bộ lịch sử trên chuỗi.",
+    "autoRefresh": " Giao dịch chưa xác nhận sẽ tự làm mới.",
+    "emptyLinks": "Các liên kết thanh toán của bạn sẽ hiện ở đây.",
+    "paidCount": "ĐÃ THU {settled}/{total}",
+    "records": "{count} BẢN GHI",
+    "toPrefix": "Tới {address}"
   },
   "workspace": {
     "eyebrow": "Không gian thanh toán của bạn",
@@ -286,7 +306,12 @@
     "step3": "Gửi thử một khoản nhỏ",
     "step4": "Xác minh biên lai trên ArcScan",
     "confirmed": "Đã xác nhận",
-    "awaitingReceipt": "Đang chờ biên lai trên chuỗi"
+    "awaitingReceipt": "Đang chờ biên lai trên chuỗi",
+    "description": "Một chốn yên ả hơn cho những đồng đô la số của bạn.",
+    "pending": "Đang chờ",
+    "mainnetNote": "USDC mainnet có giá trị thật. Hãy lấy từ cầu nối hoặc sàn DEX, không phải từ nguồn testnet. Ví của bạn luôn là nơi xem lại và ký.",
+    "steps": "{n} BƯỚC",
+    "fundingCta": "Cách có USDC trên Arc"
   },
   "receipt": {
     "title": "Biên lai thanh toán",
@@ -307,7 +332,10 @@
     "statusPaid": "ĐÃ TRẢ",
     "statusAwaiting": "CHỜ BIÊN LAI",
     "statusNotCompleted": "CHƯA HOÀN TẤT",
-    "usdcPayment": "Giao dịch USDC"
+    "usdcPayment": "Giao dịch USDC",
+    "verificationNote": "Mô tả và mã tham chiếu ở trên do ChaosPay lưu giữ và không được ghi lên chuỗi. Mã giao dịch mới là bản ghi có thẩm quyền; ai cũng kiểm chứng được tại địa chỉ ở trên.",
+    "valueNote": "USDC trên Arc có thể có giá trị tiền tệ. Tài liệu này là bản ghi một lần chuyển tiền, không phải giấy đòi nợ hay hoá đơn thuế.",
+    "amountHeading": "Số tiền"
   },
   "pulse": {
     "pulseTitle": "Nhịp tất toán",
@@ -326,7 +354,23 @@
     "transaction": "Giao dịch",
     "noWallet": "chưa có ví",
     "settlementStage": "giai đoạn tất toán",
-    "confirmedCount": "{count} đã xác nhận"
+    "confirmedCount": "{count} đã xác nhận",
+    "rhythmV_offline": "chưa có ví",
+    "rhythmN_offline": "nghỉ",
+    "rhythmV_idle": "đã kết nối",
+    "rhythmN_idle": "rảnh",
+    "rhythmV_drafting": "đang soạn",
+    "rhythmN_drafting": "chưa ký",
+    "rhythmV_review": "xem lại",
+    "rhythmN_review": "chờ chữ ký",
+    "rhythmV_signing": "đang ký",
+    "rhythmN_signing": "trong ví",
+    "rhythmV_settling": "đã phát",
+    "rhythmN_settling": "chờ biên lai",
+    "rhythmV_settled": "đã tất toán",
+    "rhythmN_settled": "xác nhận trên chuỗi",
+    "rhythmV_failed": "đã hoàn tác",
+    "rhythmN_failed": "chưa tất toán"
   },
   "invoices": {
     "eyebrow": "Hoá đơn",
@@ -364,7 +408,10 @@
     "savedLocally": "Lưu cục bộ",
     "display": "Hiển thị",
     "theme": "Giao diện",
-    "reset": "Đặt lại"
+    "reset": "Đặt lại",
+    "slippageHint": "Trượt giá cao hơn thì dễ khớp lệnh hơn, nhưng có thể nhận về ít token hơn.",
+    "themeHint": "Dùng biểu tượng trên thanh trên cùng ở máy tính để đổi giữa sáng và tối.",
+    "toggleTheme": "Đổi giao diện"
   },
   "assistant": {
     "title": "Trợ lý ChaosPay",
@@ -386,7 +433,12 @@
     "timeout": "Trợ lý trả lời quá lâu. Hãy hỏi lại, hoặc thử câu ngắn hơn.",
     "source": "Nguồn",
     "checked": "Đã kiểm tra lúc",
-    "verifyOnArcScan": "Xác minh trên ArcScan ↗"
+    "verifyOnArcScan": "Xác minh trên ArcScan ↗",
+    "useConnected": "Dùng ví đang kết nối",
+    "connectFirst": "— hãy kết nối ví trước",
+    "contextNotice": "Địa chỉ bạn chia sẻ và kết quả đọc công khai sẽ được gửi tới AI. Lịch sử thanh toán vẫn nằm trong trình duyệt này.",
+    "introduction": "Kiểm tra số dư USDC, ước tính một giao dịch, hoặc tra cứu một giao dịch trên Arc. Hãy đưa một địa chỉ ví hoặc mã giao dịch để bắt đầu. Việc đọc không bao giờ gửi tiền.",
+    "disclaimer": "Câu trả lời có thể sai. Hãy đối chiếu mọi thứ liên quan tới tiền với chính ứng dụng và ArcScan."
   },
   "limits": {
     "l1": "Bản MVP trên mainnet, không phải cổng thanh toán cho môi trường sản xuất.",
@@ -397,7 +449,7 @@
     "l6": "Kiểm thử trình duyệt chạy với ví và RPC giả lập. Chúng không chứng minh được việc tất toán thật."
   },
   "landing": {
-    "network": "Arc Mainnet",
+    "network": "Mạng",
     "custody": "Tất toán phi lưu ký",
     "eyebrow": "Ký một lần · tất toán trong vài giây · giữ lại bằng chứng",
     "titleA": "Một liên kết là một lời hứa.",
@@ -416,10 +468,10 @@
     "capabilitiesEyebrow": "Hiện tại nó làm được gì",
     "constantsTitle": "Hằng số mạng",
     "constantsMeta": "ARC MAINNET",
-    "chainId": "Chain id",
+    "chainId": "ID chuỗi",
     "usdcErc20": "USDC (ERC-20)",
     "usdcDecimals": "Số thập phân USDC",
-    "explorer": "Explorer",
+    "explorer": "Trình duyệt chuỗi",
     "getArcUsdc": "Nhận USDC trên Arc",
     "openArcScan": "Mở ArcScan",
     "limitsTitle": "Đây không phải là gì",
@@ -456,7 +508,14 @@
     "cap7Link": "Mở trang quy đổi",
     "cap5Meta": "DANH BẠ",
     "cap6Body": "Nó kiểm tra số dư, ước tính một giao dịch và tra cứu một giao dịch, rồi trưng ra bằng chứng kèm số block và thời điểm kiểm tra. Nó không có công cụ nào để ký hay gửi tiền.",
-    "capabilitiesTitle": "Mọi thứ ở đây đã xong. Không hứa hẹn gì thêm."
+    "capabilitiesTitle": "Mọi thứ ở đây đã xong. Không hứa hẹn gì thêm.",
+    "capabilitiesAria": "Hiện tại ChaosPay làm được gì",
+    "pulseTitle": "Nhịp tất toán",
+    "pulseCaption": "SUY RA, KHÔNG PHẢI DỰ ĐOÁN",
+    "chain": "Chuỗi",
+    "steps": "{n} BƯỚC",
+    "gas": "Gas",
+    "resting": "ĐANG NGHỈ"
   },
   "docs": {
     "onThisPage": "Trong trang này",
@@ -530,10 +589,10 @@
     "beforeSignature": "Trước mỗi lần ký",
     "beforeSignatureBody": "Ví của bạn hiện giao dịch cuối cùng",
     "network": "Mạng",
-    "chainId": "Chain ID",
+    "chainId": "ID chuỗi",
     "usdcErc20": "USDC (ERC-20)",
     "eurcErc20": "EURC (ERC-20)",
-    "explorer": "Explorer",
+    "explorer": "Trình duyệt chuỗi",
     "settlement": "Tất toán",
     "settlementValue": "USDC trực tiếp",
     "custody": "Lưu ký",
@@ -565,7 +624,23 @@
     "verificationRule": "Quy tắc xác minh",
     "walletSigned": "Ví đã ký",
     "referenceLabel": "Mã tham chiếu",
-    "whatIsChaosPayQ": "ChaosPay là gì?"
+    "whatIsChaosPayQ": "ChaosPay là gì?",
+    "heroEyebrow": "[DOC.001] · Tài liệu giao thức",
+    "heroTitle": "Một giao dịch kết thúc bằng bằng chứng.",
+    "intro": "ChaosPay là không gian làm việc phi lưu ký để gửi và yêu cầu USDC trên Arc. Tài liệu này giải thích ứng dụng làm gì, ví của bạn ký cái gì, và những dữ kiện nào có thể tự kiểm chứng độc lập.",
+    "whatItIs": "Một giao diện thanh toán chạy trong trình duyệt. Nó dựng sẵn một lệnh chuyển USDC tiêu chuẩn, nhờ ví của bạn ký, phát lên Arc, rồi giữ lại mã giao dịch làm biên lai.",
+    "notProcessor": "Giao dịch dùng trực tiếp hợp đồng token USDC. ChaosPay là giao diện dựng và ghi lại lệnh chuyển; nó không phải bên ký quỹ, ngân hàng hay cổng thanh toán.",
+    "requestBody": "Một yêu cầu thanh toán mang theo người nhận, số tiền, ghi chú tuỳ chọn và mã tham chiếu trong một URL thanh toán chia sẻ được. Người trả mở được mà không cần tài khoản, và tự chọn lúc nào kết nối ví để ký.",
+    "linkCaution": "Nội dung liên kết ai cầm URL cũng đọc và sửa được. Hãy coi biên lai chuyển tiền trên chuỗi — chứ không phải màn hình yêu cầu — là bằng chứng tiền đã đi.",
+    "settlementBody": "Màn hình thanh toán tách phần chuẩn bị khỏi hành động không thể hoàn tác trong ví. Không có gì được phát đi cho tới khi ví chấp thuận giao dịch.",
+    "feeBody": "Ở bước xem lại, ChaosPay ước tính gas × giá gas cộng thêm 20% dự phòng. Ví vẫn là nơi quyết định cuối cùng về phí. Nếu giao dịch bị hoàn tác, khoản thanh toán thất bại nhưng phí mạng vẫn có thể bị trừ.",
+    "browserReceiptBody": "Hữu ích cho người đọc: số tiền, người gửi, người nhận, ghi chú, mã tham chiếu, phí, trạng thái và mã giao dịch. In được, lưu PDF được, và xuất JSON được.",
+    "onchainReceiptBody": "Hữu ích để kiểm chứng: trạng thái giao dịch, block, hợp đồng token, sự kiện Transfer, các địa chỉ, giá trị và lượng gas thực dùng. ArcScan xác minh được mà không cần tin ChaosPay.",
+    "matchBody": "Hãy đối chiếu mạng, hợp đồng token, người nhận, số tiền và trạng thái thành công. Ảnh chụp màn hình hay ghi chú lưu cục bộ không phải bản ghi tất toán độc lập.",
+    "beforeSignBody": "Hãy kiểm tra đầy đủ địa chỉ người nhận, số USDC, mạng Arc và cửa sổ nhắc của ví. ChaosPay không hoàn tác được giao dịch blockchain.",
+    "constantsNote": "Các giá trị này được nhập từ đúng bộ hằng số mà mã thanh toán dùng, nên tài liệu không thể âm thầm mô tả một cấu hình mạng khác.",
+    "publicMainnet": "Mainnet công khai",
+    "usdcDecimalsLabel": "Số thập phân USDC"
   },
   "pages": {
     "eyebrow": "Không gian thanh toán của bạn",
@@ -587,5 +662,11 @@
     "swapSubtitle": "Đang chuẩn bị không gian quy đổi trên Arc.",
     "preferences": "Tuỳ chọn",
     "settingsPageSubtitle": "Giao diện, tuỳ chọn định tuyến, mặc định chuỗi và cài đặt thực thi quy đổi."
+  },
+  "error": {
+    "eyebrow": "Có gì đó hỏng",
+    "title": "Màn hình này gặp lỗi.",
+    "body": "Không có gì được gửi đi hay được ký. Hãy tải lại để thử lại — nếu vẫn lặp lại, ghi nhớ bạn đang làm gì ngay trước đó (nhất là thay đổi kích thước cửa sổ hoặc mở dev tools).",
+    "retry": "Thử lại"
   }
 }

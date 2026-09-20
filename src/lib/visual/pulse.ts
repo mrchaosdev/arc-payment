@@ -25,19 +25,20 @@ export type PulseState = {
   bpm: number;
   amplitude: number;
   tone: PulseTone;
-  rhythm: string;
   cycleMs: number;
 };
 
-const stages: Record<SettlementStage, { bpm: number; tone: PulseTone; rhythm: string }> = {
-  offline: { bpm: 38, tone: "neutral", rhythm: "no wallet · resting" },
-  idle: { bpm: 52, tone: "neutral", rhythm: "connected · idle" },
-  drafting: { bpm: 62, tone: "neutral", rhythm: "drafting · unsigned" },
-  review: { bpm: 72, tone: "neutral", rhythm: "review · awaiting signature" },
-  signing: { bpm: 88, tone: "neutral", rhythm: "signing · in wallet" },
-  settling: { bpm: 104, tone: "positive", rhythm: "broadcast · awaiting receipt" },
-  settled: { bpm: 58, tone: "positive", rhythm: "settled · confirmed onchain" },
-  failed: { bpm: 66, tone: "negative", rhythm: "reverted · not settled" },
+// No rhythm wording here any more: SettlementPulse looks it up per locale from
+// the `pulse` namespace, keyed by the stage name below.
+const stages: Record<SettlementStage, { bpm: number; tone: PulseTone }> = {
+  offline: { bpm: 38, tone: "neutral" },
+  idle: { bpm: 52, tone: "neutral" },
+  drafting: { bpm: 62, tone: "neutral" },
+  review: { bpm: 72, tone: "neutral" },
+  signing: { bpm: 88, tone: "neutral" },
+  settling: { bpm: 104, tone: "positive" },
+  settled: { bpm: 58, tone: "positive" },
+  failed: { bpm: 66, tone: "negative" },
 };
 
 export const minAmplitude = 0.028;
@@ -49,14 +50,13 @@ export const maxAmplitude = 0.098;
  * settled things has a stronger heartbeat than one that has not.
  */
 export function derivePulse(stage: SettlementStage, intensity = 0): PulseState {
-  const { bpm, tone, rhythm } = stages[stage];
+  const { bpm, tone } = stages[stage];
   const strength = Math.min(1, Math.max(0, intensity));
 
   return {
     bpm,
     amplitude: minAmplitude + strength * (maxAmplitude - minAmplitude),
     tone,
-    rhythm,
     cycleMs: (60 / bpm) * 1000,
   };
 }

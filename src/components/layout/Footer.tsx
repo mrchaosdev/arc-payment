@@ -4,11 +4,15 @@ import { getTranslations } from "next-intl/server";
 import { Label, Num } from "@/components/chaos/Terminal";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { GithubMark } from "@/components/ui/GithubMark";
+import { ARC, ARC_EXPLORER_URL, ARC_FAUCET_URL } from "@/lib/arc";
 
+// The explorer follows the selected network, and Circle's faucet is listed only
+// on testnet: it mints testnet USDC, so on mainnet it is a resource that cannot
+// do the thing a reader would click it for.
 const resourceLinks = [
   { href: "https://github.com/mrchaosdev/arc-payment", label: "GitHub", icon: GithubMark },
-  { href: "https://faucet.circle.com", label: "Circle Faucet" },
-  { href: "https://explorer.arc.io", label: "ArcScan Explorer" },
+  ...(ARC.isTestnet ? [{ href: ARC_FAUCET_URL, label: "Circle Faucet" }] : []),
+  { href: ARC_EXPLORER_URL, label: "ArcScan Explorer" },
   { href: "https://www.arc.io", label: "Arc" },
   { href: "https://docs.arc.io", label: "Arc Docs" },
   { href: "https://developers.circle.com", label: "Circle Developers" },

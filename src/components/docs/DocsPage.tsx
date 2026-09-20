@@ -20,7 +20,7 @@ import { GithubMark } from "@/components/ui/GithubMark";
 import {
   ARC_EURC_ADDRESS,
   ARC_EXPLORER_URL,
-  ARC_FAUCET_URL,
+  ARC_FUNDING,
   ARC_CHAIN_ID,
   ARC_RPC_URL,
   ARC_USDC_ADDRESS,
@@ -55,22 +55,20 @@ export async function DocsPage() {
       <header className="docs-hero border-b border-[var(--border)]">
         <div className="docs-hero-inner mx-auto max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
           <div className="docs-hero-meta flex flex-wrap items-center justify-between gap-3">
-            <Label className="text-[var(--action)]">[DOC.001] · Protocol reference</Label>
+            <Label className="text-[var(--action)]">{t("heroEyebrow")}</Label>
             <div className="flex flex-wrap gap-2">
-              <Chip tone="positive"><StatusDot tone="positive" /> Public mainnet</Chip>
+              <Chip tone="positive"><StatusDot tone="positive" /> {t("publicMainnet")}</Chip>
               <Chip tone="muted">{t("onePageReference")}</Chip>
             </div>
           </div>
 
           <div className="docs-hero-copy mt-10 grid items-end gap-7 lg:grid-cols-[1.15fr_0.85fr]">
             <h1 className="max-w-[13ch] text-5xl font-semibold leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-              A payment ends in proof.
+              {t("heroTitle")}
             </h1>
             <div className="max-w-xl lg:pb-1">
               <p className="text-sm leading-7 text-[var(--text-secondary)]">
-                ChaosPay is a non-custodial workspace for sending and requesting USDC on Arc.
-                This reference explains what the app does, what your wallet signs, and which facts can
-                be verified independently.
+                {t("intro")}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/pay" className="inline-flex h-11 items-center gap-2 bg-[var(--action)] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]">
@@ -115,8 +113,7 @@ export async function DocsPage() {
         <main id="documentation" className="docs-content min-w-0 px-4 md:px-8 lg:px-12 xl:px-16">
           <DocSection id="overview" index="01" eyebrow={t("startHere")} title={t("whatIsChaosPayQ")}>
             <p className="docs-lead text-lg leading-8 text-[var(--text-secondary)]">
-              A browser-based payment interface. It prepares a standard USDC transfer, asks your wallet
-              to sign it, broadcasts it to Arc, and keeps the resulting transaction hash as a receipt.
+              {t("whatItIs")}
             </p>
             <div className="mt-8 grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
               <Principle icon={WalletCards} title={t("walletSigned")}>{t("yourWalletBody")}</Principle>
@@ -124,8 +121,7 @@ export async function DocsPage() {
               <Principle icon={FileCheck2} title={t("publicProof")}>{t("publicProofBody")}</Principle>
             </div>
             <Callout tone="info" title={t("custodyValue")}>
-              Payments use the USDC token contract directly. ChaosPay is the interface that prepares and
-              records the transfer; it is not an escrow, bank, or payment processor.
+              {t("notProcessor")}
             </Callout>
           </DocSection>
 
@@ -138,15 +134,14 @@ export async function DocsPage() {
               <QuickStep index="05" title={t("keepReceipt")}>{t("keepReceiptBody")}</QuickStep>
             </ol>
             <div className="mt-5 flex flex-wrap gap-3">
-              <a href={ARC_FAUCET_URL} target="_blank" rel="noreferrer" className="docs-action-link">{t("getMainnetUsdc")} <ArrowUpRight size={13} /></a>
+              <a href={ARC_FUNDING.href} target={ARC_FUNDING.isExternal ? "_blank" : undefined} rel={ARC_FUNDING.isExternal ? "noreferrer" : undefined} className="docs-action-link">{t("getMainnetUsdc")} <ArrowUpRight size={13} /></a>
               <Link href="/pay" className="docs-action-link">{t("openPaymentTerminal")} <ArrowRight size={13} /></Link>
             </div>
           </DocSection>
 
           <DocSection id="requests" index="03" eyebrow={t("payments")} title={t("requestIsLink")}>
             <p className="docs-body-copy">
-              A payment request carries the recipient, amount, optional memo, and reference in a shareable
-              checkout URL. The payer can open it without an account and chooses when to connect and sign.
+              {t("requestBody")}
             </p>
             <div className="mt-7 border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
               <Label>{t("requestAnatomy")}</Label>
@@ -159,15 +154,13 @@ export async function DocsPage() {
               </div>
             </div>
             <Callout tone="warning" title={t("linkNotProof")}>
-              Link contents are readable and editable by whoever holds the URL. Treat the onchain transfer
-              receipt—not the request screen—as proof that funds moved.
+              {t("linkCaution")}
             </Callout>
           </DocSection>
 
           <DocSection id="settlement" index="04" eyebrow={t("payments")} title={t("settlementFlow")}>
             <p className="docs-body-copy">
-              The payment screen separates preparation from the irreversible wallet action. Nothing is
-              broadcast until the wallet approves the transaction.
+              {t("settlementBody")}
             </p>
             <div className="mt-7 border border-[var(--border)] bg-[var(--surface)]">
               {settlementPath.map(([labelKey, detailKey], index) => (
@@ -175,8 +168,7 @@ export async function DocsPage() {
               ))}
             </div>
             <p className="mt-5 text-xs leading-6 text-[var(--text-muted)]">
-              At review, ChaosPay estimates gas × gas price with a 20% buffer. The wallet remains the final
-              authority on the fee. If a transaction reverts, the payment fails but a network fee may still be charged.
+              {t("feeBody")}
             </p>
           </DocSection>
 
@@ -186,22 +178,19 @@ export async function DocsPage() {
                 <ReceiptText className="size-5 text-[var(--action)]" />
                 <h3 className="mt-5 text-base font-semibold">{t("browserReceipt")}</h3>
                 <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
-                  Useful for people: amount, sender, recipient, memo, reference, fee, status, and hash. It can
-                  be printed or saved as PDF and exported as JSON.
+                  {t("browserReceiptBody")}
                 </p>
               </div>
               <div className="border border-[var(--border)] bg-[var(--surface)] p-5">
                 <ShieldCheck className="size-5 text-[var(--positive)]" />
                 <h3 className="mt-5 text-base font-semibold">{t("onchainReceipt")}</h3>
                 <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
-                  Useful for verification: transaction status, block, token contract, Transfer event, addresses,
-                  value, and actual gas used. ArcScan can verify it without trusting ChaosPay.
+                  {t("onchainReceiptBody")}
                 </p>
               </div>
             </div>
             <Callout tone="success" title={t("verificationRule")}>
-              Match the network, token contract, recipient, amount, and successful status. A screenshot or a
-              locally saved memo is not an independent settlement record.
+              {t("matchBody")}
             </Callout>
           </DocSection>
 
@@ -211,8 +200,7 @@ export async function DocsPage() {
               <TrustList title={t("cannotTitle")} items={[t("cannot1"), t("cannot2"), t("cannot3"), t("cannot4")]} negative />
             </div>
             <Callout tone="warning" title={t("beforeSignature")}>
-              Verify the full recipient address, USDC amount, Arc network, and wallet prompt. Blockchain
-              transfers are not reversed by ChaosPay.
+              {t("beforeSignBody")}
             </Callout>
           </DocSection>
 
@@ -223,12 +211,11 @@ export async function DocsPage() {
               <ConstantRow label="RPC" value={ARC_RPC_URL} href={ARC_RPC_URL} />
               <ConstantRow label={t("explorer")} value={ARC_EXPLORER_URL} href={ARC_EXPLORER_URL} />
               <ConstantRow label={t("usdcErc20")} value={ARC_USDC_ADDRESS} />
-              <ConstantRow label="USDC decimals" value={String(ARC_USDC_DECIMALS)} />
+              <ConstantRow label={t("usdcDecimalsLabel")} value={String(ARC_USDC_DECIMALS)} />
               <ConstantRow label={t("eurcErc20")} value={ARC_EURC_ADDRESS} />
             </div>
             <p className="mt-5 text-xs leading-6 text-[var(--text-muted)]">
-              These values are imported from the same constants used by the payment code, so the documentation
-              cannot silently describe a different network configuration.
+              {t("constantsNote")}
             </p>
           </DocSection>
 
@@ -245,17 +232,14 @@ export async function DocsPage() {
 
           <DocSection id="features" index="09" eyebrow={t("reference")} title={t("otherFeatures")}>
             <div className="grid gap-px border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
-              <FeatureNote title="Swap" meta={`${DEFAULT_SLIPPAGE_BPS / 100}% DEFAULT SLIPPAGE`}>
-                {/* The space after the list is explicit: JSX drops the literal
-                    one here, which rendered as &quot;EURCon Arc&quot;. */}
-                Exchange {SWAP_TOKENS.join(", ")}{" "}
-                on Arc through Circle&apos;s Swap Kit. It is a same-chain swap, not a ChaosPay exchange contract.
+              <FeatureNote title={t("featSwap")} meta={t("featSwapMeta", { percent: DEFAULT_SLIPPAGE_BPS / 100 })}>
+                {t("featSwapBody", { tokens: SWAP_TOKENS.join(", ") })}
               </FeatureNote>
               <FeatureNote title={t("featContacts")} meta={t("featContactsMeta")}>
-                Save frequently used recipients under a name. Contacts stay in this browser and are never an address-ownership claim.
+                {t("featContactsBody")}
               </FeatureNote>
               <FeatureNote title={t("featAssistant")} meta={t("featAssistantMeta")}>
-                Read balances, estimate transfers, and look up transactions. It has no signing or sending tool and cannot see local payment history.
+                {t("featAssistantBody")}
               </FeatureNote>
             </div>
           </DocSection>

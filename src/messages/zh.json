@@ -24,7 +24,9 @@
     "askAssistant": "询问助手",
     "assistantUnavailable": "助手不可用",
     "expandSidebar": "展开侧边栏",
-    "collapseSidebar": "收起侧边栏"
+    "collapseSidebar": "收起侧边栏",
+    "connectWallet": "连接钱包",
+    "connectShort": "连接"
   },
   "funding": {
     "testnetTitle": "从测试 USDC 开始",
@@ -140,7 +142,11 @@
     "stillOnClipboard": "链接仍保留在复制按钮上。",
     "dismissNotification": "关闭通知",
     "qrAlt": "以二维码形式呈现的收款链接",
-    "copyBlocked": "复制被阻止"
+    "copyBlocked": "复制被阻止",
+    "tablistAria": "付款操作",
+    "linkCaution": "任何人都能生成收款链接。付款前请把这个地址与发给你链接的人核对。",
+    "amountLabelRow": "金额",
+    "reviewPayment": "核对付款"
   },
   "swap": {
     "eyebrow": "在 Arc 上兑换",
@@ -180,7 +186,10 @@
     "loadFailed": "无法加载兑换模块。请检查网络后重试。",
     "noticeTestnet": "这些是 Arc 测试网代币，不具有货币价值。",
     "noticeMainnet": "这些 Arc 代币具有真实货币价值。",
-    "slippageSetIn": "滑点在<settings>设置</settings>中调整。"
+    "slippageSetIn": "滑点在<settings>设置</settings>中调整。",
+    "youReceiveShort": "你收到",
+    "tokenFor": "{field}的代币",
+    "amountFor": "{field}的金额"
   },
   "footer": {
     "description": "一个非托管的收付款工作区，用于创建收款请求并在 Arc 上完成 USDC 结算，速度快且确定性可预期。",
@@ -244,12 +253,17 @@
     "saved": "联系人已保存。",
     "updated": "联系人已更新。",
     "removed": "联系人已删除。",
-    "saveFailed": "无法保存联系人。"
+    "saveFailed": "无法保存联系人。",
+    "addressHint": "请与收款人核对该地址。保存的名称不代表地址归属。",
+    "savedCount": "已保存 {count}",
+    "shownCount": "显示 {count}",
+    "remove": "删除",
+    "cancelEdit": "取消编辑"
   },
   "activity": {
     "eyebrow": "你的交易记录",
     "recentPayments": "最近付款",
-    "viewAll": "查看全部付款",
+    "viewAll": "查看全部 →",
     "connectPrompt": "连接钱包以查看你的付款",
     "emptyTitle": "你的第一笔付款从这里开始",
     "emptyBody": "发送 USDC 之后，交易及其确认状态会显示在这里。",
@@ -267,7 +281,13 @@
     "savedRequests": "已保存的收款请求",
     "paid": "已支付",
     "checkedToBlock": "已扫描至区块",
-    "matchingNote": "只有在本应用打开时才会进行匹配。"
+    "matchingNote": "只有在本应用打开时才会进行匹配。",
+    "storageNote": "从该钱包发出，保存在本浏览器中。并非完整的链上历史。",
+    "autoRefresh": " 未确认的付款会自动刷新。",
+    "emptyLinks": "你的收款链接会显示在这里。",
+    "paidCount": "已支付 {settled}/{total}",
+    "records": "{count} 条记录",
+    "toPrefix": "至 {address}"
   },
   "workspace": {
     "eyebrow": "你的收付款工作区",
@@ -286,7 +306,12 @@
     "step3": "先发一笔小额",
     "step4": "在 ArcScan 上核实回执",
     "confirmed": "已确认",
-    "awaitingReceipt": "等待链上回执"
+    "awaitingReceipt": "等待链上回执",
+    "description": "让你的数字美元待得更安稳的地方。",
+    "pending": "处理中",
+    "mainnetNote": "主网 USDC 具有真实价值。请从跨链桥或 DEX 获取，而不是测试网水龙头。签名与核对始终在你的钱包中进行。",
+    "steps": "{n} 步",
+    "fundingCta": "如何获取 Arc 上的 USDC"
   },
   "receipt": {
     "title": "付款回执",
@@ -307,7 +332,10 @@
     "statusPaid": "已支付",
     "statusAwaiting": "等待回执",
     "statusNotCompleted": "未完成",
-    "usdcPayment": "USDC 付款"
+    "usdcPayment": "USDC 付款",
+    "verificationNote": "上方的说明与参考编号由 ChaosPay 保存，不会写入链上。交易哈希才是权威记录；任何人都可以在上方地址处核实。",
+    "valueNote": "Arc 上的 USDC 可能具有货币价值。本文件是一次转账的记录，并非付款要求或税务发票。",
+    "amountHeading": "金额"
   },
   "pulse": {
     "pulseTitle": "结算脉冲",
@@ -326,7 +354,23 @@
     "transaction": "交易",
     "noWallet": "未连接钱包",
     "settlementStage": "结算阶段",
-    "confirmedCount": "已确认 {count} 笔"
+    "confirmedCount": "已确认 {count} 笔",
+    "rhythmV_offline": "未连接钱包",
+    "rhythmN_offline": "待机",
+    "rhythmV_idle": "已连接",
+    "rhythmN_idle": "空闲",
+    "rhythmV_drafting": "编辑中",
+    "rhythmN_drafting": "未签名",
+    "rhythmV_review": "核对",
+    "rhythmN_review": "等待签名",
+    "rhythmV_signing": "签名中",
+    "rhythmN_signing": "在钱包内",
+    "rhythmV_settling": "已广播",
+    "rhythmN_settling": "等待回执",
+    "rhythmV_settled": "已结算",
+    "rhythmN_settled": "链上已确认",
+    "rhythmV_failed": "已回滚",
+    "rhythmN_failed": "未结算"
   },
   "invoices": {
     "eyebrow": "发票",
@@ -364,7 +408,10 @@
     "savedLocally": "本地保存",
     "display": "显示",
     "theme": "主题",
-    "reset": "重置"
+    "reset": "重置",
+    "slippageHint": "滑点越高越容易成交，但可能收到更少的代币。",
+    "themeHint": "在桌面端使用顶栏图标切换浅色和深色。",
+    "toggleTheme": "切换主题"
   },
   "assistant": {
     "title": "ChaosPay 助手",
@@ -386,7 +433,12 @@
     "timeout": "助手响应时间过长。请重试，或换一个更简短的问题。",
     "source": "来源",
     "checked": "查询于",
-    "verifyOnArcScan": "在 ArcScan 上核实 ↗"
+    "verifyOnArcScan": "在 ArcScan 上核实 ↗",
+    "useConnected": "使用已连接的钱包",
+    "connectFirst": "— 请先连接钱包",
+    "contextNotice": "你分享的地址以及公开查询结果会发送给 AI。付款历史仍保留在本浏览器中。",
+    "introduction": "查询 USDC 余额、预估一笔付款，或在 Arc 上查找交易。提供钱包地址或交易哈希即可开始。查询操作绝不会发送款项。",
+    "disclaimer": "回答可能有误。凡是涉及资金的内容，请与应用本身和 ArcScan 核对。"
   },
   "limits": {
     "l1": "这是主网上的 MVP，并非生产级支付处理系统。",
@@ -397,7 +449,7 @@
     "l6": "浏览器测试针对模拟钱包和 RPC 运行，不能证明真实结算。"
   },
   "landing": {
-    "network": "Arc 主网",
+    "network": "网络",
     "custody": "非托管结算",
     "eyebrow": "签一次 · 数秒结算 · 留存凭证",
     "titleA": "链接就是承诺。",
@@ -456,7 +508,14 @@
     "cap7Link": "打开兑换",
     "cap5Meta": "联系人",
     "cap6Body": "它可以查询余额、估算转账、查找交易，并附上区块号与查询时间作为依据。它没有任何可以签名或转账的工具。",
-    "capabilitiesTitle": "这里列出的都已完成。没有任何暗示。"
+    "capabilitiesTitle": "这里列出的都已完成。没有任何暗示。",
+    "capabilitiesAria": "ChaosPay 今天能做什么",
+    "pulseTitle": "结算脉冲",
+    "pulseCaption": "实测推导，非预测",
+    "chain": "链",
+    "steps": "{n} 步",
+    "gas": "Gas",
+    "resting": "待机"
   },
   "docs": {
     "onThisPage": "本页内容",
@@ -565,7 +624,23 @@
     "verificationRule": "验证规则",
     "walletSigned": "钱包已签名",
     "referenceLabel": "参考编号",
-    "whatIsChaosPayQ": "ChaosPay 是什么？"
+    "whatIsChaosPayQ": "ChaosPay 是什么？",
+    "heroEyebrow": "[DOC.001] · 协议参考",
+    "heroTitle": "付款以凭证收尾。",
+    "intro": "ChaosPay 是一个非托管的工作区，用于在 Arc 上发送和请求 USDC。本参考说明这个应用做了什么、你的钱包签署了什么，以及哪些事实可以独立验证。",
+    "whatItIs": "一个基于浏览器的付款界面。它构造一笔标准的 USDC 转账，请你的钱包签名，广播到 Arc，并把由此产生的交易哈希留作回执。",
+    "notProcessor": "付款直接使用 USDC 代币合约。ChaosPay 是构造并记录转账的界面；它不是托管方、银行或支付处理机构。",
+    "requestBody": "一个收款请求把收款人、金额、可选备注和参考编号带在可分享的收银台 URL 中。付款方无需注册即可打开，并自行决定何时连接钱包并签名。",
+    "linkCaution": "链接内容对任何持有该 URL 的人都是可读可改的。请把链上的转账回执——而不是收款请求页面——当作资金已转移的凭证。",
+    "settlementBody": "付款页面把准备工作与不可撤销的钱包操作分开。在钱包批准交易之前，不会广播任何内容。",
+    "feeBody": "在核对阶段，ChaosPay 以 gas × gas 价格再加 20% 缓冲进行预估。手续费的最终决定权仍在钱包。如果交易回滚，付款失败，但网络费可能仍被扣除。",
+    "browserReceiptBody": "便于人阅读：金额、付款方、收款方、备注、参考编号、手续费、状态和哈希。可打印、可保存为 PDF，也可导出为 JSON。",
+    "onchainReceiptBody": "便于验证：交易状态、区块、代币合约、Transfer 事件、地址、数值以及实际消耗的 gas。ArcScan 无需信任 ChaosPay 即可核实。",
+    "matchBody": "请核对网络、代币合约、收款人、金额以及成功状态。截图或本地保存的备注并不是独立的结算记录。",
+    "beforeSignBody": "请核对完整的收款地址、USDC 金额、Arc 网络以及钱包提示。区块链转账无法由 ChaosPay 撤销。",
+    "constantsNote": "这些数值与付款代码使用的是同一组常量，因此文档不可能在你不知情的情况下描述另一套网络配置。",
+    "publicMainnet": "公开主网",
+    "usdcDecimalsLabel": "USDC 小数位"
   },
   "pages": {
     "eyebrow": "你的收付款工作区",
@@ -587,5 +662,11 @@
     "swapSubtitle": "正在准备 Arc 兑换工作区。",
     "preferences": "偏好设置",
     "settingsPageSubtitle": "主题、路由偏好、链默认值以及兑换执行设置。"
+  },
+  "error": {
+    "eyebrow": "出错了",
+    "title": "此页面发生错误。",
+    "body": "没有任何内容被发送或签名。请重新加载后重试——如果反复出现，请记下出错前你正在做什么（尤其是调整窗口大小或打开开发者工具）。",
+    "retry": "重试"
   }
 }
