@@ -6,8 +6,9 @@ ChaosPay is a non-custodial USDC payment MVP built for the Arc network. It lets 
 - switch safely to Arc mainnet (Arc Testnet is still supported — see below);
 - send USDC through its 6-decimal ERC-20 interface;
 - create shareable payment-request links, with a QR code for paying from a phone;
+- settle payment links through a non-custodial mainnet registry in one transaction using EIP-2612;
 - save pending and confirmed payment records with ArcScan links in local browser storage;
-- see a saved request marked paid when a matching USDC transfer reaches it on Arc;
+- see a saved request marked paid from its `InvoicePaid` event (legacy links still reconcile transfers);
 - print or save a receipt as PDF for any recorded payment;
 - keep named recipient contacts in the browser; and
 - swap between the Circle stablecoins Arc carries, through Circle's Swap Kit;
@@ -19,11 +20,14 @@ ChaosPay is a non-custodial USDC payment MVP built for the Arc network. It lets 
 ChaosPay is deployed on **Arc mainnet** at [chaospayment.xyz](https://chaospayment.xyz).
 Arc mainnet has been live since 2026-09-16.
 
+Its non-custodial `InvoiceRegistry` is deployed at
+[`0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35`](https://explorer.arc.io/address/0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35).
+The contract has no owner, admin or upgrade path and transfers stablecoins directly from payer to
+issuer without holding funds.
+
 The network is chosen by `NEXT_PUBLIC_ARC_NETWORK` (`mainnet` or `testnet`), which Next.js inlines
 at build time. `.env.local` currently sets `mainnet`, so `npm run dev` runs against **mainnet too** —
 with real USDC. Set it to `testnet` if you want a throwaway network locally.
-
-## Local development
 
 The navigation bar carries the live USDC balance, the current network with a switch button when the
 wallet is elsewhere, and a badge for payments still awaiting a receipt.
@@ -49,6 +53,7 @@ create and revisit links at `/requests`, open shared links at `/checkout`, keep 
 | --- | --- | --- | --- |
 | `GEMINI_API_KEY` | server | runtime | The assistant hides itself; everything else works |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | client | **build** | Only injected wallets (MetaMask); phone wallets cannot connect |
+| `NEXT_PUBLIC_ARC_REGISTRY_MAINNET` | client | **build** | Payment links fall back to direct ERC-20 transfers |
 | `COINGECKO_API_KEY` | server | — | Nothing. No code reads it yet; the token list keeps CoinGecko ids for a future price view |
 
 `NEXT_PUBLIC_*` values are inlined into the bundle by `next build`, so setting one at runtime has no
@@ -102,14 +107,18 @@ npm run build
 
 ## Current scope
 
-This is a public-testnet MVP, not a production payment processor. Payment memos and references are
-encoded only in the editable shared URL/local receipt; they are not written onchain. History and
-requests are local to this browser, capped at 200 each. A saved request is marked paid by an
-exact-amount match found while the app is open, within a bounded window of recent blocks; the
-requests page prints how far it has looked rather than implying "unpaid" means unpaid.
-Browser tests use a mock wallet/RPC and do not prove live-network settlement. Future milestones can
-add CCTP funding, Circle Gateway unified balances, embedded wallets, merchant webhooks, and an
-optional invoice/escrow contract after security review.
+This is an Arc-mainnet MVP, not a licensed payment processor. It is non-custodial: wallets sign their
+own transactions and the registry moves stablecoins directly to the recipient. Payment memos and
+references remain off-chain while a commitment to their terms is recorded in the registry.
+
+History and requests are local to the browser, capped at 200 each. Registry-backed requests reconcile
+from `InvoicePaid`; older transfer-only links use a bounded exact-amount matcher and report how far it
+searched. There is no hosted account system, merchant backend or webhook service yet.
+
+The registry was exercised with real mainnet transactions covering creation, partial and full
+payment, cancellation, one-transaction EIP-2612 settlement and expected reverts. Unit tests, browser
+tests and the reproducible smoke script remain in the public repository. Future milestones can add
+CCTP funding, Circle Gateway unified balances, embedded wallets and merchant webhooks.
 
 [The roadmap](docs/roadmap.md) carries where the project is going and why — the product it is
 becoming, the four architectural decisions that follow from it, and what is deliberately not being
