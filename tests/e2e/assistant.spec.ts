@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { arcTxUrl, ARC_CHAIN_ID_HEX, ARC_NETWORK_NAME, ARC_RPC_GLOB } from "./arc-mock";
 
 /** Answer the widget's request without involving the model provider. */
 async function stubAssistant(
@@ -77,7 +78,7 @@ test("RPC evidence stays visible when explanation fails and on the next question
   const hash = `0x${"ab".repeat(32)}`;
   const evidence = {
     tool: "getTransactionStatus", title: "Transaction status", checkedAt: "2026-09-09T08:30:00.000Z",
-    source: "Arc Testnet RPC", ok: true, url: `https://testnet.arcscan.app/tx/${hash}`,
+    source: "Arc RPC", ok: true, url: arcTxUrl(hash),
     rows: [{ label: "Status", value: "Pending — no receipt yet" }],
   };
   let count = 0;
@@ -88,7 +89,7 @@ test("RPC evidence stays visible when explanation fails and on the next question
     expect(payload).not.toHaveProperty("walletAddress");
     expect(payload.messages.every((message: Record<string, unknown>) => !message.evidence)).toBe(true);
     const events = count === 1 ? [
-      { type: "status", text: "Checking Arc Testnet…" }, { type: "evidence", evidence },
+      { type: "status", text: `Checking ${ARC_NETWORK_NAME}…` }, { type: "evidence", evidence },
       { type: "error", text: "The explanation could not finish." }, { type: "done" },
     ] : [{ type: "text", text: "Please check again." }, { type: "done" }];
     await route.fulfill({ headers: { "Content-Type": "application/x-ndjson" }, body: events.map(event => JSON.stringify(event)).join("\n") + "\n" });
@@ -98,7 +99,7 @@ test("RPC evidence stays visible when explanation fails and on the next question
   await panel.getByRole("textbox", { name: "Your question" }).fill(`Check ${hash}`);
   await panel.getByRole("button", { name: "Send question" }).click();
   await expect(panel.getByText("Pending — no receipt yet", { exact: true })).toBeVisible();
-  await expect(panel.getByText("Source: Arc Testnet RPC")).toBeVisible();
+  await expect(panel.getByText("Source: Arc RPC")).toBeVisible();
   await expect(panel.locator("time")).toHaveAttribute("datetime", evidence.checkedAt);
   await expect(panel.getByRole("link", { name: "Verify on ArcScan" })).toHaveAttribute("href", evidence.url);
   await expect(panel.getByRole("alert")).toContainText("explanation could not finish");
@@ -110,13 +111,13 @@ test("RPC evidence stays visible when explanation fails and on the next question
 
 test("connected wallet is shared only while the user enables it", async ({ page }) => {
   const address = "0x3333333333333333333333333333333333333333";
-  await page.addInitScript(address => {
+  await page.addInitScript(({ address, arcChainId }) => {
     let authorized = false;
     Object.assign(window, { ethereum: {
       isMetaMask: true, isConnected: () => true,
       on: () => {}, removeListener: () => {},
       request: async ({ method }: { method: string }) => {
-        if (method === "eth_chainId") return "0x4cef52";
+        if (method === "eth_chainId") return arcChainId;
         if (method === "eth_accounts") return authorized ? [address] : [];
         if (method === "eth_requestAccounts") { authorized = true; return [address]; }
         if (method === "wallet_requestPermissions" || method === "wallet_getPermissions") { authorized = true; return [{ parentCapability: "eth_accounts" }]; }
@@ -124,8 +125,8 @@ test("connected wallet is shared only while the user enables it", async ({ page 
         throw new Error(`Unexpected wallet method: ${method}`);
       },
     } });
-  }, address);
-  await page.route("https://rpc.testnet.arc.io/**", async route => {
+  }, { address, arcChainId: ARC_CHAIN_ID_HEX as string });
+  await page.route(ARC_RPC_GLOB, async route => {
     const payload = route.request().postDataJSON();
     const reply = (rpc: { id: number; method: string }) => ({ jsonrpc: "2.0", id: rpc.id, result: rpc.method === "eth_call" ? `0x${"0".repeat(64)}` : "0x0" });
     await route.fulfill({ json: Array.isArray(payload) ? payload.map(reply) : reply(payload) });

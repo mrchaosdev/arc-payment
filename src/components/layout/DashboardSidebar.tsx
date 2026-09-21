@@ -18,16 +18,18 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { ARC, ARC_FAUCET_URL } from "@/lib/arc";
+import { ARC, ARC_FUNDING } from "@/lib/arc";
 import { useAssistant } from "@/store/assistant";
 import { BrandMark } from "@/components/ui/BrandMark";
 
 // Circle's faucet mints testnet USDC and nothing else, so on mainnet the card
 // sends people to the funding guide instead of naming a token it cannot hand
 // out. Only the destination is fixed at build time; the wording is translated.
-const faucet = ARC.isTestnet
-  ? { keyPrefix: "testnet", href: ARC_FAUCET_URL }
-  : { keyPrefix: "mainnet", href: "/docs" };
+//
+// The destination comes from ARC_FUNDING, which every other surface already
+// reads. This file used to repeat the choice, and the copy drifted: it pointed
+// at "/docs" without the anchor and opened an internal page in a new tab.
+const faucet = { keyPrefix: ARC.isTestnet ? "testnet" : "mainnet", ...ARC_FUNDING };
 
 // Adapted from ChaoUi/navigation/dashboard-sidebar. Next links preserve native
 // navigation semantics; CSS width transitions respect reduced motion.
@@ -119,14 +121,14 @@ export function DashboardSidebar() {
           </p>
           <a
             href={faucet.href}
-            target="_blank"
-            rel="noreferrer"
+            target={faucet.isExternal ? "_blank" : undefined}
+            rel={faucet.isExternal ? "noreferrer" : undefined}
             className="dashboard-sidebar-faucet-link mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--action)]"
           >
             {tf(`${faucet.keyPrefix}Action`)} <ArrowUpRight size={12} />
           </a>
         </div>
-      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={faucet.href} target="_blank" rel="noreferrer" aria-label={tf(`${faucet.keyPrefix}Action`)} title={tf(`${faucet.keyPrefix}Action`)}><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
+      ) : <a className="dashboard-sidebar-faucet-shortcut mx-3 mb-3 grid min-h-10 place-items-center border border-[var(--border)] text-[var(--action)]" href={faucet.href} target={faucet.isExternal ? "_blank" : undefined} rel={faucet.isExternal ? "noreferrer" : undefined} aria-label={tf(`${faucet.keyPrefix}Action`)} title={tf(`${faucet.keyPrefix}Action`)}><ArrowUpRight className="dashboard-sidebar-faucet-icon size-4" /></a>}
 
       <div className="dashboard-sidebar-footer flex items-center justify-between border-t border-[var(--border)] p-3">
         {!collapsed && (

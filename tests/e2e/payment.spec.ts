@@ -1,12 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
 import { decodeFunctionData, erc20Abi } from "viem";
+import { ARC_CHAIN_ID_HEX, ARC_RPC_GLOB } from "./arc-mock";
 
 const sender = "0x3333333333333333333333333333333333333333";
 const recipient = "0x1111111111111111111111111111111111111111";
 const hash = `0x${"ab".repeat(32)}`;
 
 async function wallet(page: Page, { pending = false, reject = false } = {}) {
-  await page.addInitScript(({ sender, hash, reject }) => {
+  await page.addInitScript(({ sender, hash, reject, arcChainId }) => {
     const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
     const transactions: unknown[] = [];
     // addInitScript re-runs on every navigation, so a plain closure variable would forget
@@ -20,7 +21,7 @@ async function wallet(page: Page, { pending = false, reject = false } = {}) {
       on: (event: string, callback: (...args: unknown[]) => void) => { (listeners[event] ??= []).push(callback); },
       removeListener: (event: string, callback: (...args: unknown[]) => void) => { listeners[event] = listeners[event]?.filter(fn => fn !== callback); },
       request: async ({ method, params }: { method: string; params?: unknown[] }) => {
-        if (method === "eth_chainId") return "0x4cef52";
+        if (method === "eth_chainId") return arcChainId;
         // Real wallets only expose accounts via eth_accounts after the site has been
         // granted permission; returning them unconditionally would make wagmi auto-reconnect
         // on load and skip the "Connect wallet" step this test flow depends on.
@@ -37,12 +38,12 @@ async function wallet(page: Page, { pending = false, reject = false } = {}) {
         throw Object.assign(new Error(`Unsupported method ${method}`), { code: 4200 });
       },
     } });
-  }, { sender, hash, reject });
-  await page.route("https://rpc.testnet.arc.io/**", async route => {
+  }, { sender, hash, reject, arcChainId: ARC_CHAIN_ID_HEX as string });
+  await page.route(ARC_RPC_GLOB, async route => {
     const payload = route.request().postDataJSON();
     const answer = (rpc: { id: number; method: string }) => {
       const values: Record<string, unknown> = {
-        eth_chainId: "0x4cef52", eth_blockNumber: "0x10", eth_gasPrice: "0x4a817c800", eth_estimateGas: "0xc350",
+        eth_chainId: ARC_CHAIN_ID_HEX, eth_blockNumber: "0x10", eth_gasPrice: "0x4a817c800", eth_estimateGas: "0xc350",
         eth_getBalance: "0x56bc75e2d63100000", eth_call: `0x${BigInt(100000000).toString(16).padStart(64, "0")}`,
         eth_getTransactionCount: "0x0",
         eth_getTransactionReceipt: pending ? null : {

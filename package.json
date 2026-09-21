@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "contracts:build": "node scripts/compile-contracts.mjs",
+    "contracts:deploy": "node scripts/deploy-registry.mjs",
+    "contracts:smoke": "node scripts/smoke-registry.mjs"
   },
   "dependencies": {
     "@circle-fin/adapter-viem-v2": "^1.18.0",
@@ -35,6 +38,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "solc": "^0.8.24",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

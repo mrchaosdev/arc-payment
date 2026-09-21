@@ -11,6 +11,7 @@ registerHooks({ resolve(specifier, context, next) {
 } });
 const { runPaymentTool } = await import("../src/lib/assistant/tools.ts");
 const { readAssistantStream } = await import("../src/lib/assistant/protocol.ts");
+const { ARC } = await import("../src/lib/arc.ts");
 const from = "0x3333333333333333333333333333333333333333";
 const to = "0x1111111111111111111111111111111111111111";
 const hash = `0x${"ab".repeat(32)}`;
@@ -38,9 +39,9 @@ test("reads exact balance at a recorded block and emits source metadata", async 
     return 123456789n;
   } }));
   assert.equal(value(result, "Balance"), "123.456789 USDC");
-  assert.equal(result.source, "Arc Testnet RPC");
+  assert.equal(result.source, "Arc RPC");
   assert.ok(Number.isFinite(Date.parse(result.checkedAt)));
-  assert.equal(result.url, `https://testnet.arcscan.app/address/${from}`);
+  assert.equal(result.url, `${ARC.explorerUrl}/address/${from}`);
 });
 
 test("missing or invented addresses, extra params, unknown tools fail before RPC", async () => {

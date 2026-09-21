@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { Address, Hex } from "viem";
-import { answerCall, blockAt, transferLog } from "./arc-mock";
+import { answerCall, arcTxUrl, isArcRpc, ARC_CHAIN_ID_HEX, blockAt, transferLog } from "./arc-mock";
 
 const payee = "0x3333333333333333333333333333333333333333" as Address;
 const payer = "0x1111111111111111111111111111111111111111" as Address;
@@ -21,7 +21,7 @@ const request = (id: string, amount: string, reference: string) => ({
  * answer with exactly one incoming transfer.
  */
 async function workspace(page: import("@playwright/test").Page) {
-  await page.addInitScript(({ payee, requests }) => {
+  await page.addInitScript(({ payee, requests, arcChainId }) => {
     localStorage.setItem("chaospay-workspace-v1", JSON.stringify({ version: 0, state: { payments: [], requests } }));
     const listeners: Record<string, ((data: unknown) => void)[]> = {};
     Object.assign(window, { ethereum: {
@@ -29,7 +29,7 @@ async function workspace(page: import("@playwright/test").Page) {
       on: (event: string, fn: (data: unknown) => void) => { (listeners[event] ??= []).push(fn); },
       removeListener: (event: string, fn: (data: unknown) => void) => { listeners[event] = listeners[event]?.filter(item => item !== fn); },
       request: async ({ method }: { method: string }) => {
-        if (method === "eth_chainId") return "0x4cef52";
+        if (method === "eth_chainId") return arcChainId;
         if (method === "eth_accounts") return sessionStorage.getItem("reconcile-authorized") ? [payee] : [];
         if (method === "eth_requestAccounts") { sessionStorage.setItem("reconcile-authorized", "1"); return [payee]; }
         if (method === "wallet_getPermissions" || method === "wallet_requestPermissions") {
@@ -40,13 +40,13 @@ async function workspace(page: import("@playwright/test").Page) {
         throw new Error(`Unexpected wallet action: ${method}`);
       },
     } });
-  }, { payee, requests: [request("r-paid", "12.5", "INV-PAID"), request("r-open", "40", "INV-OPEN")] });
+  }, { payee, requests: [request("r-paid", "12.5", "INV-PAID"), request("r-open", "40", "INV-OPEN")], arcChainId: ARC_CHAIN_ID_HEX as string });
 
-  await page.route(/https:\/\/rpc\.testnet\.arc\.io/, async route => {
+  await page.route(isArcRpc, async route => {
     const payload = route.request().postDataJSON();
     const reply = (rpc: { id: number; method: string; params?: unknown }) => {
       let result: unknown = null;
-      if (rpc.method === "eth_chainId") result = "0x4cef52";
+      if (rpc.method === "eth_chainId") result = ARC_CHAIN_ID_HEX;
       else if (rpc.method === "eth_getBalance") result = "0x0";
       else if (rpc.method === "eth_blockNumber") result = `0x${HEAD.toString(16)}`;
       else if (rpc.method === "eth_call") result = answerCall(rpc.params);
@@ -81,7 +81,7 @@ test("an exact incoming transfer settles the request it paid, and only that one"
   // The receipt is a link to a transfer that is on chain, not a status the app invented.
   await expect(paid.locator(".saved-requests-settled-explorer")).toHaveAttribute(
     "href",
-    `https://testnet.arcscan.app/tx/${paidHash}`,
+    arcTxUrl(paidHash),
   );
   // A cleared request stops offering its link, so it cannot be paid twice.
   await expect(paid.getByRole("button", { name: "Copy link" })).toHaveCount(0);

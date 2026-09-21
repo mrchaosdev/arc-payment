@@ -8,14 +8,28 @@ gặp**, và **việc còn lại**.
 
 ## Trạng thái
 
-Toàn bộ kiểm tra đang xanh:
+Cập nhật 2026-09-21. **Không còn toàn xanh** — xem cột ghi chú.
 
-| Lệnh | Kết quả |
-| --- | --- |
-| `npm run build` | thành công |
-| `npm run lint` | sạch |
-| `npm test` | 30/30 |
-| `npm run test:e2e` | 26/26 |
+| Lệnh | Kết quả | Ghi chú |
+| --- | --- | --- |
+| `npm run build` | thành công | xoá `.next` trước nếu type check báo lỗi ở `.next/dev/types` |
+| `npm run lint` | 12 error, 18 warning | **toàn bộ 12 error** đến từ `tmp-diff.js`, `tmp-fix-eurc.js`, `tmp-verify-eurc.js` — ba file tạm đang bị git track |
+| `npm test` | 39/39 | |
+| `npm run test:e2e` | 29/29 | trước đó 15/29 |
+
+14 test e2e từng đỏ, và cả ba nguyên nhân đều là **một quyết định bị chép ra nhiều bản rồi trôi**:
+
+1. Bộ test ghim chain id, host RPC và explorer của testnet trong khi app đã sang mainnet, nên
+   `page.route` chặn một URL app không bao giờ gọi — mọi lời gọi rơi thẳng ra chain thật. Giờ tất
+   cả đọc từ `ARC` qua `tests/e2e/arc-mock.ts`, nên bộ test đi theo `NEXT_PUBLIC_ARC_NETWORK`.
+2. `answerCall` destructure `params` nên ném `params is not iterable` với những method không có
+   tham số. Lỗi này nằm im suốt thời gian mock không khớp URL, và chỉ lộ ra khi mock chạy thật.
+3. `DashboardSidebar` tự khai đích đến thay vì đọc `ARC_FUNDING` — **lỗi thật trong app**, không
+   phải lỗi test: trên mainnet nó trỏ `/docs` mất anchor và mở trang nội bộ trong tab mới.
+
+Những gì Arc thực sự làm — hai emitter USDC, block trùng timestamp, sàn phí 20 Gwei, permit — đo
+thật và ghi ở [arc-onchain.md](arc-onchain.md), cùng với contract `InvoiceRegistry`. Quy trình
+deploy contract đó: [deploy-registry.md](deploy-registry.md).
 
 Chưa commit tại thời điểm ghi: đối soát yêu cầu thanh toán (`lib/reconcile.ts`,
 `hooks/useRequestReconciliation.ts`, trạng thái `settlement` trong `store/payments`, giao diện

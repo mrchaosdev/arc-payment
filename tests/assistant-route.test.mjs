@@ -9,6 +9,7 @@ registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { POST } = await import("../src/app/api/chat/route.ts");
+const { ARC } = await import("../src/lib/arc.ts");
 const walletAddress = "0x3333333333333333333333333333333333333333";
 
 test("route executes the planned read, returns evidence and passes matching results to explanation", async () => {
@@ -20,7 +21,7 @@ test("route executes the planned read, returns evidence and passes matching resu
   globalThis.fetch = async (input, options) => {
     const url = String(input instanceof Request ? input.url : input);
     const body = JSON.parse(options?.body ?? (input instanceof Request ? await input.text() : "{}"));
-    if (url.startsWith("https://rpc.testnet.arc.io")) {
+    if (url.startsWith(ARC.rpcUrl)) {
       rpcMethods.push(body.method);
       const result = body.method === "eth_blockNumber" ? "0x10" : `0x${(123456789n).toString(16).padStart(64, "0")}`;
       return Response.json({ jsonrpc: "2.0", id: body.id, result });
@@ -51,7 +52,7 @@ test("route executes the planned read, returns evidence and passes matching resu
     assert.equal(modelRequests[1].generation_config.tool_choice, "none");
     const result = modelRequests[1].input.find(step => step.type === "function_result");
     assert.equal(result.call_id, "balance-call");
-    assert.equal(JSON.parse(result.result).source, "Arc Testnet RPC");
+    assert.equal(JSON.parse(result.result).source, "Arc RPC");
   } finally {
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.GEMINI_API_KEY;

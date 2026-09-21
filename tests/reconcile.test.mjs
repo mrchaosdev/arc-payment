@@ -14,7 +14,7 @@ const payer = "0xBbBBbbBBbBBBBbbBbBbBBbbBbBbbbBbBBBbbbBBB";
 const other = "0xCcccCCCCcCCCcCcCCCcCcCccCcCCCcCcccCcCCcC";
 
 const request = (over = {}) => ({ id: "r1", to: me, amount: "10", createdAt: 1_000, ...over });
-const transfer = (over = {}) => ({ hash: "0xhash1", from: payer, to: me, units: 10_000_000n, at: 2_000, logIndex: 0, ...over });
+const transfer = (over = {}) => ({ hash: "0xhash1", from: payer, to: me, units: 10_000_000n, at: 2_000, blockNumber: 10, logIndex: 0, ...over });
 
 test("settles a request when an exact amount reaches it", () => {
   const matches = matchTransfers([request()], [transfer()]);
@@ -48,16 +48,37 @@ test("one payment of two identical amounts clears the older request only", () =>
 test("two identical payments clear two requests, never the same one twice", () => {
   const requests = [request({ id: "old", createdAt: 1_000 }), request({ id: "new", createdAt: 3_000 })];
   const matches = matchTransfers(requests, [
-    transfer({ hash: "0xa", at: 4_000, logIndex: 1 }),
-    transfer({ hash: "0xb", at: 4_000, logIndex: 0 }),
+    transfer({ hash: "0xa", at: 4_000, blockNumber: 10, logIndex: 1 }),
+    transfer({ hash: "0xb", at: 4_000, blockNumber: 10, logIndex: 0 }),
   ]);
   // Ordered by log index inside the block, so the first transfer clears the older request.
   assert.deepEqual(matches.map(m => [m.id, m.settlement.hash]), [["old", "0xb"], ["new", "0xa"]]);
 });
 
+test("two blocks sharing a timestamp are ordered by block, not by log index", () => {
+  // Arc stamps blocks to the second and produces two or three of them per
+  // second, so this is the ordinary case rather than a corner one. The later
+  // block's log index restarts at 0; ordering on it would put that transfer
+  // first and hand each request the other one's hash and payer.
+  const requests = [request({ id: "old", createdAt: 1_000 }), request({ id: "new", createdAt: 3_000 })];
+  const matches = matchTransfers(requests, [
+    transfer({ hash: "0xlater", at: 4_000, blockNumber: 11, logIndex: 0 }),
+    transfer({ hash: "0xearlier", at: 4_000, blockNumber: 10, logIndex: 7 }),
+  ]);
+  assert.deepEqual(matches.map(m => [m.id, m.settlement.hash]), [["old", "0xearlier"], ["new", "0xlater"]]);
+});
+
 test("an already settled request is never matched again", () => {
   const settled = request({ settlement: { hash: "0xold", from: payer, at: 1_500 } });
   assert.deepEqual(matchTransfers([settled], [transfer()]), []);
+});
+
+test("an amount finer than USDC is rejected, never rounded into a match", () => {
+  // viem's parseUnits rounds 1.9999999 to 2 USDC. Settling a 2 USDC transfer
+  // against it would record a payment of an amount neither side agreed to.
+  const requests = [request({ id: "too-precise", amount: "1.9999999" }), request({ id: "exact", amount: "2" })];
+  const matches = matchTransfers(requests, [transfer({ units: 2_000_000n, at: 3_000 })]);
+  assert.deepEqual(matches.map(m => m.id), ["exact"]);
 });
 
 test("an unparsable stored amount is skipped, not thrown on", () => {

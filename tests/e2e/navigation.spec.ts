@@ -1,13 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
-import { answerCall } from "./arc-mock";
+import { answerCall, arcAddressUrl, ARC_CHAIN_ID, ARC_CHAIN_ID_HEX, ARC_FUNDING_LINK, ARC_NETWORK_NAME, isArcRpc } from "./arc-mock";
 
 const sender = "0x3333333333333333333333333333333333333333";
 const recipient = "0x1111111111111111111111111111111111111111";
 const hash = `0x${"ab".repeat(32)}`;
 
 async function wallet(page: Page, { wrongNetwork = false, pending = false } = {}) {
-  await page.addInitScript(({ sender, recipient, hash, wrongNetwork, pending }) => {
-    let chain = wrongNetwork ? "0x1" : "0x4cef52";
+  await page.addInitScript(({ sender, recipient, hash, wrongNetwork, pending, arcChainId }) => {
+    let chain: string = wrongNetwork ? "0x1" : arcChainId;
     const listeners: Record<string, ((data: unknown) => void)[]> = {};
     if (pending) localStorage.setItem("chaospay-workspace-v1", JSON.stringify({ version: 0, state: { requests: [], payments: [
       { hash, from: sender, to: recipient, amount: "1.25", memo: "", reference: "", createdAt: Date.now(), status: "Pending" },
@@ -27,12 +27,12 @@ async function wallet(page: Page, { wrongNetwork = false, pending = false } = {}
         throw new Error(`Unexpected wallet action: ${method}`);
       },
     } });
-  }, { sender, recipient, hash, wrongNetwork, pending });
+  }, { sender, recipient, hash, wrongNetwork, pending, arcChainId: ARC_CHAIN_ID_HEX as string });
   let settled = false;
-  await page.route(/https:\/\/(rpc\.testnet\.arc\.io|cloudflare-eth\.com)/, async route => {
+  await page.route(url => isArcRpc(url) || url.hostname === "cloudflare-eth.com", async route => {
     const payload = route.request().postDataJSON();
     const reply = (rpc: { id: number; method: string; params?: unknown }) => ({ jsonrpc: "2.0", id: rpc.id, result: ({
-      eth_chainId: "0x4cef52", eth_getBalance: "0x0", eth_blockNumber: "0x10",
+      eth_chainId: ARC_CHAIN_ID_HEX, eth_getBalance: "0x0", eth_blockNumber: "0x10",
       eth_call: answerCall(rpc.params),
       eth_getTransactionReceipt: settled ? {
         transactionHash: hash, transactionIndex: "0x0", blockHash: `0x${"ef".repeat(32)}`, blockNumber: "0x10", from: sender,
@@ -53,14 +53,14 @@ test("navbar exposes exact Arc balance, copy address and switches a supported no
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await wallet(page, { wrongNetwork: true });
   await page.getByRole("button", { name: "Switch to Arc", exact: true }).click();
-  await expect(page.locator(".top-bar-network-status")).toHaveText("Arc Testnet");
+  await expect(page.locator(".top-bar-network-status")).toHaveText(ARC_NETWORK_NAME);
   await page.getByRole("button", { name: "Wallet details", exact: true }).click();
   const panel = page.locator(".top-bar-wallet-popover");
   await expect(panel).toBeVisible();
   await expect(panel.getByText(sender, { exact: true })).toBeVisible();
   await panel.getByRole("button", { name: "Copy address" }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(sender);
-  await expect(panel.getByRole("link", { name: "ArcScan" })).toHaveAttribute("href", `https://testnet.arcscan.app/address/${sender}`);
+  await expect(panel.getByRole("link", { name: "ArcScan" })).toHaveAttribute("href", arcAddressUrl(sender));
   await page.keyboard.press("Escape");
   await expect(panel).not.toBeVisible();
 });
@@ -126,7 +126,7 @@ test("sidebar opens assistant and retains shortcuts when collapsed", async ({ pa
   await sidebar.getByRole("button", { name: "Collapse sidebar" }).click();
   await expect(sidebar.getByRole("link", { name: "Send USDC" })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Contacts", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Get test USDC" })).toHaveAttribute("href", "https://faucet.circle.com");
+  await expect(sidebar.getByRole("link", { name: ARC_FUNDING_LINK.name })).toHaveAttribute("href", ARC_FUNDING_LINK.href);
 });
 
 test("wallet connection dialog uses the ChaosPay theme", async ({ page }) => {
@@ -153,7 +153,7 @@ test("documentation is discoverable, anchored and fits a narrow screen", async (
   await expect(page.getByRole("heading", { level: 1, name: "A payment ends in proof." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Documentation" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("navigation", { name: "Documentation sections" }).getByRole("link")).toHaveCount(10);
-  await expect(page.locator("#network")).toContainText("5042002");
+  await expect(page.locator("#network")).toContainText(ARC_CHAIN_ID);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

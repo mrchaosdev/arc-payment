@@ -9,6 +9,12 @@ export type IncomingTransfer = {
   units: bigint;
   /** Block timestamp in milliseconds, so it can be compared with `createdAt`. */
   at: number;
+  /**
+   * Orders transfers, together with `logIndex`. The timestamp cannot do it:
+   * Arc produces two to three blocks a second and stamps them at one-second
+   * granularity, so consecutive blocks routinely share `at`.
+   */
+  blockNumber: number;
   /** Orders two transfers inside one block; the chain gives no finer clock. */
   logIndex: number;
 };
@@ -31,6 +37,13 @@ export type RequestMatch = { id: string; settlement: RequestSettlement };
  * down with it — it simply never matches.
  */
 function unitsOf(amount: string): bigint | undefined {
+  // Finer precision than USDC carries is rejected rather than rounded.
+  // `parseUnits` does not throw on it — it rounds, so "1.9999999" would come
+  // back as 2 USDC and let a two-dollar transfer settle an invoice for an
+  // amount nobody agreed to. The promise above is that an unusable figure
+  // never matches, so it has to be enforced here.
+  const [, fraction = ""] = amount.split(".");
+  if (fraction.length > USDC_DECIMALS) return undefined;
   try {
     return parseUnits(amount, USDC_DECIMALS);
   } catch {
@@ -56,6 +69,14 @@ const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase(
  *    cleared by at most one transfer, so two identical payments clear two
  *    invoices rather than the same invoice twice.
  *
+ * Rules 3 and 4 together mean the order transfers are read in decides which
+ * request each one clears, so that order has to be the chain's. It is block
+ * number then log index, never the timestamp: sampled over 60 mainnet blocks,
+ * 29 of 30 seconds held more than one block, so ordering by `at` would fall
+ * through to a `logIndex` that restarts at zero in every block — and two
+ * equal payments in the same second would be recorded against each other's
+ * invoice, each carrying the wrong payer and hash.
+ *
  * The payer's address is recorded but never required to match: a request is a
  * link, and whoever opens it is allowed to be the one who pays.
  */
@@ -69,7 +90,7 @@ export function matchTransfers(
     .filter(candidate => candidate.units !== undefined)
     .sort((a, b) => a.request.createdAt - b.request.createdAt);
 
-  const ordered = [...transfers].sort((a, b) => a.at - b.at || a.logIndex - b.logIndex);
+  const ordered = [...transfers].sort((a, b) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex);
   const taken = new Set<string>();
   const matches: RequestMatch[] = [];
 
