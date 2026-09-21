@@ -33,6 +33,14 @@ interface IERC20Permit {
 }
 
 contract InvoiceRegistry {
+    // The top bit separates caller-chosen IDs from IDs derived for public
+    // payment links. This stops somebody who sees a link from reserving its ID
+    // through `createInvoice` before the real payer settles it.
+    uint256 private constant DIRECT_ID_FLAG = 1 << 255;
+    bytes32 private constant DIRECT_INVOICE_TYPEHASH = keccak256(
+        "ChaosPayDirectInvoiceV1(bytes32 requestKey,address issuer,address token,uint256 amount,bytes32 memoHash)"
+    );
+
     enum Status {
         None,
         Open,
@@ -87,6 +95,7 @@ contract InvoiceRegistry {
     error AlreadyPaid(bytes32 id);
     error TransferFailed(address token);
     error ZeroIssuer();
+    error ReservedDirectId(bytes32 id);
 
     /**
      * @notice Open an invoice.
@@ -108,6 +117,7 @@ contract InvoiceRegistry {
         uint64 dueAt,
         bytes32 memoHash
     ) external {
+        if (uint256(id) & DIRECT_ID_FLAG != 0) revert ReservedDirectId(id);
         if (_invoices[id].status != Status.None) revert InvoiceExists(id);
         if (amount == 0) revert ZeroAmount();
         if (token == address(0)) revert ZeroToken();
@@ -176,7 +186,7 @@ contract InvoiceRegistry {
      *      the pull below reverts and takes the whole transaction with it.
      */
     function settleDirect(
-        bytes32 id,
+        bytes32 requestKey,
         address issuer,
         address token,
         uint256 amount,
@@ -186,6 +196,16 @@ contract InvoiceRegistry {
         bytes32 r,
         bytes32 s
     ) external {
+        // The payment terms, rather than a payer-supplied final ID, determine
+        // the record being settled. Altered terms therefore cannot poison the
+        // invoice the issuer's link points to.
+        bytes32 id = bytes32(
+            uint256(
+                keccak256(
+                    abi.encode(DIRECT_INVOICE_TYPEHASH, requestKey, issuer, token, amount, memoHash)
+                )
+            ) | DIRECT_ID_FLAG
+        );
         if (_invoices[id].status != Status.None) revert InvoiceExists(id);
         if (amount == 0) revert ZeroAmount();
         if (token == address(0)) revert ZeroToken();

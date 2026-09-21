@@ -19,6 +19,11 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { GEMINI_API_KEY: "placeholder-never-called" },
+    env: {
+      GEMINI_API_KEY: "placeholder-never-called",
+      // Keep the no-key wallet test deterministic even when a developer's
+      // .env.local contains a real Reown project ID.
+      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "",
+    },
   },
 });

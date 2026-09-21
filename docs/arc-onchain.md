@@ -2,6 +2,14 @@
 
 Ghi ngày 2026-09-21.
 
+> Cập nhật cuối ngày: code đã nối payment-link vào `settleDirect`. Link registry mang UUID ngẫu
+> nhiên; invoice ID được contract dẫn xuất từ UUID + người nhận + token + số tiền + memo hash và
+> nằm trong namespace riêng, nên người thấy link không thể chiếm ID bằng điều khoản giả.
+> `useWorkspaceSync` đọc `InvoicePaid` cho request registry; request cũ vẫn dùng bộ đối soát
+> transfer để tương thích ngược. Contract đã deploy trên Arc mainnet tại
+> `0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35`; app production vẫn dùng transfer trực tiếp cho đến
+> khi có `NEXT_PUBLIC_ARC_REGISTRY_MAINNET` lúc build.
+
 [roadmap.md](roadmap.md) nói dự án đi đâu. [handover.md](handover.md) nói trạng thái và cái bẫy.
 File này nói **Arc thực sự hành xử thế nào** — đo trên mainnet, không chép lại từ tài liệu — và
 **contract nào được thêm vào vì điều đó**.
@@ -138,11 +146,14 @@ chép trong đó đã trôi: trên mainnet nó trỏ `/docs` mất anchor `#quic
 `target="_blank"` nên mở một trang nội bộ trong tab mới.
 
 Ba lỗi khác nhau, cùng một bệnh với `matchTransfers`: một quyết định được chép ra nhiều bản thay vì
-dùng chung, rồi các bản trôi khỏi nhau. E2E từ 15/29 lên **29/29**.
+dùng chung, rồi các bản trôi khỏi nhau. E2E hiện **30/30**.
 
 ## 3. InvoiceRegistry
 
-`contracts/InvoiceRegistry.sol`. **Chưa deploy.**
+`contracts/InvoiceRegistry.sol`, đã deploy trên Arc mainnet tại
+[`0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35`](https://explorer.arc.io/address/0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35)
+ở block `22030464`. Artifact có 21 ABI entries, runtime bytecode 4,636 bytes. Compiler chuẩn hoá CRLF
+thành LF nên metadata hash tái lập giống nhau trên Windows và Linux.
 
 ### Vấn đề nó giải
 
@@ -197,11 +208,16 @@ Trường hợp cuối đáng chú ý: chữ ký permit rác bị `try/catch` nu
 `tests/registry.test.mjs` so ABI viết tay trong `src/lib/registry.ts` với ABI đã compile, nên hai
 bên không trôi khác nhau âm thầm.
 
-### Chưa kiểm chứng
+### Còn phải kiểm chứng trên chain
 
-Vòng đời đầy đủ với `permit` thật và tiền thật. State override chỉ chạy được một lệnh rồi vứt
-state, không xâu chuỗi được. `scripts/smoke-registry.mjs` làm việc đó, nhưng phải deploy lên
-testnet trước.
+`npm run contracts:simulate` đã chạy `settleDirect` trên EVM mainnet của Arc bằng state override:
+nạp runtime bytecode, cấp số dư tạm cho một ví ngẫu nhiên, ký EIP-712 permit thật, rồi để registry
+kéo USDC trong cùng `eth_call`. Call thành công và toàn bộ state tạm bị vứt; không tốn tiền.
+
+Đã kiểm chứng tính bền vững qua nhiều transaction và receipt thật. `scripts/smoke-registry.mjs`
+ký EIP-712 thật, xoá allowance trước, gọi `settleDirect`, rồi kiểm tra invoice Paid và nonce permit
+tăng đúng một. Smoke test mainnet đã qua sau khi deploy; testnet là lựa chọn diễn tập, không phải
+điều kiện bắt buộc.
 
 ### Quy trình
 
@@ -215,9 +231,8 @@ Không có registry thì app chạy y như cũ, chỉ là hoá đơn nằm trong
 
 ## 4. Còn lại
 
-- Nối `settleDirect` vào `/checkout`, và cho `/pay` tuỳ chọn ghi hoá đơn lên chain. **Chưa làm** —
-  nên làm sau khi testnet đã xanh, để không thay đường thanh toán bằng code chưa chạy thật lần nào.
-- Liên kết thanh toán hiện **không mang theo id** của request, nên người trả không có gì để tham
-  chiếu. Phải thêm vào URL trước khi nối `settleDirect`.
-- Giao diện gọi explorer là "ArcScan"; mainnet là `explorer.arc.io` chạy Blockscout.
-- Ba file `tmp-*.js` ở gốc repo vẫn đang bị git track, và là nguồn của toàn bộ 12 lint error.
+- Đặt `NEXT_PUBLIC_ARC_REGISTRY_MAINNET` ở Vercel Production, build lại, rồi thử bằng hai ví.
+- Ghi demo ngắn từ request đến trạng thái Paid để dùng trong hồ sơ grant.
+- Giao diện vẫn gọi explorer là "ArcScan"; mainnet là `explorer.arc.io` chạy Blockscout.
+- `/pay` không có request ID vẫn là transfer thường. Registry hiện dành cho payment link; đây là
+  fallback chủ ý, không phải lỗi cấu hình.

@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { erc20Abi, type Hash } from "viem";
-import { ARC_CHAIN_ID, ARC_NATIVE_PER_ERC20_UNIT, ARC_NATIVE_USDC_EMITTER, ARC_USDC_ADDRESS } from "@/lib/arc";
+import { parseAbiItem, parseUnits, type Address, type Hash } from "viem";
+import { ARC_CHAIN_ID, ARC_NATIVE_PER_ERC20_UNIT, ARC_NATIVE_USDC_EMITTER, ARC_REGISTRY_ADDRESS, ARC_USDC_ADDRESS } from "@/lib/arc";
 import { publicClients } from "@/lib/wagmi/clients";
 import { matchTransfers, openRequestsFor, type IncomingTransfer } from "@/lib/reconcile";
+import { directInvoiceIdFor, memoHashFor } from "@/lib/registry";
 import { usePayments } from "@/store/payments";
-import { parseAbiItem, type Address } from "viem";
 
 const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
+const INVOICE_PAID = parseAbiItem("event InvoicePaid(bytes32 indexed id, address indexed payer, address indexed token, uint256 amount, uint256 totalPaid, bool settled)");
 const CHUNK = BigInt(1_000);
 const CHUNKS_PER_SWEEP = BigInt(8);
 const MAX_CATCHUP = BigInt(50_000);
@@ -32,7 +33,6 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
  * Balance refetch stays in wagmi (it manages its own cache efficiently).
  */
 export function useWorkspaceSync(address: string) {
-  const hydrated = true;
   const payments = usePayments(state => state.payments);
   const requests = usePayments(state => state.requests);
   const updateStatus = usePayments(state => state.updateStatus);
@@ -40,7 +40,7 @@ export function useWorkspaceSync(address: string) {
   const setReconcileCursor = usePayments(state => state.setReconcileCursor);
 
   useEffect(() => {
-    if (!hydrated || !address) return;
+    if (!address) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
 
@@ -99,8 +99,34 @@ export function useWorkspaceSync(address: string) {
 
       // `token` is carried for the record only; the matcher ignores it.
       const transfers: (IncomingTransfer & { token: Address })[] = [];
+      const registryMatches: { id: string; settlement: { hash: Hash; from: Address; at: number } }[] = [];
       const timestamps = new Map<bigint, number>();
       const seen = new Set<string>();
+      const legacyWaiting = waiting.filter(request => request.protocol !== "registry");
+      const registryIds = new Map<string, string>();
+      if (ARC_REGISTRY_ADDRESS) {
+        for (const request of waiting.filter(candidate => candidate.protocol === "registry")) {
+          try {
+            const id = directInvoiceIdFor({
+              requestId: request.id,
+              issuer: request.to,
+              token: ARC_USDC_ADDRESS,
+              amount: parseUnits(request.amount, 6),
+              memoHash: memoHashFor(request.memo, request.reference),
+            });
+            registryIds.set(id.toLowerCase(), request.id);
+          } catch { /* A corrupted local record cannot identify an on-chain invoice. */ }
+        }
+      }
+
+      async function timestampAt(blockNumber: bigint) {
+        let at = timestamps.get(blockNumber);
+        if (at !== undefined) return at;
+        const block = await client.getBlock({ blockNumber });
+        at = Number(block.timestamp) * 1_000;
+        timestamps.set(blockNumber, at);
+        return at;
+      }
 
       for (let start = from; start <= to; start += CHUNK) {
         if (!active) return;
@@ -122,13 +148,38 @@ export function useWorkspaceSync(address: string) {
         // in that window except two documented cases that emit no system log —
         // zero-value transfers and self-transfers — and neither can settle a
         // request, which needs a non-zero amount from a different party.
-        const logs = await client.getLogs({
-          address: ARC_NATIVE_USDC_EMITTER,
-          event: TRANSFER,
-          args: { to: address as Address },
-          fromBlock: start,
-          toBlock: end,
-        });
+        if (ARC_REGISTRY_ADDRESS && registryIds.size) {
+          const invoiceLogs = await client.getLogs({
+            address: ARC_REGISTRY_ADDRESS,
+            event: INVOICE_PAID,
+            args: { token: ARC_USDC_ADDRESS },
+            fromBlock: start,
+            toBlock: end,
+          });
+          for (const log of invoiceLogs) {
+            if (!log.args.settled || !log.args.id || !log.args.payer || log.blockNumber === null || log.transactionHash === null)
+              continue;
+            const requestId = registryIds.get(log.args.id.toLowerCase());
+            if (!requestId) continue;
+            registryMatches.push({
+              id: requestId,
+              settlement: {
+                hash: log.transactionHash as Hash,
+                from: log.args.payer as Address,
+                at: await timestampAt(log.blockNumber),
+              },
+            });
+            registryIds.delete(log.args.id.toLowerCase());
+          }
+        }
+
+        const logs = legacyWaiting.length ? await client.getLogs({
+            address: ARC_NATIVE_USDC_EMITTER,
+            event: TRANSFER,
+            args: { to: address as Address },
+            fromBlock: start,
+            toBlock: end,
+          }) : [];
 
         for (const log of logs) {
           if (log.blockNumber === null || log.transactionHash === null || log.logIndex === null) continue;
@@ -141,12 +192,7 @@ export function useWorkspaceSync(address: string) {
           const sender = log.args.from as Address;
           if (sender.toLowerCase() === ZERO_ADDRESS) continue;
 
-          let at = timestamps.get(log.blockNumber);
-          if (at === undefined) {
-            const block = await client.getBlock({ blockNumber: log.blockNumber });
-            at = Number(block.timestamp) * 1_000;
-            timestamps.set(log.blockNumber, at);
-          }
+          const at = await timestampAt(log.blockNumber);
 
           // Requests are denominated in the 6-decimal ERC-20 view, so the
           // 18-decimal native amount is scaled down to match. Truncation only
@@ -167,7 +213,8 @@ export function useWorkspaceSync(address: string) {
       }
 
       if (!active) return;
-      for (const match of matchTransfers(waiting, transfers)) settleRequest(match.id, match.settlement);
+      for (const match of registryMatches) settleRequest(match.id, match.settlement);
+      for (const match of matchTransfers(legacyWaiting, transfers)) settleRequest(match.id, match.settlement);
       setReconcileCursor(Number(to));
     }
 

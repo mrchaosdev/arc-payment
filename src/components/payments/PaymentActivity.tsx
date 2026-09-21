@@ -22,6 +22,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   const format = useFormatter();
   const { address } = useAccount();
   const hydrated = useHydrated();
+  const visibleAddress = hydrated ? address : undefined;
   const payments = usePayments((s) => s.payments);
   const updateStatus = usePayments((s) => s.updateStatus);
   const [checking, setChecking] = useState<string>();
@@ -29,7 +30,7 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
   // The receipt tracks a hash rather than a snapshot, so a fee filled in while
   // the sheet is open reaches the sheet.
   const [receiptHash, setReceiptHash] = useState<string>();
-  const items = hydrated && address ? payments.filter((p) => p.from.toLowerCase() === address.toLowerCase()) : [];
+  const items = visibleAddress ? payments.filter((p) => p.from.toLowerCase() === visibleAddress.toLowerCase()) : [];
   // A stable key over the unconfirmed hashes: the sweep below restarts only when
   // the set of in-flight payments actually changes, not on every render.
   const pendingKey = items.filter((p) => p.status === "Pending").map((p) => p.hash).join(",");
@@ -110,10 +111,10 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
       {!items.length ? (
         <div className="payment-activity-empty-state px-6 py-12 text-center">
           <p className="payment-activity-empty-title text-sm font-semibold">
-            {address ? t("emptyTitle") : t("connectPrompt")}
+            {visibleAddress ? t("emptyTitle") : t("connectPrompt")}
           </p>
           <p className="payment-activity-empty-description mx-auto mt-2 max-w-sm text-[13px] leading-6 text-[var(--text-muted)]">
-            {address
+            {visibleAddress
               ? t("emptyBody")
               : t("browserOnlyNote")}
           </p>

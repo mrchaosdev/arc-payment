@@ -23,7 +23,7 @@ const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
 function linkFor(origin: string, request: SavedRequest) {
   if (!origin) return "";
   try {
-    return paymentLink(origin, request);
+    return paymentLink(origin, request, request.protocol === "registry" ? request.id : undefined);
   } catch {
     return "";
   }
@@ -81,7 +81,13 @@ export function SavedRequests() {
                       <Link
                         href={{
                           pathname: "/checkout",
-                          query: { to: r.to, amount: r.amount, memo: r.memo, ref: r.reference },
+                          query: {
+                            to: r.to,
+                            amount: r.amount,
+                            memo: r.memo,
+                            ref: r.reference,
+                            ...(r.protocol === "registry" ? { id: r.id } : {}),
+                          },
                         }}
                         className="saved-requests-checkout-link flex items-center gap-2 text-[var(--action)]"
                       >

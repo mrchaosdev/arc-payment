@@ -17,6 +17,8 @@ export type PaymentRecord = {
 };
 export type SavedRequest = {
   id: string; to: Address; amount: string; memo: string; reference: string; createdAt: number;
+  /** Missing on records created before the registry integration. */
+  protocol?: "registry" | "transfer";
   /**
    * Written by the reconciliation sweep when a matching USDC transfer lands.
    * Absent means unpaid *as far as this browser has looked* — see

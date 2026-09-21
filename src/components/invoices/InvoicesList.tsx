@@ -49,10 +49,12 @@ export function InvoicesList() {
   const [counterpartyName, setCounterpartyName] = useState("");
   const contacts = useContacts(s => s.contacts);
   const payments = usePayments(s => s.payments);
-  const hydrated = true;
 
   useEffect(() => {
-    setInvoices(loadInvoices());
+    // Keep the server and first client render identical, then load browser
+    // storage on the next frame.
+    const frame = requestAnimationFrame(() => setInvoices(loadInvoices()));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   function updateInvoiceStatus(inv: Invoice): Invoice {
@@ -62,12 +64,11 @@ export function InvoicesList() {
       Math.abs(parseFloat(p.amount) - invAmount) < 0.000001
     );
     if (!matchingPayments.length) return inv;
-    const paid = matchingPayments.length;
     const overpaid = matchingPayments.length > 1;
     return {
       ...inv,
       status: overpaid ? "overpaid" : "paid",
-      updatedAt: Date.now(),
+      updatedAt: matchingPayments[0]?.createdAt ?? inv.updatedAt,
     };
   }
 

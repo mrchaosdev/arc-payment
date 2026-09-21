@@ -15,7 +15,10 @@ const out = join(src, "out");
 const sources = Object.fromEntries(
   readdirSync(src)
     .filter((f) => f.endsWith(".sol"))
-    .map((f) => [f, { content: readFileSync(join(src, f), "utf8") }]),
+    // Git checks files out with CRLF on Windows. Solc includes the exact source
+    // bytes in its metadata hash, so normalize them to keep artifacts identical
+    // across Windows, macOS and Linux builds.
+    .map((f) => [f, { content: readFileSync(join(src, f), "utf8").replace(/\r\n/g, "\n") }]),
 );
 
 const input = {

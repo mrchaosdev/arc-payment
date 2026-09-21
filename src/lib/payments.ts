@@ -71,12 +71,20 @@ export function paymentTotals(amountUnits: bigint, feeNative?: bigint) {
   };
 }
 
-export function paymentLink(origin: string, draft: PaymentDraft) {
+const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isRequestId(value: string): boolean {
+  return REQUEST_ID.test(value);
+}
+
+export function paymentLink(origin: string, draft: PaymentDraft, requestId?: string) {
   const payment = validatePayment(draft);
+  if (requestId && !isRequestId(requestId)) throw new Error("Payment request ID is invalid.");
   const url = new URL("/checkout", origin);
   url.searchParams.set("to", payment.to);
   url.searchParams.set("amount", payment.amount);
   if (draft.memo) url.searchParams.set("memo", draft.memo.slice(0, 120));
   if (draft.reference) url.searchParams.set("ref", draft.reference.slice(0, 48));
+  if (requestId) url.searchParams.set("id", requestId.toLowerCase());
   return url.toString();
 }

@@ -8,7 +8,7 @@ registerHooks({ resolve(specifier, context, next) {
     return next(specifier + ".ts", context);
   return next(specifier, context);
 } });
-const { INVOICE_REGISTRY_ABI, INVOICE_STATUS, invoiceIdFor, memoHashFor, decodeInvoice, ZERO_HASH } =
+const { INVOICE_REGISTRY_ABI, INVOICE_STATUS, invoiceIdFor, directInvoiceIdFor, memoHashFor, decodeInvoice, ZERO_HASH } =
   await import("../src/lib/registry.ts");
 
 const artifact = JSON.parse(readFileSync(new URL("../contracts/out/InvoiceRegistry.json", import.meta.url), "utf8"));
@@ -38,6 +38,22 @@ test("an invoice id is stable, and unique per request", () => {
   assert.match(id, /^0x[0-9a-f]{64}$/);
   assert.equal(id, invoiceIdFor("3f2a8c1e-0000-4000-8000-000000000001"));
   assert.notEqual(id, invoiceIdFor("3f2a8c1e-0000-4000-8000-000000000002"));
+  assert.equal(BigInt(id) >> 255n, 0n, "ordinary invoice IDs stay outside the direct-payment namespace");
+});
+
+test("a direct invoice id is bound to every payment term", () => {
+  const terms = {
+    requestId: "3f2a8c1e-0000-4000-8000-000000000001",
+    issuer: raw.issuer.toLowerCase(),
+    token: raw.token,
+    amount: raw.amount,
+    memoHash: ZERO_HASH,
+  };
+  const id = directInvoiceIdFor(terms);
+  assert.equal(BigInt(id) >> 255n, 1n, "direct invoice IDs use the reserved namespace");
+  assert.equal(id, directInvoiceIdFor(terms));
+  assert.notEqual(id, directInvoiceIdFor({ ...terms, amount: terms.amount + 1n }));
+  assert.notEqual(id, directInvoiceIdFor({ ...terms, issuer: "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }));
 });
 
 test("memo and reference cannot collide by running together", () => {

@@ -1,4 +1,4 @@
-import { keccak256, stringToHex, type Address, type Hash } from "viem";
+import { encodeAbiParameters, keccak256, stringToHex, toHex, type Address, type Hash } from "viem";
 
 import { ARC, ARC_REGISTRY_ADDRESS } from "./arc";
 
@@ -40,7 +40,7 @@ export const INVOICE_REGISTRY_ABI = [
     name: "settleDirect",
     stateMutability: "nonpayable",
     inputs: [
-      { name: "id", type: "bytes32" },
+      { name: "requestKey", type: "bytes32" },
       { name: "issuer", type: "address" },
       { name: "token", type: "address" },
       { name: "amount", type: "uint256" },
@@ -121,6 +121,11 @@ export type OnChainInvoice = {
 };
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const DIRECT_ID_FLAG = BigInt(1) << BigInt(255);
+const INVOICE_ID_MASK = DIRECT_ID_FLAG - BigInt(1);
+const DIRECT_INVOICE_TYPEHASH = keccak256(
+  stringToHex("ChaosPayDirectInvoiceV1(bytes32 requestKey,address issuer,address token,uint256 amount,bytes32 memoHash)"),
+);
 
 /**
  * The on-chain key for a saved request.
@@ -130,7 +135,46 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
  * always find its invoice again without having stored an extra field.
  */
 export function invoiceIdFor(requestId: string): Hash {
-  return keccak256(stringToHex(`chaospay:invoice:${requestId}`));
+  const hash = keccak256(stringToHex(`chaospay:invoice:${requestId}`));
+  return toHex(BigInt(hash) & INVOICE_ID_MASK, { size: 32 });
+}
+
+/** Secret-free, unguessable key carried by a public payment link. */
+export function requestKeyFor(requestId: string): Hash {
+  return keccak256(stringToHex(`chaospay:request:${requestId}`));
+}
+
+/**
+ * ID recorded by `settleDirect` for this exact set of payment terms.
+ *
+ * Changing the recipient, token, amount or memo produces a different record,
+ * so a copied link cannot be used to poison the invoice the issuer expects.
+ */
+export function directInvoiceIdFor({
+  requestId,
+  issuer,
+  token,
+  amount,
+  memoHash,
+}: {
+  requestId: string;
+  issuer: Address;
+  token: Address;
+  amount: bigint;
+  memoHash: Hash;
+}): Hash {
+  const encoded = encodeAbiParameters(
+    [
+      { type: "bytes32" },
+      { type: "bytes32" },
+      { type: "address" },
+      { type: "address" },
+      { type: "uint256" },
+      { type: "bytes32" },
+    ],
+    [DIRECT_INVOICE_TYPEHASH, requestKeyFor(requestId), issuer, token, amount, memoHash],
+  );
+  return toHex(BigInt(keccak256(encoded)) | DIRECT_ID_FLAG, { size: 32 });
 }
 
 /**

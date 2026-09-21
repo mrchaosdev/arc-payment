@@ -4,7 +4,7 @@
 //
 // Reads the registry address from --registry or NEXT_PUBLIC_ARC_REGISTRY_MAINNET,
 // .env.local. Spends about 0.02 USDC, paid from the deployer to itself, plus
-// gas. Run it on testnet before mainnet.
+// gas. Run it immediately after deployment; testnet is an optional rehearsal.
 //
 // The deployer plays issuer and payer at once. That is not a real invoice
 // flow, but it covers every state transition without a second funded key,
@@ -12,7 +12,18 @@
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createWalletClient, createPublicClient, http, defineChain, keccak256, toHex, parseUnits, formatUnits } from "viem";
+import {
+  createWalletClient,
+  createPublicClient,
+  defineChain,
+  encodeAbiParameters,
+  formatUnits,
+  http,
+  keccak256,
+  parseSignature,
+  parseUnits,
+  toHex,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { arc, arcTestnet } from "viem/chains";
 
@@ -48,6 +59,7 @@ const abi = JSON.parse(readFileSync(join(root, "contracts/out/InvoiceRegistry.js
 const erc20 = [
   { type: "function", name: "approve", stateMutability: "nonpayable", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [{ type: "bool" }] },
   { type: "function", name: "balanceOf", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "nonces", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }] },
 ];
 
 // Arc's chain definition comes from viem rather than being rebuilt here. Its
@@ -83,8 +95,36 @@ const read = (functionName, args) => publicClient.readContract({ address: regist
 
 const half = parseUnits("0.01", ARC_USDC_DECIMALS);
 const total = half * 2n;
-const id = keccak256(toHex(`chaospay-smoke-${Date.now()}`));
-const cancelId = keccak256(toHex(`chaospay-smoke-cancel-${Date.now()}`));
+const ordinaryId = (label) => toHex(
+  BigInt(keccak256(toHex(label))) & ((1n << 255n) - 1n),
+  { size: 32 },
+);
+const id = ordinaryId(`chaospay-smoke-${Date.now()}`);
+const cancelId = ordinaryId(`chaospay-smoke-cancel-${Date.now()}`);
+const requestKey = keccak256(toHex(`chaospay-smoke-direct-${Date.now()}`));
+const memoHash = keccak256(toHex("INV-SMOKE-DIRECT"));
+
+const directTypeHash = keccak256(
+  toHex("ChaosPayDirectInvoiceV1(bytes32 requestKey,address issuer,address token,uint256 amount,bytes32 memoHash)"),
+);
+const directId = toHex(
+  BigInt(
+    keccak256(
+      encodeAbiParameters(
+        [
+          { type: "bytes32" },
+          { type: "bytes32" },
+          { type: "address" },
+          { type: "address" },
+          { type: "uint256" },
+          { type: "bytes32" },
+        ],
+        [directTypeHash, requestKey, account.address, arc_.usdc, half, memoHash],
+      ),
+    ),
+  ) | (1n << 255n),
+  { size: 32 },
+);
 
 console.log(`network   ${arc_.name} (chain ${arc_.chainId})`);
 console.log(`registry  ${registry}`);
@@ -117,6 +157,47 @@ await send("createInvoice", {
 });
 await send("cancel", { address: registry, abi, functionName: "cancel", args: [cancelId] });
 assert((await read("getInvoice", [cancelId])).status === 3, "cancelled invoice reads as Cancelled");
+
+console.log("\none-signature direct settlement");
+// A zero allowance makes this path prove the permit was accepted: if the
+// signature domain or fields drift, settleDirect's transferFrom must revert.
+await send("clear allowance", { address: arc_.usdc, abi: erc20, functionName: "approve", args: [registry, 0n] });
+const nonce = await publicClient.readContract({
+  address: arc_.usdc,
+  abi: erc20,
+  functionName: "nonces",
+  args: [account.address],
+});
+const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30);
+const signature = await account.signTypedData({
+  domain: { name: "USDC", version: "2", chainId: arc_.chainId, verifyingContract: arc_.usdc },
+  types: {
+    Permit: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+  },
+  primaryType: "Permit",
+  message: { owner: account.address, spender: registry, value: half, nonce, deadline },
+});
+const { v, r, s } = parseSignature(signature);
+await send("settleDirect + permit", {
+  address: registry,
+  abi,
+  functionName: "settleDirect",
+  args: [requestKey, account.address, arc_.usdc, half, memoHash, deadline, Number(v), r, s],
+});
+const direct = await read("getInvoice", [directId]);
+assert(direct.status === 2, "direct invoice is recorded as Paid");
+assert(direct.issuer.toLowerCase() === account.address.toLowerCase(), "direct invoice records the issuer");
+assert(direct.amount === half && direct.paid === half, "direct invoice records the exact amount");
+assert(
+  (await publicClient.readContract({ address: arc_.usdc, abi: erc20, functionName: "nonces", args: [account.address] })) === nonce + 1n,
+  "USDC consumed the EIP-2612 permit nonce",
+);
 
 console.log("\nrejections");
 for (const [label, call] of [

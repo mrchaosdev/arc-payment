@@ -2,6 +2,12 @@
 
 Ghi ngày 2026-09-21.
 
+> Trạng thái hiện tại: `InvoiceRegistry` đã deploy trên Arc mainnet tại
+> [`0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35`](https://explorer.arc.io/address/0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35)
+> ở block `22030464` ([deploy tx](https://explorer.arc.io/tx/0x3ce57099998c279c556f165f36ce0fd8ff72456663d5aceb927c605d97a73303)); smoke test mainnet đã qua. UI vẫn feature-gate bằng
+> `NEXT_PUBLIC_ARC_REGISTRY_MAINNET`, nên production chỉ bật luồng registry sau khi thêm biến này
+> vào Vercel và build lại.
+
 Vì sao có contract này, nó giải quyết gì, và những gì đã kiểm chứng: xem
 [arc-onchain.md](arc-onchain.md). File này chỉ là quy trình thao tác.
 
@@ -9,8 +15,8 @@ Deploy **thẳng lên mainnet**, không qua testnet. Lý do: sai một lần tr�
 contract không giữ tiền nên không có gì để mất, trong khi testnet tốn một vòng faucet để diễn tập
 thứ rẻ hơn cả thời gian bỏ ra. Grant cũng bắt buộc phải có bản mainnet.
 
-Toàn bộ quá trình **không đụng gì tới site đang chạy**. Chưa có dòng code nào trong giao diện gọi
-tới registry, nên deploy xong app vẫn y nguyên. Việc nối vào giao diện làm sau.
+Toàn bộ quá trình **không đụng gì tới site đang chạy**. Giao diện chỉ gọi registry khi địa chỉ
+contract đã được nhúng vào build, nên deploy xong app vẫn y nguyên cho tới bước Vercel bên dưới.
 
 ---
 
@@ -66,10 +72,20 @@ npm run contracts:build
 Đúng thì in ra một dòng, không kèm warning nào:
 
 ```
-InvoiceRegistry: 20 abi entries, 4471 bytes deployed
+IERC20Permit: 1 abi entries, 0 bytes deployed
+InvoiceRegistry: 21 abi entries, 4636 bytes deployed
 ```
 
 Có warning thì dừng lại.
+
+### 1b. Mô phỏng permit trên Arc mainnet, không tốn tiền
+
+```bash
+npm run contracts:simulate
+```
+
+Phải thấy đủ hai dòng `ok`. Lệnh dùng ví ngẫu nhiên và state override trong `eth_call`; không đọc
+`DEPLOYER_PRIVATE_KEY`, không deploy và không làm thay đổi state mainnet.
 
 ### 2. Deploy
 
@@ -131,6 +147,14 @@ cancellation
   ok  createInvoice          https://…
   ok  cancel                 https://…
   ok  cancelled invoice reads as Cancelled
+
+one-signature direct settlement
+  ok  clear allowance          https://…
+  ok  settleDirect + permit    https://…
+  ok  direct invoice is recorded as Paid
+  ok  direct invoice records the issuer
+  ok  direct invoice records the exact amount
+  ok  USDC consumed the EIP-2612 permit nonce
 
 rejections
   ok  paying a cancelled invoice reverts
@@ -203,6 +227,6 @@ USDC testnet lấy ở [faucet.circle.com](https://faucet.circle.com), chọn m�
 
 Chưa nộp grant vội. Chỉ được nộp **một lần cho mỗi dự án**, không sửa lại được. Thứ tự còn lại:
 
-1. Nối `settleDirect` vào `/checkout` — cần thêm id của request vào link thanh toán trước.
-2. Push, Vercel build, kiểm tra trên site thật.
-3. Viết mô tả và nộp.
+1. Push code đã test, đặt env Vercel và build lại.
+2. Tạo request bằng ví người nhận; mở link và trả bằng ví thứ hai; kiểm tra cả tx lẫn trạng thái Paid.
+3. Chụp demo ngắn, viết mô tả và nộp.

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validatePayment, paymentLink, draftErrors, feeUnits, paymentTotals } from "../src/lib/payments.ts";
+import { validatePayment, isRequestId, paymentLink, draftErrors, feeUnits, paymentTotals } from "../src/lib/payments.ts";
 
 const draft = { to: "0x1111111111111111111111111111111111111111", amount: "1.25", memo: "", reference: "" };
 test("uses exact 6-decimal units and canonical amounts", () => {
@@ -51,4 +51,12 @@ test("checkout URLs round-trip encoded metadata", () => {
   assert.equal(link.searchParams.get("amount"), p.amount);
   assert.equal(link.searchParams.get("memo"), p.memo);
   assert.equal(link.searchParams.get("ref"), p.reference);
+});
+test("registry checkout URLs carry only canonical random request IDs", () => {
+  const id = "3f2a8c1e-0000-4000-8000-000000000001";
+  const link = new URL(paymentLink("https://chaospayment.xyz", draft, id));
+  assert.equal(link.searchParams.get("id"), id);
+  assert.equal(isRequestId(id), true);
+  assert.equal(isRequestId("predictable-id"), false);
+  assert.throws(() => paymentLink("https://chaospayment.xyz", draft, "predictable-id"), /ID is invalid/);
 });

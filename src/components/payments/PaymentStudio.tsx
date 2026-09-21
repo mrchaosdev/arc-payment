@@ -3,8 +3,8 @@
 import { Link } from "@/i18n/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, Link2, Pencil, RefreshCw, RotateCcw, Send, ShieldCheck, Smartphone } from "lucide-react";
-import { erc20Abi, formatUnits, type Address, type Hash } from "viem";
-import { useAccount, useReadContract, useSwitchChain, useWriteContract } from "wagmi";
+import { erc20Abi, formatUnits, parseSignature, type Address, type Hash } from "viem";
+import { useAccount, useReadContract, useSignTypedData, useSwitchChain, useWriteContract } from "wagmi";
 import { getAccount } from "wagmi/actions";
 import { useTranslations } from "next-intl";
 import { AnimatedTabs } from "@/components/chaos/AnimatedTabs";
@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConnectWalletButton } from "@/components/ui/ConnectWalletButton";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
-import { ARC, ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
+import { ARC, ARC_CHAIN_ID, ARC_REGISTRY_ADDRESS, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { amountError, draftErrors, paymentLink, paymentTotals, recipientError, validatePayment, type PaymentDraft, type PaymentField } from "@/lib/payments";
+import { INVOICE_REGISTRY_ABI, memoHashFor, PERMIT_TYPES, requestKeyFor, usdcPermitDomain } from "@/lib/registry";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { useHydrated } from "@/hooks/useHydrated";
 import type { SettlementStage } from "@/lib/visual/pulse";
@@ -34,6 +35,16 @@ type Stage = "summary" | "editing" | "review" | "signing" | "pending" | "success
 type FieldErrors = Partial<Record<PaymentField, string>>;
 
 const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
+const permitNonceAbi = [{
+  type: "function",
+  name: "nonces",
+  stateMutability: "view",
+  inputs: [{ name: "owner", type: "address" }],
+  outputs: [{ name: "", type: "uint256" }],
+}] as const;
+// Used only for the fee preview. The wallet still estimates the exact gas when
+// it submits, and 300k leaves headroom above the registry's measured path.
+const REGISTRY_GAS_PREVIEW = BigInt(300_000);
 
 /** The studio's own stage vocabulary, mapped onto what the pulse understands. */
 function settlementStage(stage: Stage, connected: boolean, hasDraft: boolean): SettlementStage {
@@ -46,8 +57,8 @@ function settlementStage(stage: Stage, connected: boolean, hasDraft: boolean): S
   ] as SettlementStage;
 }
 
-export function PaymentStudio({ initialMode, initialRequest, checkout = false }: {
-  initialMode: Mode; initialRequest: PaymentDraft; checkout?: boolean;
+export function PaymentStudio({ initialMode, initialRequest, checkout = false, requestId }: {
+  initialMode: Mode; initialRequest: PaymentDraft; checkout?: boolean; requestId?: string;
 }) {
   const t = useTranslations("pay");
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -72,20 +83,24 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   const toInput = useRef<HTMLInputElement>(null);
   const amountInput = useRef<HTMLInputElement>(null);
   const { address, chainId, isConnected } = useAccount();
+  const walletAddress = hydrated ? address : undefined;
+  const walletConnected = hydrated && isConnected;
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
+  const { signTypedDataAsync } = useSignTypedData();
   const savePayment = usePayments(s => s.savePayment);
   const updateStatus = usePayments(s => s.updateStatus);
   const saveRequest = usePayments(s => s.saveRequest);
   const client = publicClients[ARC_CHAIN_ID];
+  const registryPayment = Boolean(checkout && requestId && ARC_REGISTRY_ADDRESS);
   const balanceQuery = useReadContract({
     address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf",
-    args: address ? [address] : undefined, chainId: ARC_CHAIN_ID, query: { enabled: !!address },
+    args: walletAddress ? [walletAddress] : undefined, chainId: ARC_CHAIN_ID, query: { enabled: !!walletAddress },
   });
   const busy = checking || stage === "signing" || stage === "pending";
-  const current = mode === "request" ? { ...request, to: request.to || address || "" } : review && stage !== "editing" ? review : draft;
+  const current = mode === "request" ? { ...request, to: request.to || walletAddress || "" } : review && stage !== "editing" ? review : draft;
   const confirmed = usePayments(s => s.payments.filter(p => p.status === "Success").length);
-  const pulseStage = settlementStage(stage, isConnected, Boolean(draft.to || draft.amount));
+  const pulseStage = settlementStage(stage, walletConnected, Boolean(draft.to || draft.amount));
   // One ripple per settled payment: the count only moves when a receipt lands.
   const impulse = confirmed;
   // Amount, fee and the one number the wallet actually debits — the payer should
@@ -95,8 +110,8 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   // off the address bar so a code never carries stray query junk.
   const checkoutUrl = useMemo(() => {
     if (!hydrated || !checkout) return "";
-    try { return paymentLink(window.location.origin, draft); } catch { return ""; }
-  }, [hydrated, checkout, draft]);
+    try { return paymentLink(window.location.origin, draft, requestId); } catch { return ""; }
+  }, [hydrated, checkout, draft, requestId]);
 
   function edit(key: keyof PaymentDraft, value: string) {
     setError("");
@@ -139,19 +154,18 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   // Watch for status updates from the workspace sync hook.
   // The sync hook checks receipts every SWEEP_MS (12s) for all pending
   // payments at once; PaymentStudio no longer needs its own timer.
-  const ownPayment = usePayments(state =>
-    hash ? state.payments.find(p => p.hash === hash) : undefined,
-  );
   useEffect(() => {
-    if (stage !== "pending" || !hash || !ownPayment) return;
-    if (ownPayment.status === "Success" || ownPayment.status === "Failed") {
-      const feeNative = ownPayment.feeNative ? BigInt(ownPayment.feeNative) : BigInt(0);
-      setActualFeeNative(feeNative);
-      setStage(ownPayment.status === "Success" ? "success" : "failed");
-      setError(ownPayment.status === "Success" ? "" : t("reverted"));
+    if (!hash) return;
+    return usePayments.subscribe((state, previous) => {
+      const payment = state.payments.find(p => p.hash === hash);
+      const before = previous.payments.find(p => p.hash === hash);
+      if (!payment || payment.status === before?.status || payment.status === "Pending") return;
+      setActualFeeNative(payment.feeNative ? BigInt(payment.feeNative) : BigInt(0));
+      setStage(payment.status === "Success" ? "success" : "failed");
+      setError(payment.status === "Success" ? "" : t("reverted"));
       void balanceQuery.refetch();
-    }
-  }, [stage, hash, ownPayment, balanceQuery, t]);
+    });
+  }, [hash, balanceQuery, t]);
 
   async function prepare() {
     if (lock.current) return;
@@ -166,7 +180,9 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       // Simulation checks transfer viability. Native units are used only for gas
       // accounting: both balance interfaces refer to the same underlying USDC.
       const [gas, price, nativeBalance] = await Promise.all([
-        client.estimateContractGas({ account: account.address, address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "transfer", args: [valid.to, valid.units] }),
+        registryPayment
+          ? Promise.resolve(REGISTRY_GAS_PREVIEW)
+          : client.estimateContractGas({ account: account.address, address: ARC_USDC_ADDRESS, abi: erc20Abi, functionName: "transfer", args: [valid.to, valid.units] }),
         client.getGasPrice(),
         client.getBalance({ address: account.address }),
       ]);
@@ -195,10 +211,52 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
       const account = getAccount(wagmiConfig);
       if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_CHAIN_ID)
         throw new Error(t("staleReview"));
-      submitted = await writeContractAsync({
-        account: review.from, address: ARC_USDC_ADDRESS, abi: erc20Abi,
-        functionName: "transfer", args: [review.to, review.units], chainId: ARC_CHAIN_ID,
-      });
+      if (registryPayment && requestId && ARC_REGISTRY_ADDRESS) {
+        const nonce = await client.readContract({
+          address: ARC_USDC_ADDRESS,
+          abi: permitNonceAbi,
+          functionName: "nonces",
+          args: [review.from],
+        });
+        const deadline = BigInt(Math.floor(Date.now() / 1_000) + 30 * 60);
+        const signature = await signTypedDataAsync({
+          account: review.from,
+          domain: usdcPermitDomain(ARC_CHAIN_ID, ARC_USDC_ADDRESS),
+          types: PERMIT_TYPES,
+          primaryType: "Permit",
+          message: {
+            owner: review.from,
+            spender: ARC_REGISTRY_ADDRESS,
+            value: review.units,
+            nonce,
+            deadline,
+          },
+        });
+        const { v, r, s } = parseSignature(signature);
+        submitted = await writeContractAsync({
+          account: review.from,
+          address: ARC_REGISTRY_ADDRESS,
+          abi: INVOICE_REGISTRY_ABI,
+          functionName: "settleDirect",
+          args: [
+            requestKeyFor(requestId),
+            review.to,
+            ARC_USDC_ADDRESS,
+            review.units,
+            memoHashFor(review.memo, review.reference),
+            deadline,
+            Number(v),
+            r,
+            s,
+          ],
+          chainId: ARC_CHAIN_ID,
+        });
+      } else {
+        submitted = await writeContractAsync({
+          account: review.from, address: ARC_USDC_ADDRESS, abi: erc20Abi,
+          functionName: "transfer", args: [review.to, review.units], chainId: ARC_CHAIN_ID,
+        });
+      }
       setHash(submitted);
       setStage("pending");
       const record: PaymentRecord = { hash: submitted, from: review.from, to: review.to,
@@ -226,12 +284,14 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
   function createRequest() {
     setError("");
     const reference = request.reference || `SP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    const candidate = { ...request, to: request.to || address || "", reference };
+    const candidate = { ...request, to: request.to || walletAddress || "", reference };
     if (reportFields(candidate)) return;
     try {
       const valid = validatePayment(candidate);
-      const url = paymentLink(window.location.origin, valid);
-      saveRequest({ id: crypto.randomUUID(), to: valid.to, amount: valid.amount, memo: valid.memo, reference, createdAt: Date.now() });
+      const id = crypto.randomUUID();
+      const protocol = ARC_REGISTRY_ADDRESS ? "registry" : "transfer";
+      const url = paymentLink(window.location.origin, valid, protocol === "registry" ? id : undefined);
+      saveRequest({ id, to: valid.to, amount: valid.amount, memo: valid.memo, reference, createdAt: Date.now(), protocol });
       setRequest({ to: valid.to, amount: valid.amount, memo: valid.memo, reference });
       setShareUrl(url);
       void navigator.clipboard.writeText(url).catch(() => {});
@@ -307,7 +367,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
           aria-invalid={fieldErrors.to ? true : undefined} aria-describedby={fieldErrors.to ? "recipient-error" : undefined}
           className="payment-studio-recipient-input payment-input font-mono text-xs" value={mode === "pay" ? draft.to : request.to}
           onChange={e => edit("to", e.target.value.trim())} onBlur={e => checkField("to", e.target.value)}
-          placeholder={mode === "request" ? address || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
+          placeholder={mode === "request" ? walletAddress || "0x..." : "0x..."} autoComplete="off" spellCheck={false} />
       </Field>
       <Field label={t("amount")} error={fieldErrors.amount} errorId="amount-error"
         hint={isConnected
@@ -397,10 +457,10 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     {error && <p role="alert" className="payment-studio-error mt-5 border-l-2 border-[var(--negative)] bg-[var(--negative)]/8 px-4 py-3 text-[13px] leading-6 text-[var(--negative)]">{error}</p>}
     <div className="payment-studio-actions mt-6 space-y-3">
       {mode === "request" ? <Button type="button" onClick={createRequest} disabled={!!shareUrl} className="payment-studio-create-request-button h-12 w-full"><Link2 size={16} />{shareUrl ? t("requestCreated") : t("createLink")}</Button>
-        : stage === "summary" ? <>{!isConnected ? <ConnectWalletButton className="payment-studio-summary-connect-button h-12 w-full" label={t("connectToPay")} />
+        : stage === "summary" ? <>{!walletConnected ? <ConnectWalletButton className="payment-studio-summary-connect-button h-12 w-full" label={t("connectToPay")} />
           : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-summary-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}{t("reviewPayment")}</Button>}
           <Button type="button" variant="ghost" onClick={() => setStage("editing")} className="payment-studio-edit-details-button w-full"><Pencil size={14} />{t("editDetails")}</Button></>
-        : stage === "editing" ? !isConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label={t("connectToContinue")} />
+        : stage === "editing" ? !walletConnected ? <ConnectWalletButton className="payment-studio-connect-button h-12 w-full" label={t("connectToContinue")} />
           : <Button type="button" onClick={prepare} disabled={busy} className="payment-studio-review-button h-12 w-full">{checking ? <RefreshCw size={16} className="animate-spin" /> : <ArrowRight size={16} />}{t("reviewPayment")}</Button>
         : stage === "review" ? <><Button type="button" className="payment-studio-pay-button h-12 w-full" onClick={send}>{chainId === ARC_CHAIN_ID ? t("confirmAndPay") : t("switchAndPay")}<Send size={16} /></Button><Button type="button" variant="ghost" onClick={backToEdit} className="payment-studio-edit-payment-button w-full"><ArrowLeft size={16} />{t("editPayment")}</Button></>
         : stage === "pending" ? <Button type="button" variant="secondary" onClick={recheck} disabled={checking} className="payment-studio-recheck-button w-full"><RefreshCw size={14} className={checking ? "animate-spin" : ""} />{t("checkNow")}</Button>

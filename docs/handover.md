@@ -8,14 +8,18 @@ gặp**, và **việc còn lại**.
 
 ## Trạng thái
 
-Cập nhật 2026-09-21. **Không còn toàn xanh** — xem cột ghi chú.
+Cập nhật 2026-09-21. Contract/UI registry đã nối xong. `InvoiceRegistry` đã deploy trên Arc mainnet
+tại `0xc3a4f4cf8d63819556b1eb9a2fd0489918f44b35` (block `22030464`) và smoke test đã qua; production
+còn cần đặt `NEXT_PUBLIC_ARC_REGISTRY_MAINNET` trên Vercel rồi redeploy.
 
 | Lệnh | Kết quả | Ghi chú |
 | --- | --- | --- |
 | `npm run build` | thành công | xoá `.next` trước nếu type check báo lỗi ở `.next/dev/types` |
-| `npm run lint` | 12 error, 18 warning | **toàn bộ 12 error** đến từ `tmp-diff.js`, `tmp-fix-eurc.js`, `tmp-verify-eurc.js` — ba file tạm đang bị git track |
-| `npm test` | 39/39 | |
-| `npm run test:e2e` | 29/29 | trước đó 15/29 |
+| `npm run lint` | thành công, 6 warning | worktree `.kilo`, test output và `tmp-*.js` đã loại khỏi lint |
+| `npm test` | 41/41 | thêm request ID và ràng buộc điều khoản direct invoice |
+| `npm run test:e2e` | 30/30 | WalletConnect test độc lập với project ID trong `.env.local` |
+| `npm run contracts:simulate` | thành công | permit thật + `settleDirect` trên Arc mainnet qua state override, không tốn tiền |
+| `npm run contracts:smoke -- --network mainnet` | thành công | create/pay/cancel, permit một chữ ký và các ca revert đều qua |
 
 14 test e2e từng đỏ, và cả ba nguyên nhân đều là **một quyết định bị chép ra nhiều bản rồi trôi**:
 
@@ -87,6 +91,7 @@ thiết kế, không phải lỗi, và giao diện có nói rõ điều đó.
 | --- | --- | --- |
 | `GEMINI_API_KEY` | server | **runtime** là đủ |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | client | **build** |
+| `NEXT_PUBLIC_ARC_REGISTRY_MAINNET` | client | **build**, chỉ sau khi deploy registry |
 | `COINGECKO_API_KEY` | server | tuỳ chọn |
 
 `NEXT_PUBLIC_*` bị nhúng cứng vào bundle lúc `next build`. Đặt lúc runtime không có tác dụng.
