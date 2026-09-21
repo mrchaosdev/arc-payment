@@ -3,11 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { QR_LOGO_RATIO } from "@/lib/qr";
 
 type DrawnCode = { value: string; modules: number; path: string };
-
-/** How much of the code's width the mark covers. Kept well inside what level H can lose. */
-const LOGO_RATIO = 0.22;
 
 /**
  * The QR for a checkout link.
@@ -82,7 +80,7 @@ export function PaymentQr({
     );
 
   const { modules } = drawn;
-  const markSide = Math.round(modules * LOGO_RATIO);
+  const markSide = Math.round(modules * QR_LOGO_RATIO);
   const plateSide = markSide + 2;
 
   return (

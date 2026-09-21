@@ -2,11 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, QrCode, Share2 } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, QrCode, Share2 } from "lucide-react";
 import { PaymentQr } from "@/components/payments/PaymentQr";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useHydrated } from "@/hooks/useHydrated";
+import { downloadQrPng } from "@/lib/qr";
 
 /**
  * Everything a saved request needs to actually reach a payer: the link itself,
@@ -18,16 +19,21 @@ export function ShareActions({
   url,
   title,
   preview = true,
+  qr = true,
 }: {
   url: string;
   title?: string;
   preview?: boolean;
+  /** Off when the caller already shows its own code for this link — a second
+   * toggle here would only draw a duplicate of it. */
+  qr?: boolean;
 }) {
   const t = useTranslations("pay");
   // Resolved here rather than as a default argument: a default cannot call a hook.
   const heading = title ?? t("paymentRequest");
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { toast } = useToast();
   const hydrated = useHydrated();
   // `navigator.share` cannot be read while rendering on the server, so the
@@ -60,6 +66,18 @@ export function ShareActions({
     }
   }
 
+  async function download() {
+    setDownloading(true);
+    try {
+      const slug = heading.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "payment-request";
+      await downloadQrPng(url, `chaospay-${slug}.png`);
+    } catch {
+      toast({ title: t("qrDownloadFailed"), tone: "info" });
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <div className="share-actions-root">
       <div className="share-actions-buttons flex flex-wrap items-center gap-2">
@@ -67,15 +85,21 @@ export function ShareActions({
           {copied ? <Check size={13} /> : <Copy size={13} />}
           {copied ? "Copied" : "Copy link"}
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          className="share-actions-qr-button h-8 px-2.5"
-          aria-expanded={showQr}
-          onClick={() => setShowQr((open) => !open)}
-        >
-          <QrCode size={13} />
-          {showQr ? "Hide QR" : "QR"}
+        {qr && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="share-actions-qr-button h-8 px-2.5"
+            aria-expanded={showQr}
+            onClick={() => setShowQr((open) => !open)}
+          >
+            <QrCode size={13} />
+            {showQr ? "Hide QR" : "QR"}
+          </Button>
+        )}
+        <Button type="button" variant="secondary" className="share-actions-download-button h-8 px-2.5" onClick={download} disabled={downloading}>
+          <Download size={13} />
+          {downloading ? "Saving..." : "Download"}
         </Button>
         {canShare && (
           <Button type="button" variant="secondary" className="share-actions-share-button h-8 px-2.5" onClick={share}>
@@ -100,7 +124,7 @@ export function ShareActions({
         )}
       </div>
 
-      {showQr && (
+      {qr && showQr && (
         <div className="share-actions-qr-panel mt-3 flex flex-col items-start gap-2">
           <PaymentQr value={url} />
           <p className="share-actions-qr-hint font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">

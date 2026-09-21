@@ -143,6 +143,7 @@
     "dismissNotification": "关闭通知",
     "qrAlt": "以二维码形式呈现的收款链接",
     "copyBlocked": "复制被阻止",
+    "qrDownloadFailed": "二维码图片下载失败",
     "tablistAria": "付款操作",
     "linkCaution": "任何人都能生成收款链接。付款前请把这个地址与发给你链接的人核对。",
     "amountLabelRow": "金额",

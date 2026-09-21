@@ -143,6 +143,7 @@
     "dismissNotification": "Dismiss notification",
     "qrAlt": "Payment link as a QR code",
     "copyBlocked": "Copy blocked",
+    "qrDownloadFailed": "Could not download the QR image",
     "tablistAria": "Payment action",
     "linkCaution": "Anyone can create a payment link. Check this address against the person who sent it to you before paying.",
     "amountLabelRow": "Amount",

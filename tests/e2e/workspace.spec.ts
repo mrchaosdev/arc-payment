@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, devices } from "@playwright/test";
 
 const recipient = "0x1111111111111111111111111111111111111111";
 const receiver = "0x2222222222222222222222222222222222222222";
@@ -74,6 +74,23 @@ test("opening the wallet picker makes no doomed third-party calls", async ({ pag
   await page.waitForTimeout(2500);
 
   expect(offsite).toEqual([]);
+});
+
+test.describe("on a phone", () => {
+  // defaultBrowserType cannot be set per describe block — it would force a new
+  // worker — and the suite is chromium-only anyway. Everything else in the device
+  // profile is what makes RainbowKit take its mobile path.
+  const { defaultBrowserType: _chromium, ...pixel5 } = devices["Pixel 5"];
+  test.use(pixel5);
+
+  test("the wallet picker offers MetaMask, which no injected provider can supply", async ({ page }) => {
+    // A phone browser has no window.ethereum, so "Browser Wallet" is dead on arrival
+    // there. Without a MetaMask entry of its own the picker leaves a payer on a phone
+    // with nothing to tap, which is the whole reason the SDK is carried on mobile.
+    await page.goto("/pay");
+    await page.getByRole("button", { name: "Connect wallet to continue" }).click();
+    await expect(page.getByRole("button", { name: "MetaMask", exact: true })).toBeVisible();
+  });
 });
 
 test("rejects imprecise request amount and supports keyboard tabs", async ({ page }) => {

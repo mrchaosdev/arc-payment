@@ -143,6 +143,7 @@
     "dismissNotification": "Đóng thông báo",
     "qrAlt": "Liên kết thanh toán dưới dạng mã QR",
     "copyBlocked": "Sao chép bị chặn",
+    "qrDownloadFailed": "Không tải được ảnh QR",
     "tablistAria": "Thao tác thanh toán",
     "linkCaution": "Ai cũng tạo được liên kết thanh toán. Hãy đối chiếu địa chỉ này với người đã gửi nó cho bạn trước khi trả.",
     "amountLabelRow": "Số tiền",

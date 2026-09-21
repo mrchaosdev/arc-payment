@@ -27,6 +27,7 @@ import {
   ARC_USDC_DECIMALS,
 } from "@/lib/arc";
 import { CHAOSPAY_LIMIT_KEYS } from "@/lib/limits";
+import { DocsNav } from "@/components/docs/DocsNav";
 import { DEFAULT_SLIPPAGE_BPS, SWAP_TOKENS } from "@/lib/swap-constants";
 
 // Section ids stay fixed (they are anchors); the labels are message keys.
@@ -93,20 +94,13 @@ export async function DocsPage() {
         <aside className="docs-sidebar min-w-0 overflow-hidden border-b border-[var(--border)] bg-[var(--app-bg)] lg:overflow-visible lg:border-b-0 lg:border-r">
           <div className="docs-sidebar-inner min-w-0 lg:sticky lg:top-14 lg:max-h-[calc(100svh-56px)] lg:overflow-y-auto lg:px-6 lg:py-10">
             <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)] lg:block">{t("onThisPage")}</p>
-            <nav aria-label={t("sections")} className="docs-nav flex w-full min-w-0 gap-1 overflow-x-auto px-4 py-3 lg:mt-5 lg:block lg:space-y-6 lg:overflow-visible lg:px-0 lg:py-0">
-              {navigation.map((group) => (
-                <div key={group.key} className="docs-nav-group contents lg:block">
-                  <p className="hidden px-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)] lg:block">{t(group.key)}</p>
-                  <div className="contents lg:mt-2 lg:block">
-                    {group.items.map(([id, labelKey]) => (
-                      <a key={id} href={`#${id}`} className="docs-nav-link block shrink-0 border border-[var(--border)] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)] lg:border-0 lg:border-l-2 lg:border-l-transparent lg:px-3 lg:py-2 lg:text-[11px] lg:normal-case lg:tracking-normal">
-                        {t(labelKey)}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </nav>
+            <DocsNav
+              label={t("sections")}
+              groups={navigation.map((group) => ({
+                label: t(group.key),
+                items: group.items.map(([id, labelKey]) => ({ id, label: t(labelKey) })),
+              }))}
+            />
           </div>
         </aside>
 
@@ -269,14 +263,33 @@ export async function DocsPage() {
   );
 }
 
+/**
+ * One numbered section of the reference.
+ *
+ * The index used to hang in the gutter to the left of the eyebrow, aligned with
+ * nothing and reading as a stray number; it now sits on the eyebrow's own line,
+ * where it says what it is — this is section 03 of the document.
+ *
+ * `mx-auto` on the body is what closes the 206px hole that used to sit to its
+ * right on every wide screen: the column keeps its readable measure and the
+ * slack becomes margin on both sides instead of a gap on one.
+ */
 function DocSection({ id, index, eyebrow, title, children }: { id: string; index: string; eyebrow: string; title: string; children: React.ReactNode }) {
+  // The rule sits on the inner wrapper, not the section, so it ends where the
+  // text ends: on the full-width section it ran 60px past the content on each
+  // side, which only became visible once the column was centred.
   return (
-    <section id={id} className="docs-section scroll-mt-20 border-b border-[var(--border)] py-12 md:py-16">
-      <div className="mb-8 flex items-start gap-4">
-        <Num value={index} tone="primary" className="mt-1 text-[11px]" />
-        <div><Label>{eyebrow}</Label><h2 className="mt-3 text-3xl font-semibold tracking-[-0.025em] sm:text-4xl">{title}</h2></div>
+    <section id={id} className="docs-section scroll-mt-20 pt-10 md:pt-12">
+      <div className="docs-section-rule mx-auto max-w-[900px] border-b border-[var(--border)] pb-10 md:pb-12">
+      <div className="docs-section-heading mb-7">
+        <div className="docs-section-eyebrow flex items-baseline gap-2.5">
+          <Num value={index} tone="primary" className="text-[11px]" />
+          <Label>{eyebrow}</Label>
+        </div>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.025em] sm:text-4xl">{title}</h2>
       </div>
-      <div className="docs-section-body max-w-[900px]">{children}</div>
+        <div className="docs-section-body">{children}</div>
+      </div>
     </section>
   );
 }

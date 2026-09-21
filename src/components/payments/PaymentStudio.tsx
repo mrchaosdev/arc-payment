@@ -413,7 +413,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
     {/* Most people reach a shared link on a desktop but keep their wallet on a
         phone. The code is the bridge, so on checkout it is shown rather than
         hidden behind a control the payer has no reason to press. */}
-    {stage === "summary" && checkoutUrl ? <div className="payment-studio-mobile-checkout mt-6 flex flex-wrap items-center gap-4 border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+    {mode === "pay" && stage === "summary" && checkoutUrl ? <div className="payment-studio-mobile-checkout mt-6 flex flex-wrap items-center gap-4 border border-[var(--border)] bg-[var(--surface-soft)] p-4">
       <PaymentQr value={checkoutUrl} size={132} />
       <div className="payment-studio-mobile-checkout-copy min-w-[180px] flex-1">
         <p className="payment-studio-mobile-checkout-title flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--action)]"><Smartphone size={13} />{t("payFromPhone")}</p>
@@ -427,7 +427,7 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false }:
         <p className="payment-studio-qr-hint font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">{t("scanWithPhone")}</p>
         <PaymentQr value={shareUrl} size={180} logo />
       </div>
-      <div className="payment-studio-share-actions mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} /></div>
+      <div className="payment-studio-share-actions mt-3"><ShareActions url={shareUrl} title={request.memo || `Payment request · ${request.amount} USDC`} qr={false} /></div>
       <p className="payment-studio-share-notice mt-3 text-xs leading-5 text-[var(--text-muted)]">{t("linkWarning")}</p>
     </div>}
   </div>;
