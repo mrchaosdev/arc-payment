@@ -2,15 +2,17 @@
 
 import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight, Download, ExternalLink } from "lucide-react";
 import { Chip, Num, Panel } from "@/components/chaos/Terminal";
 import { ShareActions } from "@/components/payments/ShareActions";
+import { Button } from "@/components/ui/Button";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
+import { downloadCsv } from "@/lib/csv";
 import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { paymentLink } from "@/lib/payments";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { compactAddress } from "@/lib/utils";
-import { usePayments, type SavedRequest } from "@/store/payments";
+import { requestsToCsv, usePayments, type SavedRequest } from "@/store/payments";
 import { useHydrated } from "@/hooks/useHydrated";
 
 const usdc = findToken(ARC_CHAIN_ID, ARC_USDC_ADDRESS);
@@ -132,6 +134,18 @@ export function SavedRequests() {
             })}
           </ul>
         )}
+
+        {hydrated && requests.length ? (
+          <div className="saved-requests-footer flex justify-end border-t border-[var(--border)] px-4 py-3">
+            <Button
+              variant="secondary"
+              className="saved-requests-export-button h-7 px-2"
+              onClick={() => downloadCsv("chaospay-requests.csv", requestsToCsv(requests))}
+            >
+              <Download size={11} /> {t("exportCsv")}
+            </Button>
+          </div>
+        ) : null}
       </Panel>
     </div>
   );

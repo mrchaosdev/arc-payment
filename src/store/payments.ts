@@ -2,7 +2,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Address, Hash } from "viem";
+import { formatUnits, type Address, type Hash } from "viem";
+import { ARC_WORKSPACE_STORAGE_KEY } from "@/lib/arc";
+import { toCsv } from "@/lib/csv";
 import type { RequestSettlement } from "@/lib/reconcile";
 
 export type PaymentRecord = {
@@ -26,6 +28,36 @@ export type SavedRequest = {
    */
   settlement?: RequestSettlement;
 };
+function feeUsdc(feeNative?: string) {
+  if (!feeNative) return "";
+  try {
+    return formatUnits(BigInt(feeNative), 18);
+  } catch {
+    return "";
+  }
+}
+
+export function paymentsToCsv(payments: PaymentRecord[]): string {
+  return toCsv([
+    ["created_at", "hash", "from", "to", "amount", "token", "memo", "reference", "status", "fee_usdc"],
+    ...payments.map(p => [
+      new Date(p.createdAt).toISOString(), p.hash, p.from, p.to, p.amount, "USDC",
+      p.memo, p.reference, p.status, feeUsdc(p.feeNative),
+    ]),
+  ]);
+}
+
+export function requestsToCsv(requests: SavedRequest[]): string {
+  return toCsv([
+    ["created_at", "id", "to", "amount", "token", "memo", "reference", "protocol", "status", "paid_by", "paid_at", "settlement_hash"],
+    ...requests.map(r => [
+      new Date(r.createdAt).toISOString(), r.id, r.to, r.amount, "USDC", r.memo, r.reference,
+      r.protocol ?? "transfer", r.settlement ? "Paid" : "Unpaid",
+      r.settlement?.from, r.settlement ? new Date(r.settlement.at).toISOString() : undefined, r.settlement?.hash,
+    ]),
+  ]);
+}
+
 export const usePayments = create<{
   payments: PaymentRecord[];
   requests: SavedRequest[];
@@ -58,4 +90,4 @@ export const usePayments = create<{
   // Monotonic: a sweep that raced a slower one must not walk the cursor back
   // over blocks that were already read.
   setReconcileCursor: block => set(state => ({ reconcileCursor: Math.max(block, state.reconcileCursor ?? 0) })),
-}), { name: "chaospay-workspace-v1" }));
+}), { name: ARC_WORKSPACE_STORAGE_KEY }));

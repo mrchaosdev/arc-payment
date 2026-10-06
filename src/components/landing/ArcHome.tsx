@@ -65,6 +65,7 @@ export function ArcHome() {
   const t = useTranslations("landing");
   const tp = useTranslations("pulse");
   const tl = useTranslations("limits");
+  const ta = useTranslations("about");
   // The accordion takes finished strings, so the keys above are resolved here.
   const capabilityItems = capabilities.map((c) => ({
     id: c.id,
@@ -150,7 +151,24 @@ export function ArcHome() {
               {t("description")}
             </p>
 
-            <div className="landing-settlement-card mt-9 max-w-md border border-[var(--border)] bg-[var(--surface)]">
+            {/* The two actions sit above the settlement path: a reader should not
+                have to get through five step rows to find what to do. */}
+            <div className="landing-hero-actions mt-8 grid max-w-md grid-cols-2 border border-[var(--border)]">
+              <Link
+                href="/dashboard"
+                className="landing-workspace-link flex h-12 items-center justify-center gap-2 bg-[var(--action)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
+              >
+                {t("openWorkspace")} <ArrowRight className="size-3.5" />
+              </Link>
+              <Link
+                href="/pay?mode=request"
+                className="landing-request-link flex h-12 items-center justify-center gap-2 border-l border-[var(--border)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-soft)]"
+              >
+                {t("requestPayment")} <Link2 className="size-3.5" />
+              </Link>
+            </div>
+
+            <div className="landing-settlement-card mt-6 max-w-md border border-[var(--border)] bg-[var(--surface)]">
               <div className="landing-settlement-header flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
                 <p className="landing-settlement-title font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
                   {t("settlementPath")}
@@ -160,20 +178,6 @@ export function ArcHome() {
               {SETTLEMENT_STEP_KEYS.map((key, index) => (
                 <TraceRow key={key} index={index + 1} label={tp(key)} state="pending" />
               ))}
-              <div className="landing-hero-actions grid grid-cols-2 border-t border-[var(--border)]">
-                <Link
-                  href="/dashboard"
-                  className="landing-workspace-link flex h-12 items-center justify-center gap-2 bg-[var(--action)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--on-action)] transition-colors hover:bg-[var(--action-hover)]"
-                >
-                  {t("openWorkspace")} <ArrowRight className="size-3.5" />
-                </Link>
-                <Link
-                  href="/pay?mode=request"
-                  className="landing-request-link flex h-12 items-center justify-center gap-2 border-l border-[var(--border)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-soft)]"
-                >
-                  Request payment <Link2 className="size-3.5" />
-                </Link>
-              </div>
             </div>
 
             <div className="landing-benefits mt-6 flex flex-wrap items-center gap-2">
@@ -182,6 +186,12 @@ export function ArcHome() {
               </Chip>
               <Chip className="landing-wallet-chip" tone="muted">{t("walletNative")}</Chip>
               <Chip className="landing-testnet-chip" tone="muted">{t("arcUsdc")}</Chip>
+              <Link
+                href="/about"
+                className="landing-about-link inline-flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                {ta("eyebrow")}
+              </Link>
               <a
                 href="https://github.com/mrchaosdev/arc-payment"
                 target="_blank"

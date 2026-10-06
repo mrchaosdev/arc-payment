@@ -39,11 +39,11 @@ export function initLandingMotion(root: HTMLElement) {
         .from(".landing-hero-title-primary", { opacity: 0, y: 14 }, "-=0.25")
         .from(".landing-hero-title-secondary", { opacity: 0, y: 14 }, "-=0.35")
         .from(".landing-hero-description", { opacity: 0, y: 10 }, "-=0.3")
+        .from(".landing-hero-actions > *", { opacity: 0, stagger: 0.08 }, "-=0.2")
         .from(".landing-settlement-card", { opacity: 0, y: 12 }, "-=0.25")
         // The five steps print one after another, which is the one place the
         // boot-sequence reading is literal: they are the stages of a transfer.
         .from(".landing-settlement-card .terminal-trace-row", { opacity: 0, x: -8, stagger: 0.055 }, "-=0.2")
-        .from(".landing-hero-actions > *", { opacity: 0, stagger: 0.08 }, "-=0.05")
         .from(".landing-benefits > *", { opacity: 0, y: 6, stagger: 0.06 }, "-=0.2")
         // The right column arrives alongside the copy rather than after it, so
         // the fold is complete before the steps have finished printing.

@@ -63,7 +63,7 @@ Route tĩnh được prerender lúc build — xem bẫy số 2.
 
 | Store | Khoá localStorage | Giới hạn |
 | --- | --- | --- |
-| `store/payments` | `chaospay-workspace-v1` | 200 payment, 200 request, một `reconcileCursor` |
+| `store/payments` | `chaospay-workspace-v1` (mainnet), `chaospay-workspace-v1-testnet` (testnet) | 200 payment, 200 request, một `reconcileCursor` |
 | `store/contacts` | `chaospay-contacts-v1` | 100 liên hệ |
 | `store/settings` | `chaospay-settings` | — |
 | `store/assistant` | *không lưu* | chỉ chia sẻ trạng thái mở/đóng giữa sidebar và quả cầu |

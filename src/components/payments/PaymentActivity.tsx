@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { PaymentReceipt } from "@/components/payments/PaymentReceipt";
 import { TokenAvatar } from "@/components/ui/TokenAvatar";
 import { useHydrated } from "@/hooks/useHydrated";
-import { usePayments, type PaymentRecord } from "@/store/payments";
+import { downloadCsv } from "@/lib/csv";
+import { paymentsToCsv, usePayments, type PaymentRecord } from "@/store/payments";
 import { ARC_CHAIN_ID, ARC_USDC_ADDRESS, arcTransactionUrl } from "@/lib/arc";
 import { findToken } from "@/lib/tokenlist/tokens";
 import { publicClients } from "@/lib/wagmi/clients";
@@ -188,8 +189,15 @@ export function PaymentActivity({ compact = false }: { compact?: boolean }) {
       )}
 
       {!compact && items.length ? (
-        <div className="payment-activity-footer border-t border-[var(--border)] px-4 py-3">
+        <div className="payment-activity-footer flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3">
           <Label className="payment-activity-storage-limit">{t("cappedNote")}</Label>
+          <Button
+            variant="secondary"
+            className="payment-activity-export-button h-7 px-2"
+            onClick={() => downloadCsv("chaospay-payments.csv", paymentsToCsv(items))}
+          >
+            <Download size={11} /> {t("exportCsv")}
+          </Button>
         </div>
       ) : null}
 

@@ -44,14 +44,29 @@ export function useWorkspaceSync(address: string) {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
 
+    // A tab that comes back to the foreground triggers its own sweep, so this
+    // flag keeps that one from running alongside a sweep already in flight.
+    let running = false;
+
     async function sweep() {
+      if (running) return;
+      running = true;
       if (!document.hidden) {
         try {
           await checkReceipts();
           await reconcile();
         } catch { /* RPC down is not a payment failure. Retry next tick. */ }
       }
+      running = false;
       if (active) timer = setTimeout(sweep, SWEEP_MS);
+    }
+
+    // Sweeps skip while the tab is hidden, so a reader coming back would
+    // otherwise wait out the rest of SWEEP_MS before anything is checked.
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      clearTimeout(timer);
+      timer = setTimeout(sweep, 0);
     }
 
     async function checkReceipts() {
@@ -219,6 +234,11 @@ export function useWorkspaceSync(address: string) {
     }
 
     timer = setTimeout(sweep, 2_000);
-    return () => { active = false; clearTimeout(timer); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [address, payments, requests, updateStatus, settleRequest, setReconcileCursor]);
 }

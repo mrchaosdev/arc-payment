@@ -127,6 +127,15 @@ function selected(): ArcNetworkKey {
 
 export const ARC = resolveArcNetwork(ARC_NETWORKS[selected()]);
 
+/**
+ * localStorage key for the payments store, one per network. Block numbers, hashes
+ * and the reconcile cursor mean nothing on the other chain, so a browser that
+ * has run both must not hand one's cursor to the other. Mainnet keeps the
+ * original unsuffixed key: it is the default, and renaming it would orphan
+ * every record already saved under it.
+ */
+export const ARC_WORKSPACE_STORAGE_KEY = ARC.isTestnet ? "chaospay-workspace-v1-testnet" : "chaospay-workspace-v1";
+
 export const ARC_MAINNET_ID = ARC.chainId;
 export const ARC_MAINNET_RPC = ARC.rpcUrl;
 export const ARC_MAINNET_EXPLORER = ARC.explorerUrl;

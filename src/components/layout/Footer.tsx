@@ -26,6 +26,7 @@ export async function Footer() {
     { href: "/history", label: t("paymentActivity") },
     { href: "/settings", label: t("settings") },
     { href: "/docs", label: t("docs") },
+    { href: "/about", label: t("about") },
   ];
   const stack: [string, string][] = [
     [t("network"), "Arc"],
