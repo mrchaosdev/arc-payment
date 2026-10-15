@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ExternalLink, Link2, Pencil, RefreshCw, RotateCcw, Send, ShieldCheck, Smartphone } from "lucide-react";
-import { erc20Abi, formatUnits, parseSignature, type Address, type Hash } from "viem";
+import { encodeFunctionData, erc20Abi, formatUnits, parseSignature, type Address, type Hash } from "viem";
 import { useAccount, useReadContract, useSignTypedData, useSwitchChain, useWriteContract } from "wagmi";
 import { getAccount } from "wagmi/actions";
 import { useTranslations } from "next-intl";
@@ -25,6 +25,7 @@ import { useHydrated } from "@/hooks/useHydrated";
 import type { SettlementStage } from "@/lib/visual/pulse";
 import { publicClients } from "@/lib/wagmi/clients";
 import { wagmiConfig } from "@/lib/wagmi/config";
+import { isPasskeyConnector, sendPasskeyCalls } from "@/lib/wagmi/passkey";
 import { usePayments, type PaymentRecord } from "@/store/payments";
 import { useContacts } from "@/store/contacts";
 import { compactAddress } from "@/lib/utils";
@@ -211,7 +212,28 @@ export function PaymentStudio({ initialMode, initialRequest, checkout = false, r
       const account = getAccount(wagmiConfig);
       if (account.address?.toLowerCase() !== review.from.toLowerCase() || account.chainId !== ARC_CHAIN_ID)
         throw new Error(t("staleReview"));
-      if (registryPayment && requestId && ARC_REGISTRY_ADDRESS) {
+      if (registryPayment && requestId && ARC_REGISTRY_ADDRESS && isPasskeyConnector(account.connector)) {
+        // A smart account cannot produce the v/r/s permit below; its signatures
+        // are contract signatures. It does not need one: approve and settle go
+        // out as one user operation, applied together or not at all, under a
+        // single passkey prompt. `settleDirect` tries the empty permit, lets it
+        // fail, and pulls against the allowance set one call earlier.
+        const zero = `0x${"0".repeat(64)}` as Hash;
+        submitted = await sendPasskeyCalls([
+          {
+            to: ARC_USDC_ADDRESS,
+            data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [ARC_REGISTRY_ADDRESS, review.units] }),
+          },
+          {
+            to: ARC_REGISTRY_ADDRESS,
+            data: encodeFunctionData({
+              abi: INVOICE_REGISTRY_ABI,
+              functionName: "settleDirect",
+              args: [requestKeyFor(requestId), review.to, ARC_USDC_ADDRESS, review.units, memoHashFor(review.memo, review.reference), BigInt(0), 0, zero, zero],
+            }),
+          },
+        ]);
+      } else if (registryPayment && requestId && ARC_REGISTRY_ADDRESS) {
         const nonce = await client.readContract({
           address: ARC_USDC_ADDRESS,
           abi: permitNonceAbi,

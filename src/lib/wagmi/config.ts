@@ -3,6 +3,7 @@ import { injectedWallet, metaMaskWallet, rainbowWallet, safeWallet, walletConnec
 import { arc, arcTestnet, arbitrum, base, bsc, mainnet } from "viem/chains";
 import { http } from "wagmi";
 import { ARC, ARC_RPC_URL } from "@/lib/arc";
+import { PASSKEY_ENABLED, passkeyLoginWallet, passkeyRegisterWallet } from "@/lib/wagmi/passkey";
 
 // WalletConnect projectId — lấy free tại https://cloud.reown.com rồi đặt vào
 // NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID (xem .env.example).
@@ -12,8 +13,12 @@ const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?
 // nên vẫn phải truyền placeholder khi chưa có key thật.
 const projectId = walletConnectProjectId || "chaospay_dev_placeholder";
 
-// Arc mainnet is the primary network (live 2026-09-16); legacy EVM routes remain available after it.
-export const supportedChains = [arc, bsc, mainnet, arbitrum, base] as const;
+// The Arc chain follows NEXT_PUBLIC_ARC_NETWORK. It used to be pinned to `arc`, so a testnet
+// build asked wallets for chain 5042 while every read and check expected 5042002.
+export const arcChain = ARC.isTestnet ? arcTestnet : arc;
+
+// Arc is the primary network (mainnet live 2026-09-16); legacy EVM routes remain available after it.
+export const supportedChains = [arcChain, bsc, mainnet, arbitrum, base] as const;
 
 // Cùng tiêu chí RainbowKit dùng để chọn giữa hộp thoại mobile và desktop (isMobile
 // trong dist). Phải trùng nhau: lệch một cái là có máy nhận hộp thoại mobile trong khi
@@ -45,7 +50,11 @@ export const wagmiConfig = getDefaultConfig({
   // chỉ có thể hỏng — và hỏng ồn ào: mỗi lần mở hộp thoại connect, AppKit gọi
   // api.web3modal.org (403) và bắn telemetry lên pulse.walletconnect.org (400).
   // Chỉ chào những ví hoạt động được mà không cần key.
+  //
+  // The passkey wallet leads when this build has a Circle client key for its network: it
+  // needs no extension and works on a phone, which the injected wallets cannot.
   wallets: [
+    ...(PASSKEY_ENABLED ? [{ groupName: "Passkey", wallets: [passkeyLoginWallet, passkeyRegisterWallet] }] : []),
     {
       groupName: "Popular",
       wallets: walletConnectProjectId
@@ -54,7 +63,7 @@ export const wagmiConfig = getDefaultConfig({
     },
   ],
   transports: {
-    [arc.id]: http(ARC_RPC_URL),
+    [arcChain.id]: http(ARC_RPC_URL),
     [mainnet.id]: http("https://cloudflare-eth.com"),
     [bsc.id]: http("https://bsc-dataseed.binance.org"),
     [arbitrum.id]: http("https://arb1.arbitrum.io/rpc"),
