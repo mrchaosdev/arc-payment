@@ -10,13 +10,26 @@ import { WalletControls } from "@/components/layout/WalletControls";
 import { ThemeMorphToggle } from "@/components/layout/ThemeMorphToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { useLocale as useAppLocale } from "next-intl";
+import { cn, compactAddress } from "@/lib/utils";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { WalletGem } from "@/components/ui/WalletGem";
+import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
 
 export function TopBar({ workspace = false }: { workspace?: boolean }) {
   const t = useTranslations("nav");
+  const locale = useAppLocale();
   const pathname = usePathname();
+  const { address: connectedAddress } = useAccount();
+  const [ecosystemWallet, setEcosystemWallet] = useState<`0x${string}` | null>(null);
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get("ecosystemWallet");
+    if (value && /^0x[a-fA-F0-9]{40}$/.test(value)) setEcosystemWallet(value as `0x${string}`);
+  }, []);
+  const ecosystemUrl = connectedAddress
+    ? `https://chaos-ecosystem.vercel.app/id/${connectedAddress}?lang=${locale}`
+    : `https://chaos-ecosystem.vercel.app/?lang=${locale}`;
   const navItems = [
     { href: "/dashboard", label: t("workspace"), icon: null },
     { href: "/pay", label: t("pay"), icon: null },
@@ -39,11 +52,11 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
       </div>
       <div className="top-bar-actions ml-auto flex items-center gap-2">
         <a
-          href="https://chaos-ecosystem.vercel.app/"
+          href={ecosystemUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chaos Ecosystem"
-          title="Chaos Ecosystem"
+          title={connectedAddress ? "Open your ChaosID profile in Chaos Ecosystem" : "Open Chaos Ecosystem"}
           className="top-bar-ecosystem-link inline-flex h-9 items-center gap-1.5 border border-[var(--border)] px-2 text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
         >
           <span className="hidden sm:inline">Ecosystem</span>
@@ -82,6 +95,22 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
           return <WalletControls key={account.address} address={account.address as Address} chainId={chain.id} openAccountModal={openAccountModal} />;
         }}
       </ConnectButton.Custom>
+      {ecosystemWallet && <div role="status" className="top-bar-ecosystem-context mx-auto flex w-full max-w-[1400px] flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] px-4 py-2 text-xs md:px-6">
+        <p className="text-[var(--text-muted)]">
+          {connectedAddress?.toLowerCase() === ecosystemWallet.toLowerCase()
+            ? <>This app is connected to the address shared by Ecosystem <span className="font-mono">({compactAddress(ecosystemWallet)})</span>.</>
+            : connectedAddress
+              ? <>Ecosystem opened with <span className="font-mono">{compactAddress(ecosystemWallet)}</span>; this app has a different wallet connected.</>
+              : <>Ecosystem shared <span className="font-mono">{compactAddress(ecosystemWallet)}</span>. Connect this wallet here to continue with it.</>}
+          <span className="ml-1 opacity-70">Each app confirms wallet connection separately.</span>
+        </p>
+        {connectedAddress?.toLowerCase() !== ecosystemWallet.toLowerCase() && <ConnectButton.Custom>
+          {({ mounted, openAccountModal, openConnectModal }) => mounted && <button type="button" onClick={connectedAddress ? openAccountModal : openConnectModal} className="shrink-0 text-[var(--action)] underline underline-offset-2">
+            {connectedAddress ? "Manage wallet" : "Connect wallet"}
+          </button>}
+        </ConnectButton.Custom>}
+        <button type="button" onClick={() => setEcosystemWallet(null)} aria-label="Dismiss Ecosystem wallet notice" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Dismiss</button>
+      </div>}
     </div>
   </header>;
 }
