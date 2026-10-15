@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { BookOpen, Settings } from "lucide-react";
+import { ArrowUpRight, BookOpen, Settings } from "lucide-react";
 import type { Address } from "viem";
 import { Skeleton } from "@/components/chaos/Skeleton";
 import { WalletControls } from "@/components/layout/WalletControls";
@@ -38,6 +38,17 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
         </nav>}
       </div>
       <div className="top-bar-actions ml-auto flex items-center gap-2">
+        <a
+          href="https://chaos-ecosystem.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chaos Ecosystem"
+          title="Chaos Ecosystem"
+          className="top-bar-ecosystem-link inline-flex h-9 items-center gap-1.5 border border-[var(--border)] px-2 text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+        >
+          <span className="hidden sm:inline">Ecosystem</span>
+          <ArrowUpRight className="size-3.5" />
+        </a>
         <Link
           href="/docs"
           aria-label={t("docs")}
