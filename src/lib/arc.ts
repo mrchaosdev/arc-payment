@@ -189,6 +189,22 @@ export const ARC_CHAIN_ID = ARC.chainId;
 export const ARC_RPC_URL = ARC.rpcUrl;
 export const ARC_EXPLORER_URL = ARC.explorerUrl;
 
+/**
+ * An RPC that still serves old logs, for lookups by time rather than "recent".
+ *
+ * The two mainnet endpoints trade off differently (measured 2026-10-15):
+ * Blockdaemon (`rpc`) answers ranges up to 100,000 blocks but keeps only about
+ * the last 100,000 ("pruned history unavailable" beyond); Arc's own
+ * `rpc.mainnet.arc.io` keeps history back past the registry deployment but
+ * refuses any range of 10,000 blocks or more, and rate-limits sweeps. So the
+ * app keeps Blockdaemon for its wide recent scans and asks this one only for a
+ * narrow window it has already located.
+ */
+export const ARC_ARCHIVE_RPC_URL = ARC.isTestnet ? ARC.rpcUrl : "https://rpc.mainnet.arc.io";
+
+/** Widest `eth_getLogs` range `ARC_ARCHIVE_RPC_URL` accepts, exclusive. */
+export const ARC_ARCHIVE_LOG_RANGE = 10_000;
+
 export const ARC_REGISTRY_ADDRESS = ARC.registry;
 
 /** Whether this build can write invoices on-chain, rather than to the browser alone. */

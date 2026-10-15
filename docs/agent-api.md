@@ -32,7 +32,7 @@ Gửi `url` cho người trả. Dùng `statusUrl` để poll.
 - `{ "invoiceId", "status": "pending" }`: chưa có gì được thanh toán dưới id này.
 - `{ "status": "paid", "to", "payer", "amount", "paidAt", "txHash", "blockNumber", "explorerUrl", … }`: đã thanh toán.
 
-`txHash` lấy từ log `InvoicePaid`, mà RPC công khai của Arc chỉ giữ khoảng 100.000 block gần nhất (đo được ≈ 14 giờ; xa hơn trả `pruned history unavailable`). Khoản thanh toán cũ hơn thì `txHash`, `blockNumber` và `explorerUrl` là `null`, còn `status: "paid"` vẫn đúng vì nó đọc thẳng state của hợp đồng.
+`txHash` lấy từ log `InvoicePaid`. Hai RPC mainnet đánh đổi khác nhau (đo 2026-10-15): Blockdaemon nhận khoảng 100.000 block mỗi lần query nhưng chỉ giữ khoảng 100.000 block gần nhất (≈ 14 giờ; xa hơn trả `pruned history unavailable`), còn `rpc.mainnet.arc.io` giữ toàn bộ lịch sử nhưng từ chối mọi khoảng từ 10.000 block trở lên. Vì vậy khoản trả trong 12 giờ gần nhất được tìm trên Blockdaemon, còn khoản cũ hơn thì server dò block khớp với `paidAt` trên `rpc.mainnet.arc.io` (thường 2–3 lần đọc) rồi tìm trong ±4.000 block quanh đó. `txHash` chỉ là `null` khi lần đọc đó lỗi; `status: "paid"` luôn đúng vì nó đọc thẳng state của hợp đồng.
 
 Một hoá đơn direct chỉ tồn tại trên chain sau khi có người trả, nên `pending` cũng là kết quả của một id gõ sai hoặc chưa từng được cấp. Poll mỗi vài giây là đủ; endpoint giới hạn 120 lượt/phút/IP, còn `POST` là 60.
 

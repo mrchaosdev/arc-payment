@@ -80,9 +80,12 @@ Arc mainnet configuration (what this build targets):
 | EURC ERC-20 | `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1` |
 | Decimals | `6` for both |
 
-Arc mainnet carries USDC and EURC and no USDT; Circle's Swap Kit routes that same pair. cirBTC is a
-testnet-only token, and several impostor contracts on mainnet reuse all three symbols — see the
-warning at the top of `src/lib/tokenlist/tokens.ts`.
+ChaosPay pays and swaps USDC and EURC, the pair Circle's Swap Kit routes on Arc. Arc mainnet has no
+USDT. It does carry official cirBTC (`0x171A4217b86A807A64eB94757Db6849fb4bDbAA0`, 8 decimals),
+USYC and bridged WETH, which ChaosPay does not use; the full list is in
+[Arc's contract addresses](https://docs.arc.io/arc/references/contract-addresses). Impostor contracts
+on mainnet reuse the USDC, EURC and cirBTC symbols, so match tokens by address, never by symbol —
+see the warning at the top of `src/lib/tokenlist/tokens.ts`.
 
 Arc Testnet configuration, if `NEXT_PUBLIC_ARC_NETWORK=testnet`:
 
@@ -90,7 +93,7 @@ Arc Testnet configuration, if `NEXT_PUBLIC_ARC_NETWORK=testnet`:
 | --- | --- |
 | Chain ID | `5042002` (`0x4CEF52`) |
 | RPC | `https://rpc.testnet.arc.io` |
-| Explorer | `https://testnet.arcscan.app` |
+| Explorer | `https://explorer.testnet.arc.io` |
 
 Arc exposes one USDC balance through native and ERC-20 views. ChaosPay uses the 6-decimal ERC-20
 interface for display and transfers and does not add the native view to it.

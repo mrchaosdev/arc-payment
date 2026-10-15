@@ -8,7 +8,7 @@ registerHooks({ resolve(specifier, context, next) {
     return next(specifier + ".ts", context);
   return next(specifier, context);
 } });
-const { createAgentRequest, isDirectInvoiceId } = await import("../src/lib/agent-request.ts");
+const { blockNear, createAgentRequest, isDirectInvoiceId } = await import("../src/lib/agent-request.ts");
 const { directInvoiceIdFor, memoHashFor } = await import("../src/lib/registry.ts");
 const { ARC_USDC_ADDRESS } = await import("../src/lib/arc.ts");
 
@@ -88,4 +88,38 @@ test("only direct-invoice ids are accepted for polling", () => {
   assert.equal(isDirectInvoiceId("0x1234"), false);
   assert.equal(isDirectInvoiceId(`0x8${"g".repeat(63)}`), false);
   assert.equal(isDirectInvoiceId("11111111-1111-4111-8111-111111111111"), false);
+});
+
+// A chain whose block rate drifts: 0.6 s per block for the first two million
+// blocks, 0.45 s after. A search that trusted one average rate would land
+// hours away from the target on the far side of the change.
+const DRIFTING = { genesis: 1_750_000_000, change: 2_000_000 };
+const timestampOf = (block) => {
+  const n = Number(block);
+  return Math.floor(n <= DRIFTING.change
+    ? DRIFTING.genesis + n * 0.6
+    : DRIFTING.genesis + DRIFTING.change * 0.6 + (n - DRIFTING.change) * 0.45);
+};
+
+test("blockNear finds the block mined at a time, across a change in block rate", async () => {
+  const head = { number: BigInt(4_000_000), timestamp: timestampOf(4_000_000) };
+  for (const actual of [100_000, 1_500_000, 2_000_000, 3_999_000]) {
+    let reads = 0;
+    const found = await blockNear({
+      target: timestampOf(actual),
+      head,
+      readTimestamp: async (block) => { reads++; return timestampOf(block); },
+    });
+    assert.ok(Math.abs(timestampOf(found) - timestampOf(actual)) <= 60, `block ${actual}: landed ${found}`);
+    assert.ok(reads <= 5, `block ${actual}: took ${reads} reads`);
+  }
+});
+
+test("blockNear stays inside the chain for a time before genesis or after head", async () => {
+  const head = { number: BigInt(4_000_000), timestamp: timestampOf(4_000_000) };
+  const readTimestamp = async (block) => timestampOf(block);
+  const early = await blockNear({ target: DRIFTING.genesis - 86_400, head, readTimestamp });
+  const late = await blockNear({ target: head.timestamp + 86_400, head, readTimestamp });
+  assert.ok(early >= BigInt(0));
+  assert.ok(late <= head.number);
 });

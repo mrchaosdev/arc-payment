@@ -15,18 +15,25 @@ import { cn, compactAddress } from "@/lib/utils";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { WalletGem } from "@/components/ui/WalletGem";
 import { useAccount } from "wagmi";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+
+// The address Chaos Ecosystem hands over in `?ecosystemWallet=`. Read through
+// useSyncExternalStore so the server snapshot (null) and the first client
+// render agree, without a setState inside an effect.
+const noSubscription = () => () => {};
+function readEcosystemWallet() {
+  const value = new URLSearchParams(window.location.search).get("ecosystemWallet");
+  return value && /^0x[a-fA-F0-9]{40}$/.test(value) ? (value as `0x${string}`) : null;
+}
 
 export function TopBar({ workspace = false }: { workspace?: boolean }) {
   const t = useTranslations("nav");
   const locale = useAppLocale();
   const pathname = usePathname();
   const { address: connectedAddress } = useAccount();
-  const [ecosystemWallet, setEcosystemWallet] = useState<`0x${string}` | null>(null);
-  useEffect(() => {
-    const value = new URLSearchParams(window.location.search).get("ecosystemWallet");
-    if (value && /^0x[a-fA-F0-9]{40}$/.test(value)) setEcosystemWallet(value as `0x${string}`);
-  }, []);
+  const sharedWallet = useSyncExternalStore(noSubscription, readEcosystemWallet, () => null);
+  const [dismissed, setDismissed] = useState(false);
+  const ecosystemWallet = dismissed ? null : sharedWallet;
   const ecosystemUrl = connectedAddress
     ? `https://chaos-ecosystem.vercel.app/id/${connectedAddress}?lang=${locale}`
     : `https://chaos-ecosystem.vercel.app/?lang=${locale}`;
@@ -109,7 +116,7 @@ export function TopBar({ workspace = false }: { workspace?: boolean }) {
             {connectedAddress ? "Manage wallet" : "Connect wallet"}
           </button>}
         </ConnectButton.Custom>}
-        <button type="button" onClick={() => setEcosystemWallet(null)} aria-label="Dismiss Ecosystem wallet notice" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Dismiss</button>
+        <button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss Ecosystem wallet notice" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Dismiss</button>
       </div>}
     </div>
   </header>;

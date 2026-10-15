@@ -21,6 +21,12 @@ const SERVER_URL = process.env.CAGENT_SERVER_URL || "http://localhost:3001";
 const DEFAULT_AGENT_ID = process.env.CAGENT_AGENT_ID || "chaospay";
 
 export async function POST(request: NextRequest) {
+  // The localhost default is for development only. A production deployment
+  // with no Cagent server configured has nothing behind this route, so it does
+  // not exist there rather than answering 502 with an internal address.
+  if (!process.env.CAGENT_SERVER_URL && process.env.NODE_ENV === "production")
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+
   const serverUrl = `${SERVER_URL.replace(/\/$/, "")}/api/agent/chat`;
 
   let payload: unknown;
@@ -72,10 +78,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Cannot reach Cagent server at ${SERVER_URL}. Make sure it is running.`, details: message },
-      { status: 502 },
-    );
+    // The upstream address and the fetch error stay in the server log; the
+    // caller only learns that the assistant backend is unavailable.
+    console.error(`Cagent server at ${SERVER_URL} is unreachable:`, error);
+    return NextResponse.json({ error: "The Cagent server is unavailable. Try again later." }, { status: 502 });
   }
 }

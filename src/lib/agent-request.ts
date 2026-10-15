@@ -79,3 +79,49 @@ export function createAgentRequest(origin: string, body: unknown, newId: () => s
 export function isDirectInvoiceId(value: string): value is Hash {
   return DIRECT_ID.test(value.toLowerCase());
 }
+
+/** Arc mainnet's average block interval, in seconds, over its first million blocks to 2026-10-15. */
+const SECONDS_PER_BLOCK = 0.5;
+
+/**
+ * The block mined closest to `target` (Unix seconds), to within `tolerance`.
+ *
+ * Interpolates from `head` at the average block rate, reads the guessed
+ * block's timestamp, re-measures the rate from what it found and corrects,
+ * which converges in two or three reads where a bisection would take twenty.
+ * Arc block timestamps are whole seconds and can repeat, so the answer is a
+ * neighbourhood to search, not an exact block. `readTimestamp` is injected so
+ * the search can be tested without a chain.
+ */
+export async function blockNear({
+  target,
+  head,
+  readTimestamp,
+  tolerance = 60,
+  maxReads = 5,
+}: {
+  target: number;
+  head: { number: bigint; timestamp: number };
+  readTimestamp: (block: bigint) => Promise<number>;
+  tolerance?: number;
+  maxReads?: number;
+}): Promise<bigint> {
+  let known = head;
+  let rate = SECONDS_PER_BLOCK;
+  let guess = head.number;
+  for (let read = 0; read < maxReads; read++) {
+    const offset = BigInt(Math.round((known.timestamp - target) / rate));
+    guess = known.number - offset;
+    if (guess < BigInt(0)) guess = BigInt(0);
+    if (guess > head.number) guess = head.number;
+
+    const seen = await readTimestamp(guess);
+    if (Math.abs(seen - target) <= tolerance) return guess;
+
+    const blocks = Number(known.number - guess);
+    if (blocks !== 0 && seen !== known.timestamp) rate = (known.timestamp - seen) / blocks;
+    if (!(rate > 0)) rate = SECONDS_PER_BLOCK;
+    known = { number: guess, timestamp: seen };
+  }
+  return guess;
+}
